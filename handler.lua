@@ -668,7 +668,7 @@ local function handle_tooltip(tooltip, point)
     end
 
     if point.group then
-        tooltip:AddDoubleLine(GROUP, ns.groups[point.group] or point.group)
+        tooltip:AddDoubleLine(GROUP, render_string(ns.groups[point.group] or point.group, point))
     end
 
     if point.quest and ns.db.tooltip_questid then
