@@ -129,6 +129,19 @@ function ns.RegisterPoints(zone, points, defaults)
         end
     end
 end
+function ns.RegisterVignettes(zone, vignettes, defaults)
+    if defaults then
+        defaults = ns.nodeMaker(defaults)
+    end
+    for vignetteID, point in pairs(vignettes) do
+        point._coord = point._coord or 0
+        point._uiMapID = zone
+        point.always = true
+        point.label = false
+
+        ns.VignetteIDsToPoints[vignetteID] = defaults and defaults(point) or point
+    end
+end
 
 ns.merge = function(t1, t2)
     if not t2 then return t1 end
