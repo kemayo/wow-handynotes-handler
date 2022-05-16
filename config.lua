@@ -475,6 +475,10 @@ ns.itemIsKnown = function(item)
         if item.pet then return PlayerHasPet(item.pet) end
         if item.quest then return C_QuestLog.IsQuestFlaggedCompleted(item.quest) or C_QuestLog.IsOnQuest(item.quest) end
         if item.questComplete then return C_QuestLog.IsQuestFlaggedCompleted(item.questComplete) end
+        if item.set then
+            local info = C_TransmogSets.GetSetInfo(item.set)
+            return info.collected
+        end
         if CanLearnAppearance(item[1]) then return HasAppearance(item[1]) end
     elseif CanLearnAppearance(item) then
         return HasAppearance(item)

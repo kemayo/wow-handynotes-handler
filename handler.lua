@@ -560,6 +560,47 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
         )
     end
 end
+local function tooltip_loot(tooltip, item)
+    local _, link, _, _, _, _, _, _, _, icon = GetItemInfo(ns.lootitem(item))
+    if not link then
+        tooltip:AddDoubleLine(ENCOUNTER_JOURNAL_ITEM, SEARCH_LOADING_TEXT,
+            NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
+            0, 1, 1
+        )
+        return
+    end
+    local label = ENCOUNTER_JOURNAL_ITEM
+    link = link:gsub("[%[%]]", "")
+    if type(item) == "table" then
+        if item.mount then label = MOUNT
+        elseif item.toy then label = TOY
+        elseif item.pet then label = TOOLTIP_BATTLE_PET
+        elseif item.set then
+            label = WARDROBE_SETS
+            local info = C_TransmogSets.GetSetInfo(item.set)
+            if info then
+                link = info.name
+            end
+        end
+        -- todo: faction?
+        if item.covenant then
+            local data = C_Covenants.GetCovenantData(item.covenant)
+            -- local active = item.covenant == C_Covenants.GetActiveCovenantID()
+            link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, COVENANT_COLORS[item.covenant]:WrapTextInColorCode(data and data.name or ns.covenants[item.covenant]))
+        end
+        if item.class then
+            link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, RAID_CLASS_COLORS[item.class]:WrapTextInColorCode(LOCALIZED_CLASS_NAMES_FEMALE[item.class]))
+        end
+        if item.note then
+            link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, render_string(item.note))
+        end
+    end
+    local known = ns.itemIsKnown(item)
+    if known ~= nil and (known == true or not ns.itemRestricted(item)) then
+        link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
+    end
+    tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link)
+end
 local function handle_tooltip(tooltip, point)
     if not point then
         tooltip:SetText(UNKNOWN)
@@ -638,39 +679,7 @@ local function handle_tooltip(tooltip, point)
     end
     if point.loot then
         for _, item in ipairs(point.loot) do
-            local _, link, _, _, _, _, _, _, _, icon = GetItemInfo(ns.lootitem(item))
-            if link then
-                local label = ENCOUNTER_JOURNAL_ITEM
-                link = link:gsub("[%[%]]", "")
-                if type(item) == "table" then
-                    if item.mount then label = MOUNT
-                    elseif item.toy then label = TOY
-                    elseif item.pet then label = TOOLTIP_BATTLE_PET
-                    end
-                    -- todo: faction?
-                    if item.covenant then
-                        local data = C_Covenants.GetCovenantData(item.covenant)
-                        -- local active = item.covenant == C_Covenants.GetActiveCovenantID()
-                        link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, COVENANT_COLORS[item.covenant]:WrapTextInColorCode(data and data.name or ns.covenants[item.covenant]))
-                    end
-                    if item.class then
-                        link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, RAID_CLASS_COLORS[item.class]:WrapTextInColorCode(LOCALIZED_CLASS_NAMES_FEMALE[item.class]))
-                    end
-                    if item.note then
-                        link = TEXT_MODE_A_STRING_VALUE_TYPE:format(link, render_string(item.note))
-                    end
-                end
-                local known = ns.itemIsKnown(item)
-                if known ~= nil and (known == true or not ns.itemRestricted(item)) then
-                    link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
-                end
-                tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link)
-            else
-                tooltip:AddDoubleLine(ENCOUNTER_JOURNAL_ITEM, SEARCH_LOADING_TEXT,
-                    NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
-                    0, 1, 1
-                )
-            end
+            tooltip_loot(tooltip, item)
         end
     end
     if point.covenant then
