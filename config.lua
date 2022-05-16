@@ -663,7 +663,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
     if point.requires_item and not itemInBags(point.requires_item) then
         return false
     end
-    if point.requires_worldquest and not C_TaskQuest.IsActive(point.requires_worldquest) then
+    if point.requires_worldquest and not (C_TaskQuest.IsActive(point.requires_worldquest) or C_QuestLog.IsQuestFlaggedCompleted(point.requires_worldquest)) then
         return false
     end
     if point.requires and not ns.conditions.check(point.requires) then
