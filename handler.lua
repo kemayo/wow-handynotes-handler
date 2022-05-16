@@ -183,6 +183,20 @@ ns.playerClassLocal = playerClassLocal
 ns.playerClassColor = RAID_CLASS_COLORS[playerClass]
 ns.playerName = UnitName("player")
 ns.playerFaction = UnitFactionGroup("player")
+ns.playerClassMask = ({
+    WARRIOR = 0x1,
+    PALADIN = 0x2,
+    HUNTER = 0x4,
+    ROGUE = 0x8,
+    PRIEST = 0x10,
+    DEATHKNIGHT = 0x20,
+    SHAMAN = 0x40,
+    MAGE = 0x80,
+    WARLOCK = 0x100,
+    MONK = 0x200,
+    DRUID = 0x400,
+    DEMONHUNTER = 0x800,
+})[playerClass] or 0
 
 ---------------------------------------------------------
 -- All the utility code

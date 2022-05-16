@@ -460,7 +460,16 @@ ns.itemRestricted = function(item)
 end
 ns.itemIsKnowable = function(item)
     if type(item) == "table" then
-        return (item.toy or item.mount or item.pet or item.quest or CanLearnAppearance(item[1])) and not ns.itemRestricted(item)
+        if ns.itemRestricted(item) then
+            return false
+        end
+        if item.set and ns.playerClassMask then
+            local info = C_TransmogSets.GetSetInfo(item.set)
+            if info and info.classMask then
+                return bit.band(info.classMask, ns.playerClassMask) == ns.playerClassMask
+            end
+        end
+        return (item.toy or item.mount or item.pet or item.quest or CanLearnAppearance(item[1]))
     end
     return CanLearnAppearance(item)
 end
@@ -477,7 +486,11 @@ ns.itemIsKnown = function(item)
         if item.questComplete then return C_QuestLog.IsQuestFlaggedCompleted(item.questComplete) end
         if item.set then
             local info = C_TransmogSets.GetSetInfo(item.set)
-            return info.collected
+            if info then
+                if info.collected then return true end
+                -- we want to return nil for sets the current class can't learn:
+                if info.classMask and bit.band(info.classMask, ns.playerClassMask) == ns.playerClassMask then return false end
+            end
         end
         if CanLearnAppearance(item[1]) then return HasAppearance(item[1]) end
     elseif CanLearnAppearance(item) then
