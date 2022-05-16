@@ -223,7 +223,7 @@ local function mob_name(id)
 end
 local function quick_texture_markup(icon)
     -- needs less than CreateTextureMarkup
-    return '|T' .. icon .. ':0:0:1:-1|t'
+    return icon and ('|T' .. icon .. ':0:0:1:-1|t') or ''
 end
 local completeColor = CreateColor(0, 1, 0, 1)
 local incompleteColor = CreateColor(1, 0, 0, 1)
@@ -575,16 +575,15 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
     end
 end
 local function tooltip_loot(tooltip, item)
-    local _, link, _, _, _, _, _, _, _, icon = GetItemInfo(ns.lootitem(item))
-    if not link then
-        tooltip:AddDoubleLine(ENCOUNTER_JOURNAL_ITEM, SEARCH_LOADING_TEXT,
-            NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
-            0, 1, 1
-        )
-        return
-    end
     local label = ENCOUNTER_JOURNAL_ITEM
-    link = link:gsub("[%[%]]", "")
+    local r, g, b = NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
+    local _, link, _, _, _, _, _, _, _, icon = GetItemInfo(ns.lootitem(item))
+    if link then
+        link = link:gsub("[%[%]]", "")
+    else
+        r, g, b = 0, 1, 1
+        link = SEARCH_LOADING_TEXT
+    end
     if type(item) == "table" then
         if item.mount then label = MOUNT
         elseif item.toy then label = TOY
@@ -613,7 +612,10 @@ local function tooltip_loot(tooltip, item)
     if known ~= nil and (known == true or not ns.itemRestricted(item)) then
         link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
     end
-    tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link)
+    tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link,
+        NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
+        r, g, b
+    )
 end
 local function handle_tooltip(tooltip, point)
     if not point then
