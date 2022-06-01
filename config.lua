@@ -16,6 +16,7 @@ ns.defaults = {
         icon_scale = 1.0,
         icon_alpha = 1.0,
         icon_item = false,
+        tooltip_charloot = true,
         tooltip_pointanchor = false,
         tooltip_item = true,
         tooltip_questid = false,
@@ -126,6 +127,12 @@ ns.options = {
                     name = "Use item tooltips",
                     desc = "Show the full tooltips for items",
                     order = 10,
+                },
+                tooltip_charloot = {
+                    type = "toggle",
+                    name = "Loot for this character only",
+                    desc = "Only show loot that should drop for the current character",
+                    order = 12,
                 },
                 tooltip_pointanchor = {
                     type = "toggle",
@@ -451,6 +458,7 @@ ns.itemRestricted = function(item)
     if item.class and ns.playerClass ~= item.class then
         return true
     end
+    -- TODO: profession recipes
     return false
 end
 ns.itemIsKnowable = function(item)

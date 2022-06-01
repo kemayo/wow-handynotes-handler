@@ -577,6 +577,14 @@ end
 local function tooltip_loot(tooltip, item)
     local r, g, b = NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
     local _, itemType, itemSubtype, equipLoc, icon, classID, subclassID = GetItemInfoInstant(ns.lootitem(item))
+    if ns.db.tooltip_charloot and not IsShiftKeyDown() then
+        -- show loot for the current character only
+        -- can't pass in a reusable table for the second argument because it changes the no-data case
+        local specTable = GetItemSpecInfo(ns.lootitem(item))
+        if specTable and #specTable == 0 then return true end
+        -- then catch covenants / classes / etc
+        if ns.itemRestricted(item) then return true end
+    end
     local _, link = GetItemInfo(ns.lootitem(item))
     local label = ENCOUNTER_JOURNAL_ITEM
     if classID == Enum.ItemClass.Armor and subclassID ~= Enum.ItemArmorSubclass.Shield then
@@ -700,8 +708,12 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddLine(render_string(point.note, point), 1, 1, 1, true)
     end
     if point.loot then
+        local hidden
         for _, item in ipairs(point.loot) do
-            tooltip_loot(tooltip, item)
+            hidden = tooltip_loot(tooltip, item) or hidden
+        end
+        if hidden then
+            tooltip:AddLine("Items for other characters hidden", 0, 1, 1)
         end
     end
     if point.covenant then
