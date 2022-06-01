@@ -617,14 +617,14 @@ local function tooltip_loot(tooltip, item)
         r, g, b
     )
 end
-local function handle_tooltip(tooltip, point)
+local function handle_tooltip(tooltip, point, skip_label)
     if not point then
         tooltip:SetText(UNKNOWN)
         tooltip:Show()
         return
     end
     -- major:
-    if point.label ~= false then
+    if not skip_label and point.label ~= false then
         tooltip:AddLine(work_out_label(point))
     end
     if point.follower then
@@ -1090,22 +1090,22 @@ hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
     if not self.areaPoiID then return end
     if not ns.POIsToPoints[self.areaPoiID] then return end
     local point = ns.POIsToPoints[self.areaPoiID]
-    if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-    handle_tooltip(GameTooltip, point)
+    -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
+    handle_tooltip(GameTooltip, point, true)
 end)
 
 hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
     local vignetteInfo = self.vignetteInfo
     if not (vignetteInfo.vignetteID and ns.VignetteIDsToPoints[vignetteInfo.vignetteID]) then return end
     local point = ns.VignetteIDsToPoints[vignetteInfo.vignetteID]
-    if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-    handle_tooltip(GameTooltip, point)
+    -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
+    handle_tooltip(GameTooltip, point, true)
 end)
 
 hooksecurefunc("TaskPOI_OnEnter", function(self)
     if not self.questID then return end
     if not ns.WorldQuestsToPoints[self.questID] then return end
     local point = ns.WorldQuestsToPoints[self.questID]
-    if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-    handle_tooltip(GameTooltip, point)
+    -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
+    handle_tooltip(GameTooltip, point, true)
 end)
