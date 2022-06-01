@@ -445,6 +445,9 @@ local function CanLearnAppearance(itemLinkOrID)
 end
 local hasAppearanceCache = {}
 local function HasAppearance(itemLinkOrID)
+    -- 9.1.5 added PlayerHasTransmogByItemInfo, but I can't use (just) it
+    -- because it's specific to that item and won't say if you've learned the
+    -- appearance from other sources
     local itemID = GetItemInfoInstant(itemLinkOrID)
     if not itemID then
         return
