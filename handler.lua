@@ -575,9 +575,15 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
     end
 end
 local function tooltip_loot(tooltip, item)
-    local label = ENCOUNTER_JOURNAL_ITEM
     local r, g, b = NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
-    local _, link, _, _, _, _, _, _, _, icon = GetItemInfo(ns.lootitem(item))
+    local _, itemType, itemSubtype, equipLoc, icon, classID, subclassID = GetItemInfoInstant(ns.lootitem(item))
+    local _, link = GetItemInfo(ns.lootitem(item))
+    local label = ENCOUNTER_JOURNAL_ITEM
+    if classID == Enum.ItemClass.Armor and subclassID ~= Enum.ItemArmorSubclass.Shield then
+        label = _G[equipLoc] or label
+    else
+        label = itemSubtype
+    end
     if link then
         link = link:gsub("[%[%]]", "")
     else
