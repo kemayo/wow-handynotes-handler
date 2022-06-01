@@ -392,54 +392,8 @@ local function GetItemSlot(itemLinkOrID)
     if not slot then return end
     return itemSlots[slot]
 end
-local weaponCategories = {
-    -- [Enum.ItemWeaponSubclass.] = Enum.TransmogCollectionType.,
-    [Enum.ItemWeaponSubclass.Wand] = Enum.TransmogCollectionType.Wand, -- = 11,
-    [Enum.ItemWeaponSubclass.Axe1H] = Enum.TransmogCollectionType.OneHAxe, -- = 12,
-    [Enum.ItemWeaponSubclass.Sword1H] = Enum.TransmogCollectionType.OneHSword, -- = 13,
-    [Enum.ItemWeaponSubclass.Mace1H] = Enum.TransmogCollectionType.OneHMace, -- = 14,
-    [Enum.ItemWeaponSubclass.Dagger] = Enum.TransmogCollectionType.Dagger, -- = 15,
-    [Enum.ItemWeaponSubclass.Unarmed] = Enum.TransmogCollectionType.Fist, -- = 16,
-    -- [Enum.ItemWeaponSubclass.] = Enum.TransmogCollectionType.Holdable, -- = 18,
-    [Enum.ItemWeaponSubclass.Axe2H] = Enum.TransmogCollectionType.TwoHAxe, -- = 19,
-    [Enum.ItemWeaponSubclass.Sword2H] = Enum.TransmogCollectionType.TwoHSword, -- = 20,
-    [Enum.ItemWeaponSubclass.Mace2H] = Enum.TransmogCollectionType.TwoHMace, -- = 21,
-    [Enum.ItemWeaponSubclass.Staff] = Enum.TransmogCollectionType.Staff, -- = 22,
-    [Enum.ItemWeaponSubclass.Polearm] = Enum.TransmogCollectionType.Polearm, -- = 23,
-    [Enum.ItemWeaponSubclass.Bows] = Enum.TransmogCollectionType.Bow, -- = 24,
-    [Enum.ItemWeaponSubclass.Guns] = Enum.TransmogCollectionType.Gun, -- = 25,
-    [Enum.ItemWeaponSubclass.Crossbow] = Enum.TransmogCollectionType.Crossbow, -- = 26,
-    [Enum.ItemWeaponSubclass.Warglaive] = Enum.TransmogCollectionType.Warglaives, -- = 27,
-    -- [Enum.ItemWeaponSubclass.] = Enum.TransmogCollectionType.Paired, -- = 28,
-}
-local armorCategories = {
-    -- [Enum.ItemArmorSubclass.] = [Enum.TransmogCollectionType.],
-    [Enum.InventoryType.IndexHeadType] = Enum.TransmogCollectionType.Head,
-    [Enum.InventoryType.IndexShoulderType] = Enum.TransmogCollectionType.Shoulder,
-    [Enum.InventoryType.IndexCloakType] = Enum.TransmogCollectionType.Back,
-    [Enum.InventoryType.IndexChestType] = Enum.TransmogCollectionType.Chest,
-    [Enum.InventoryType.IndexBodyType] = Enum.TransmogCollectionType.Shirt,
-    [Enum.InventoryType.IndexTabardType] = Enum.TransmogCollectionType.Tabard,
-    [Enum.InventoryType.IndexWristType] = Enum.TransmogCollectionType.Wrist,
-    [Enum.InventoryType.IndexHandType] = Enum.TransmogCollectionType.Hands,
-    [Enum.InventoryType.IndexWaistType] = Enum.TransmogCollectionType.Waist,
-    [Enum.InventoryType.IndexLegsType] = Enum.TransmogCollectionType.Legs,
-    [Enum.InventoryType.IndexFeetType] = Enum.TransmogCollectionType.Feet,
-}
-local function GetItemCategory(itemLinkOrID)
-    -- TODO: might need work on paired artifacts
-    local itemID, itemType, itemSubType, itemEquipLoc, icon, classID, subclassID = GetItemInfoInstant(itemLinkOrID)
-    if not itemID then return Enum.TransmogCollectionType.None end
-    if classID == Enum.ItemClass.Weapon then
-        return weaponCategories[subclassID] or Enum.TransmogCollectionType.None
-    end
-    if classID == Enum.ItemClass.Armor then
-        if subclassID == Enum.ItemArmorSubclass.Shield then
-            return Enum.TransmogCollectionType.Shield
-        end
-        return armorCategories[C_Item.GetItemInventoryTypeByID(itemLinkOrID)] or Enum.TransmogCollectionType.None
-    end
-    return Enum.TransmogCollectionType.None
+local function GetItemCategory(appearanceID, sourceID)
+    return C_TransmogCollection.GetCategoryForItem(appearanceID) or C_TransmogCollection.GetCategoryForItem(sourceID)
 end
 local function GetTransmogLocation(itemLinkOrID)
     return TransmogUtil.GetTransmogLocation(GetItemSlot(itemLinkOrID), Enum.TransmogType.Appearance, Enum.TransmogModification.Main)
@@ -476,12 +430,12 @@ local function CanLearnAppearance(itemLinkOrID)
         canLearnCache[itemID] = false
         return false
     end
-    local appearanceID = GetAppearanceAndSource(itemLinkOrID)
+    local appearanceID, sourceID = GetAppearanceAndSource(itemLinkOrID)
     if not appearanceID then
         canLearnCache[itemID] = false
         return false
     end
-    if not C_TransmogCollection.GetAppearanceSources(appearanceID, GetItemCategory(itemLinkOrID), GetTransmogLocation(itemLinkOrID)) then
+    if not C_TransmogCollection.GetAppearanceSources(appearanceID, GetItemCategory(appearanceID, sourceID), GetTransmogLocation(itemLinkOrID)) then
         -- This returns nil for inappropriate appearances
         canLearnCache[itemID] = false
         return false
@@ -508,7 +462,7 @@ local function HasAppearance(itemLinkOrID)
         hasAppearanceCache[itemID] = true
         return true
     end
-    local sources = C_TransmogCollection.GetAppearanceSources(appearanceID, GetItemCategory(itemLinkOrID), GetTransmogLocation(itemLinkOrID))
+    local sources = C_TransmogCollection.GetAppearanceSources(appearanceID, GetItemCategory(appearanceID, sourceID), GetTransmogLocation(itemLinkOrID))
     if not sources then
         hasAppearanceCache[itemID] = false
         return false
