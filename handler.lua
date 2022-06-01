@@ -575,6 +575,7 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
     end
 end
 local function tooltip_loot(tooltip, item)
+    local knownText
     local r, g, b = NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
     local _, itemType, itemSubtype, equipLoc, icon, classID, subclassID = GetItemInfoInstant(ns.lootitem(item))
     if ns.db.tooltip_charloot and not IsShiftKeyDown() then
@@ -607,6 +608,18 @@ local function tooltip_loot(tooltip, item)
             local info = C_TransmogSets.GetSetInfo(item.set)
             if info then
                 link = info.name
+                if not info.collected then
+                    local sources = C_TransmogSets.GetSetPrimaryAppearances(item.set)
+                    if sources and #sources > 0 then
+                        local numKnown = 0
+                        for _, source in pairs(sources) do
+                            if source.collected then
+                                numKnown = numKnown + 1
+                            end
+                        end
+                        knownText = RED_FONT_COLOR:WrapTextInColorCode(GENERIC_FRACTION_STRING:format(numKnown, #sources))
+                    end
+                end
             end
         end
         -- todo: faction?
@@ -624,7 +637,11 @@ local function tooltip_loot(tooltip, item)
     end
     local known = ns.itemIsKnown(item)
     if known ~= nil and (known == true or not ns.itemRestricted(item)) then
-        link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
+        if knownText then
+            link = link .. " " .. knownText
+        else
+            link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
+        end
     end
     tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link,
         NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
