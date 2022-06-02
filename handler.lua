@@ -335,10 +335,18 @@ local trimmed_icon = function(texture)
     end
     return icon_cache[texture]
 end
-local atlas_texture = function(atlas, extra)
+local atlas_texture = function(atlas, extra, crop)
     atlas = C_Texture.GetAtlasInfo(atlas)
     if type(extra) == "number" then
         extra = {scale=extra}
+    end
+    if crop then
+        local xcrop = (atlas.rightTexCoord - atlas.leftTexCoord) * crop
+        local ycrop = (atlas.bottomTexCoord - atlas.topTexCoord) * crop
+        atlas.rightTexCoord = atlas.rightTexCoord - xcrop
+        atlas.leftTexCoord = atlas.leftTexCoord + xcrop
+        atlas.bottomTexCoord = atlas.bottomTexCoord - ycrop
+        atlas.topTexCoord = atlas.topTexCoord + xcrop
     end
     return ns.merge({
         icon = atlas.file,
