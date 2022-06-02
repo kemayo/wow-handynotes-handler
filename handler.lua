@@ -356,18 +356,12 @@ local function work_out_label(point)
     if point.label then
         return (render_string(point.label, point))
     end
-    if point.achievement then
-        if point.criteria and type(point.criteria) ~= "table" and point.criteria ~= true then
-            local criteria = (point.criteria < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)(point.achievement, point.criteria)
-            if criteria then
-                return criteria
-            end
+    if point.achievement and point.criteria and type(point.criteria) ~= "table" and point.criteria ~= true then
+        local criteria = (point.criteria < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)(point.achievement, point.criteria)
+        if criteria then
+            return criteria
         end
-        local _, achievement = GetAchievementInfo(point.achievement)
-        if achievement then
-            return achievement
-        end
-        fallback = 'achievement:'..point.achievement
+        fallback = 'achievement:'..point.achievement..':'..point.criteria
     end
     if point.follower then
         local follower = C_Garrison.GetFollowerInfo(point.follower)
@@ -390,6 +384,13 @@ local function work_out_label(point)
             return link:gsub("[%[%]]", "")
         end
         fallback = 'item:'..ns.lootitem(point.loot[1])
+    end
+    if point.achievement and not point.criteria then
+        local _, achievement = GetAchievementInfo(point.achievement)
+        if achievement then
+            return achievement
+        end
+        fallback = 'achievement:'..point.achievement
     end
     if point.currency then
         if ns.currencies[point.currency] then
