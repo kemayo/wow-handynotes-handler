@@ -229,7 +229,9 @@ local completeColor = CreateColor(0, 1, 0, 1)
 local incompleteColor = CreateColor(1, 0, 0, 1)
 local function render_string(s, context)
     if type(s) == "function" then s = s(context) end
-    return s:gsub("{(%l+):(%d+):?([^}]*)}", function(variant, id, fallback)
+    return s:gsub("{(%l+):([^:]+):?([^}]*)}", function(variant, id, fallback)
+        local mainid, subid = id:match("(%d+)%.(%d+)")
+        mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
         id = tonumber(id)
         if variant == "item" then
             local name, link, _, _, _, _, _, _, _, icon = GetItemInfo(id)
@@ -252,9 +254,17 @@ local function render_string(s, context)
         elseif variant == "questid" then
             return CreateAtlasMarkup("questnormal") .. (C_QuestLog.IsQuestFlaggedCompleted(id) and completeColor or incompleteColor):WrapTextInColorCode(id)
         elseif variant == "achievement" then
-            local _, name, _, completed = GetAchievementInfo(id)
-            if name and name ~= "" then
-                return CreateAtlasMarkup("storyheader-cheevoicon") .. " " .. (completed and completeColor or incompleteColor):WrapTextInColorCode(name)
+            if mainid and subid then
+                local criteria = (subid < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)(mainid, subid)
+                if criteria then
+                    return criteria
+                end
+                id = 'achievement:'..mainid..'.'..subid
+            else
+                local _, name, _, completed = GetAchievementInfo(id)
+                if name and name ~= "" then
+                    return CreateAtlasMarkup("storyheader-cheevoicon") .. " " .. (completed and completeColor or incompleteColor):WrapTextInColorCode(name)
+                end
             end
         elseif variant == "npc" then
             local name = mob_name(id)
@@ -369,7 +379,7 @@ local function work_out_label(point)
         if criteria then
             return criteria
         end
-        fallback = 'achievement:'..point.achievement..':'..point.criteria
+        fallback = 'achievement:'..point.achievement..'.'..point.criteria
     end
     if point.follower then
         local follower = C_Garrison.GetFollowerInfo(point.follower)
