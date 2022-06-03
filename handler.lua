@@ -229,7 +229,7 @@ local completeColor = CreateColor(0, 1, 0, 1)
 local incompleteColor = CreateColor(1, 0, 0, 1)
 local function render_string(s, context)
     if type(s) == "function" then s = s(context) end
-    return s:gsub("{(%l+):([^:]+):?([^}]*)}", function(variant, id, fallback)
+    return s:gsub("{(%l+):([^:}]+):?([^}]*)}", function(variant, id, fallback)
         local mainid, subid = id:match("(%d+)%.(%d+)")
         mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
         id = tonumber(id)
