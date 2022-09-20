@@ -975,13 +975,15 @@ do
                 wipe(info)
             end
 
-            info.text = COMMUNITIES_INVITE_MANAGER_LINK_TO_CHAT -- Link to chat
-            info.notCheckable = 1
-            info.func = sendToChat
-            info.arg1 = currentZone
-            info.arg2 = currentCoord
-            UIDropDownMenu_AddButton(info, level)
-            wipe(info)
+            if _G.MAP_PIN_HYPERLINK then
+                info.text = COMMUNITIES_INVITE_MANAGER_LINK_TO_CHAT -- Link to chat
+                info.notCheckable = 1
+                info.func = sendToChat
+                info.arg1 = currentZone
+                info.arg2 = currentCoord
+                UIDropDownMenu_AddButton(info, level)
+                wipe(info)
+            end
 
             -- Hide menu item
             info.text         = "Hide node"
@@ -1046,7 +1048,7 @@ do
             if button == "RightButton" then
                 ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
             end
-            if button == "LeftButton" and IsShiftKeyDown() then
+            if button == "LeftButton" and IsShiftKeyDown() and _G.MAP_PIN_HYPERLINK then
                 sendToChat(button, uiMapID, coord)
             end
         end
