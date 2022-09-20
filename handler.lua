@@ -606,7 +606,7 @@ local function tooltip_loot(tooltip, item)
         -- could only confirm this for some cosmetic back items but let's play it
         -- safe and say that any cosmetic item can drop regardless of what the
         -- spec info says...
-        if specTable and #specTable == 0 and not IsCosmeticItem(id) then
+        if specTable and #specTable == 0 and not (_G.IsCosmeticItem and IsCosmeticItem(id)) then
             return true
         end
         -- then catch covenants / classes / etc
@@ -1110,8 +1110,10 @@ function HL:OnInitialize()
     self:RegisterEvent("CRITERIA_EARNED", "RefreshOnEvent")
     self:RegisterEvent("BAG_UPDATE", "RefreshOnEvent")
     self:RegisterEvent("QUEST_TURNED_IN", "RefreshOnEvent")
-    self:RegisterEvent("SHOW_LOOT_TOAST", "RefreshOnEvent")
-    self:RegisterEvent("GARRISON_FOLLOWER_ADDED", "RefreshOnEvent")
+    if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+        self:RegisterEvent("SHOW_LOOT_TOAST", "RefreshOnEvent")
+        self:RegisterEvent("GARRISON_FOLLOWER_ADDED", "RefreshOnEvent")
+    end
     -- This is sometimes spammy, but is the only thing that tends to get us casts:
     self:RegisterEvent("CRITERIA_UPDATE", "RefreshOnEvent")
 
@@ -1163,10 +1165,12 @@ hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
     handle_tooltip(GameTooltip, point, true)
 end)
 
-hooksecurefunc("TaskPOI_OnEnter", function(self)
-    if not self.questID then return end
-    if not ns.WorldQuestsToPoints[self.questID] then return end
-    local point = ns.WorldQuestsToPoints[self.questID]
-    -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-    handle_tooltip(GameTooltip, point, true)
-end)
+if _G.TaskPoi_OnEnter then
+    hooksecurefunc("TaskPOI_OnEnter", function(self)
+        if not self.questID then return end
+        if not ns.WorldQuestsToPoints[self.questID] then return end
+        local point = ns.WorldQuestsToPoints[self.questID]
+        -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
+        handle_tooltip(GameTooltip, point, true)
+    end)
+end
