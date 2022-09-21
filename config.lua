@@ -464,6 +464,7 @@ ns.itemRestricted = function(item)
     return false
 end
 ns.itemIsKnowable = function(item)
+    if ns.CLASSIC then return false end
     if type(item) == "table" then
         if ns.itemRestricted(item) then
             return false
@@ -480,6 +481,7 @@ ns.itemIsKnowable = function(item)
 end
 ns.itemIsKnown = function(item)
     -- returns true/false/nil for yes/no/not-knowable
+    if ns.CLASSIC then return GetItemCount(ns.lootitem(item), true) end
     if type(item) == "table" then
         -- TODO: could arguably do transmog here, too. Since we're mostly
         -- considering soulbound things, the restrictions on seeing appearances

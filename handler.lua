@@ -7,6 +7,8 @@ ns.HL = HL
 
 ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@project-version@'
 
+ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
+
 ---------------------------------------------------------
 -- Data model stuff:
 
