@@ -879,7 +879,18 @@ function HLHandler:OnEnter(uiMapID, coord)
 end
 
 local function showAchievement(button, achievement)
-    OpenAchievementFrameToAchievement(achievement)
+    if OpenAchievementFrameToAchievement then
+        OpenAchievementFrameToAchievement(achievement)
+    else
+        -- probably classic
+        if ( not AchievementFrame ) then
+            AchievementFrame_LoadUI()
+        end
+        if ( not AchievementFrame:IsShown() ) then
+            AchievementFrame_ToggleAchievementFrame()
+        end
+        AchievementFrame_SelectAchievement(achievement)
+    end
 end
 
 local function createWaypoint(button, uiMapID, coord)
