@@ -1,9 +1,5 @@
 local myname, ns = ...
 
-if not WorldMapFrame.AddOverlayFrame then
-    return
-end
-
 local function hideTextureWithAtlas(atlas, ...)
     for i=1, select("#", ...) do
         local region = select(i, ...)
@@ -141,14 +137,41 @@ function ns.SetupMapOverlay()
     local Krowi = LibStub("Krowi_WorldMapButtons-1.3", true)
     if Krowi then
         frame = Krowi:Add("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON")
-    else
+    elseif WorldMapFrame.AddOverlayFrame then
         frame = WorldMapFrame:AddOverlayFrame("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", WorldMapFrame:GetCanvasContainer(), "TOPRIGHT", -68, -2)
+    else
+        -- classic!
+        frame = CreateFrame("Button", nil, WorldMapFrame:GetCanvasContainer())
+        frame:SetPoint("TOPRIGHT", -68, -2)
+        frame:SetSize(31, 31)
+        frame:RegisterForClicks("anyUp")
+        frame:SetHighlightTexture(136477) --"Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
+        local overlay = frame:CreateTexture(nil, "OVERLAY")
+        overlay:SetSize(53, 53)
+        overlay:SetTexture(136430) --"Interface\\Minimap\\MiniMap-TrackingBorder"
+        overlay:SetPoint("TOPLEFT")
+        local background = frame:CreateTexture(nil, "BACKGROUND")
+        background:SetSize(20, 20)
+        background:SetTexture(136467) --"Interface\\Minimap\\UI-Minimap-Background"
+        background:SetPoint("TOPLEFT", 7, -5)
+        local icon = frame:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(17, 17)
+        icon:SetPoint("TOPLEFT", 7, -6)
+        frame.Icon = icon
+        frame.isMouseDown = false
+        frame.DropDown = CreateFrame("Frame", nil, frame, "UIDropDownMenuTemplate")
+        frame:SetScript("OnMouseUp", function(self)
+            ToggleDropDownMenu(1, nil, frame.DropDown, "cursor", 3, -3)
+        end)
+        hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+            frame:Refresh()
+        end)
     end
     frame.Icon:SetAtlas("VignetteLootElite")
     frame.Icon:SetPoint("TOPLEFT", 6, -5)
     hideTextureWithAtlas("MapCornerShadow-Right", frame:GetRegions())
     frame.Refresh = function(self)
-        local uiMapID = self:GetParent():GetMapID()
+        local uiMapID = WorldMapFrame.mapID
         local info = C_Map.GetMapInfo(uiMapID)
         local parentMapID = info and info.parentMapID or 0
         if ns.db.worldmapoverlay and (ns.points[uiMapID] or ns.points[parentMapID]) then
