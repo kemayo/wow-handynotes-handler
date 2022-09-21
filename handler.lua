@@ -403,7 +403,7 @@ local function work_out_label(point)
         end
         fallback = 'item:'..ns.lootitem(point.loot[1])
     end
-    if point.achievement and not point.criteria then
+    if point.achievement and not point.criteria or point.criteria == true then
         local _, achievement = GetAchievementInfo(point.achievement)
         if achievement then
             return achievement
