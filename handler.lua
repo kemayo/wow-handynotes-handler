@@ -9,6 +9,11 @@ ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@project-version@'
 
 ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 
+local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
+if ns.CLASSIC then
+    ATLAS_CHECK, ATLAS_CROSS = "Tracker-Check", "Objective-Fail"
+end
+
 ---------------------------------------------------------
 -- Data model stuff:
 
@@ -668,7 +673,7 @@ local function tooltip_loot(tooltip, item)
         if knownText then
             link = link .. " " .. knownText
         else
-            link = link .. " " .. CreateAtlasMarkup(known and "common-icon-checkmark" or "common-icon-redx")
+            link = link .. " " .. CreateAtlasMarkup(known and ATLAS_CHECK or ATLAS_CROSS)
         end
     end
     tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link,
