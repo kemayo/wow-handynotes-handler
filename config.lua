@@ -98,7 +98,9 @@ ns.options = {
                     desc = "Put a button on the world map for quick access to these options",
                     set = function(info, v)
                         ns.db[info[#info]] = v
-                        WorldMapFrame:RefreshOverlayFrames()
+                        if WorldMapFrame.RefreshOverlayFrames then
+                            WorldMapFrame:RefreshOverlayFrames()
+                        end
                     end,
                     hidden = function(info)
                         if not ns.SetupMapOverlay then
