@@ -1,4 +1,5 @@
 local myname, ns = ...
+local _, myfullname = GetAddOnInfo(myname)
 
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
 local HL = LibStub("AceAddon-3.0"):NewAddon(myname, "AceEvent-3.0")
@@ -968,8 +969,8 @@ do
         local info = LibDD:UIDropDownMenu_CreateInfo()
         if (level == 1) then
             -- Create the title of the menu
-            info.isTitle      = 1
-            info.text         = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
+            info.isTitle = 1
+            info.text = myfullname
             info.notCheckable = 1
             LibDD:UIDropDownMenu_AddButton(info, level)
             wipe(info)

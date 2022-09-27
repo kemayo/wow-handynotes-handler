@@ -1,4 +1,5 @@
 local myname, ns = ...
+local _, myfullname = GetAddOnInfo(myname)
 
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
@@ -205,7 +206,7 @@ function ns.SetupMapOverlay()
         if level == 1 then
             info.isTitle = true
             info.notCheckable = true
-            info.text = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
+            info.text = myfullname
             LibDD:UIDropDownMenu_AddButton(info, level)
 
             info.isTitle = nil
