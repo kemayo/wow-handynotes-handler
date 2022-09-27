@@ -1055,10 +1055,8 @@ do
             wipe(info)
         end
     end
-    local HL_Dropdown = LibDD:Create_UIDropDownMenu(myname .. "PointDropdown")
-    LibDD:UIDropDownMenu_SetInitializeFunction(HL_Dropdown, generateMenu)
-    LibDD:UIDropDownMenu_SetDisplayMode(HL_Dropdown, "MENU")
 
+    local HL_Dropdown
     function HLHandler:OnClick(button, down, uiMapID, coord)
         if down then return end
         currentZone = uiMapID
@@ -1067,6 +1065,11 @@ do
         local point = ns.points[currentZone] and ns.points[currentZone][currentCoord]
         if point then
             if button == "RightButton" then
+                if not HL_Dropdown then
+                    HL_Dropdown = LibDD:Create_UIDropDownMenu(myname .. "PointDropdown")
+                    LibDD:UIDropDownMenu_SetInitializeFunction(HL_Dropdown, generateMenu)
+                    LibDD:UIDropDownMenu_SetDisplayMode(HL_Dropdown, "MENU")
+                end
                 LibDD:ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
             end
             if button == "LeftButton" and IsShiftKeyDown() and _G.MAP_PIN_HYPERLINK then
