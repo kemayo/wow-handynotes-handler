@@ -197,8 +197,16 @@ function ns.SetupMapOverlay()
         self.Icon:SetPoint("TOPLEFT", 6, -5)
         self.IconOverlay:Hide()
     end
+    frame.OnMouseEnter = function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip_SetTitle(GameTooltip, myfullname)
+        GameTooltip_AddNormalLine(GameTooltip, "Adjust display settings")
+        GameTooltip:Show()
+    end
     frame:SetScript("OnMouseUp", frame.OnMouseUp)
     frame:SetScript("OnMouseDown", frame.OnMouseDown)
+    frame:SetScript("OnEnter", frame.OnMouseEnter)
+    frame:SetScript("OnLeave", GameTooltip_Hide)
     frame.InitializeDropDown = function(self, level, menuList)
         local uiMapID = WorldMapFrame.mapID
         local info = LibDD:UIDropDownMenu_CreateInfo()
@@ -206,7 +214,7 @@ function ns.SetupMapOverlay()
         if level == 1 then
             info.isTitle = true
             info.notCheckable = true
-            info.text = myfullname
+            info.text = DISPLAY_OPTIONS
             LibDD:UIDropDownMenu_AddButton(info, level)
 
             info.isTitle = nil
