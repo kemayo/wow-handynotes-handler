@@ -1,5 +1,6 @@
 local myname, ns = ...
 
+local LDD = LibStub("LibDropDown")
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
 local function hideTextureWithAtlas(atlas, ...)
@@ -166,7 +167,10 @@ function ns.SetupMapOverlay()
             frame:Refresh()
         end)
     end
-    frame.DropDown = LibDD:Create_UIDropDownMenu(myname .. "OptionsDropdown", frame) -- replace the template
+    frame.DropDown = LDD:NewMenu(frame, myname .. "OptionsDropdown")
+    frame.DropDown:SetStyle("MENU")
+    frame.DropDown:SetFrameStrata("DIALOG")
+    frame.DropDown:SetScale(0.8)
     frame.Icon:SetAtlas("VignetteLootElite")
     frame.Icon:SetPoint("TOPLEFT", 6, -5)
     hideTextureWithAtlas("MapCornerShadow-Right", frame:GetRegions())
@@ -188,8 +192,8 @@ function ns.SetupMapOverlay()
         if not mapID then
             return
         end
-        self.DropDown.mapID = mapID
-        LibDD:ToggleDropDownMenu(1, nil, self.DropDown, self, 0, -5)
+
+        ns.ShowOverlayMenu(self.DropDown, mapID)
         PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
     end
     frame.OnMouseUp = function(self)
@@ -198,233 +202,219 @@ function ns.SetupMapOverlay()
     end
     frame:SetScript("OnMouseUp", frame.OnMouseUp)
     frame:SetScript("OnMouseDown", frame.OnMouseDown)
-    frame.InitializeDropDown = function(self, level, menuList)
-        local uiMapID = WorldMapFrame.mapID
-        local info = LibDD:UIDropDownMenu_CreateInfo()
-        level = level or 1
-        if level == 1 then
-            info.isTitle = true
-            info.notCheckable = true
-            info.text = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
-            LibDD:UIDropDownMenu_AddButton(info, level)
+    frame.OnSelection = function(self, value, checked, arg1, arg2) end
+end
 
-            info.isTitle = nil
-            info.disabled = nil
+local separator = {isSpacer = true}
+local function lineCheck(line)
+    local checked = not line:GetCheckedState()
+    line:SetCheckedState(checked)
+    if (checked) then
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+    else
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+    end
+    return checked
+end
+
+function ns.ShowOverlayMenu(dropdown, uiMapID)
+    dropdown:ClearLines()
+    local info = {}
+
+    info.isTitle = true
+    info.text = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
+    dropdown:AddLine(info)
+
+    info.isTitle = nil
+    info.keepShown = true
+    info.func = function(line, _, key)
+        local option = ns.options.args.display.args[key]
+        if option.type == "execute" then
+            option.func()
+        else
+            ns.db[key] = lineCheck(line)
+        end
+        ns.HL:Refresh()
+    end
+
+    local sorted = {}
+    for key in pairs(ns.options.args.display.args) do
+        table.insert(sorted, key)
+    end
+    table.sort(sorted, function(a, b)
+        return (ns.options.args.display.args[a].order or 0) < (ns.options.args.display.args[b].order or 0)
+    end)
+    for _, key in ipairs(sorted) do
+        local option = ns.options.args.display.args[key]
+        info.text = option.name
+        info.tooltipTitle = option.name
+        info.tooltip = option.desc
+        info.args = {key}
+        if option.type == "toggle" then
             info.notCheckable = nil
-            info.isNotRadio = true
-            info.keepShownOnClick = true
-            info.tooltipOnButton = true
-            info.func = function(button)
-                local checked = button.checked
-                local value = button.value
-                if (checked) then
-                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-                else
-                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-                end
-                local option = ns.options.args.display.args[value]
-                local db = ns.db
-                if option.type == "execute" then
-                    option.func()
-                else
-                    db[value] = checked
-                end
-                ns.HL:Refresh()
-            end
-
-            local sorted = {}
-            for key in pairs(ns.options.args.display.args) do
-                table.insert(sorted, key)
-            end
-            table.sort(sorted, function(a, b)
-                return (ns.options.args.display.args[a].order or 0) < (ns.options.args.display.args[b].order or 0)
-            end)
-            for _, key in ipairs(sorted) do
-                local option = ns.options.args.display.args[key]
-                info.text = option.name
-                info.tooltipTitle = option.desc
-                info.value = key
-                if option.type == "toggle" then
-                    info.notCheckable = nil
-                    info.checked = ns.db[key]
-                elseif option.type == "execute" then
-                    info.notCheckable = true
-                    info.checked = nil
-                end
-                if option.disabled then
-                    info.disabled = option.disabled()
-                else
-                    info.disabled = nil
-                end
-                LibDD:UIDropDownMenu_AddButton(info, level)
-            end
-
-            LibDD:UIDropDownMenu_AddSeparator(level)
-
-            if not (ns.hiddenConfig.groupsHiddenByZone and OptionsDropdown.isHidden(ns.options, "groupsHidden")) and zoneHasGroups(uiMapID) then
-                local global = ns.hiddenConfig.groupsHiddenByZone
-                wipe(info)
-                info.isNotRadio = true
-                info.keepShownOnClick = true
-                info.tooltipOnButton = true
-                info.func = function(button, group)
-                    if global then
-                        ns.db.groupsHidden[group] = not button.checked
-                    else
-                        ns.db.groupsHiddenByZone[uiMapID][group] = not button.checked
-                    end
-                    ns.HL:Refresh()
-                end
-                info.tooltipTitle = global and "Hide this type of point everywhere" or "Hide this type of point on this map"
-                for _, group in iterKeysByValue(zoneGroups(uiMapID)) do
-                    info.text = ns.render_string(ns.groups[group] or group)
-                    info.arg1 = group
-                    if global then
-                        info.checked = not ns.db.groupsHidden[group]
-                    else
-                        info.checked = not ns.db.groupsHiddenByZone[uiMapID][group]
-                    end
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
-            end
-            if not OptionsDropdown.isHidden(ns.options, "achievementsHidden") and zoneHasAchievements(uiMapID) then
-                wipe(info)
-                info.isNotRadio = true
-                info.keepShownOnClick = true
-                info.tooltipOnButton = true
-                info.func = function(button, achievementid)
-                    ns.db.achievementsHidden[achievementid] = not button.checked
-                    ns.HL:Refresh()
-                end
-                info.tooltipTitle = "Hide this type of point"
-                for achievementid in pairs(zoneAchievements(uiMapID)) do
-                    info.text = ns.render_string(("{achievement:%d}"):format(achievementid))
-                    info.arg1 = achievementid
-                    info.checked = not ns.db.achievementsHidden[achievementid]
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
-            end
-
-            wipe(info)
-            info.hasArrow = true
-            info.keepShownOnClick = true
-            info.notCheckable = true
-
-            local displayed = false
-            if not OptionsDropdown.isHidden(ns.options, "achievementsHidden") then
-                info.text = ACHIEVEMENTS
-                info.value = "achievementsHidden"
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                displayed = true
-            end
-
-            if not OptionsDropdown.isHidden(ns.options, "zonesHidden") then
-                info.text = ZONE
-                info.value = "zonesHidden"
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                displayed = true
-            end
-
-            if not OptionsDropdown.isHidden(ns.options, "groupsHidden") and hasGroups() then
-                info.text = GROUP
-                info.value = "groupsHidden"
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                displayed = true
-            end
-
-            if displayed then
-                LibDD:UIDropDownMenu_AddSeparator(level)
-            end
-
-            info.text = "Open HandyNotes options"
-            info.hasArrow = nil
-            info.keepShownOnClick = nil
-            info.func = function(button)
-                InterfaceOptionsFrame_Show()
-                InterfaceOptionsFrame_OpenToCategory('HandyNotes')
-                LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', myname:gsub("HandyNotes_", ""))
-            end
-            LibDD:UIDropDownMenu_AddButton(info, level)
-
-        elseif level == 2 or level == 3 then
-            local parent = L_UIDROPDOWNMENU_MENU_VALUE
-            local currentZone = WorldMapFrame.mapID
-            info.arg1 = parent
-            info.isTitle = nil
+            info.checked = ns.db[key]
+        elseif option.type == "execute" then
+            info.checked = nil
+        end
+        if option.disabled then
+            info.disabled = option.disabled()
+        else
             info.disabled = nil
-            info.notCheckable = nil
-            info.isNotRadio = true
-            info.keepShownOnClick = true
-            info.tooltipOnButton = true
-            info.func = function(button, section, subsection, checked)
-                local value = button.value
-                if (checked) then
-                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-                else
-                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-                end
-                if subsection then
-                    ns.db[section][subsection][value] = not checked
-                else
-                    ns.db[section][value] = not checked
-                end
-                ns.HL:Refresh()
+        end
+        dropdown:AddLine(info)
+    end
+
+    dropdown:AddLine(separator)
+
+    if not (ns.hiddenConfig.groupsHiddenByZone and OptionsDropdown.isHidden(ns.options, "groupsHidden")) and zoneHasGroups(uiMapID) then
+        local global = ns.hiddenConfig.groupsHiddenByZone
+        wipe(info)
+        info.keepShown = true
+        info.func = function(line, _, group)
+            if global then
+                ns.db.groupsHidden[group] = not lineCheck(line)
+            else
+                ns.db.groupsHiddenByZone[uiMapID][group] = not lineCheck(line)
             end
-            local values = OptionsDropdown.values(ns.options, parent)
-            if parent == "achievementsHidden" then
-                local relevant = zoneAchievements(currentZone)
-                for _, achievementid in iterKeysByValue(values) do
-                    info.text = values[achievementid]
-                    info.value = achievementid
-                    info.checked = not ns.db.achievementsHidden[achievementid]
-                    if relevant[achievementid] then
-                        info.text = BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(info.text) .. " " .. CreateAtlasMarkup("VignetteKill", 0)
-                    end
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
-            elseif parent == "zonesHidden" then
-                for _, uiMapID in iterKeysByValue(values) do
-                    info.text = values[uiMapID]
-                    info.value = uiMapID
-                    info.checked = not ns.db.zonesHidden[uiMapID]
-                    if uiMapID == currentZone then
-                        info.text = BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(info.text) .. " " .. CreateAtlasMarkup("VignetteKill", 0)
-                    end
-                    if not ns.hiddenConfig.groupsHiddenByZone and zoneHasGroups(uiMapID) then
-                        info.hasArrow = true
-                        info.menuList = "groupsHiddenByZone"
-                    else
-                        info.hasArrow = nil
-                        info.menuList = nil
-                    end
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
-            elseif parent == "groupsHidden" then
-                info.arg1 = "groupsHidden"
-                info.tooltipTitle = "Hide this type of point everywhere"
-                local groups = allGroups()
-                for _, group in iterKeysByValue(groups) do
-                    info.text = ns.render_string(ns.groups[group] or group)
-                    info.value = group
-                    info.checked = not ns.db.groupsHidden[group]
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
-            elseif menuList == "groupsHiddenByZone" then
-                local uiMapID = parent
-                info.arg1 = "groupsHiddenByZone"
-                info.arg2 = uiMapID
-                info.tooltipTitle = "Hide this type of point on this map"
-                local groups = zoneGroups(uiMapID)
-                for _, group in iterKeysByValue(groups) do
-                    info.text = ns.render_string(ns.groups[group] or group)
-                    info.value = group
-                    info.checked = not ns.db.groupsHiddenByZone[uiMapID][group]
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                end
+            ns.HL:Refresh()
+        end
+        info.tooltip = global and "Hide this type of point everywhere" or "Hide this type of point on this map"
+        for _, group in iterKeysByValue(zoneGroups(uiMapID)) do
+            info.text = ns.render_string(ns.groups[group] or group)
+            info.tooltipTitle = info.text
+            info.args = {group}
+            if global then
+                info.checked = not ns.db.groupsHidden[group]
+            else
+                info.checked = not ns.db.groupsHiddenByZone[uiMapID][group]
             end
+            dropdown:AddLine(info)
         end
     end
-    frame.OnSelection = function(self, value, checked, arg1, arg2) end
-    LibDD:UIDropDownMenu_SetInitializeFunction(frame.DropDown, function(self, ...) frame:InitializeDropDown(...) end)
-    LibDD:UIDropDownMenu_SetDisplayMode(frame.DropDown, "MENU")
+    if not OptionsDropdown.isHidden(ns.options, "achievementsHidden") and zoneHasAchievements(uiMapID) then
+        wipe(info)
+        info.keepShown = true
+        info.func = function(line, _, achievementid)
+            ns.db.achievementsHidden[achievementid] = not lineCheck(line)
+            ns.HL:Refresh()
+        end
+        info.tooltip = "Hide this type of point"
+        for achievementid in pairs(zoneAchievements(uiMapID)) do
+            info.text = ns.render_string(("{achievement:%d}"):format(achievementid))
+            info.tooltipTitle = info.text
+            info.args = {achievementid}
+            info.checked = not ns.db.achievementsHidden[achievementid]
+            dropdown:AddLine(info)
+        end
+    end
+
+    wipe(info)
+    info.keepShown = true
+
+    -- The submenus:
+    -- (Also all negative-checked)
+    local subfunc = function(line, _, key, section, subsection)
+        -- print("subfunc", key, section, subsection)
+        if subsection then
+            ns.db[section][subsection][key] = not lineCheck(line)
+        else
+            ns.db[section][key] = not lineCheck(line)
+        end
+        ns.HL:Refresh()
+    end
+
+    local displayed = false
+    if not OptionsDropdown.isHidden(ns.options, "achievementsHidden") then
+        print("building achievements menu")
+        info.text = ACHIEVEMENTS
+        info.value = "achievementsHidden"
+        info.menu = {}
+        local relevant = zoneAchievements(uiMapID)
+        local values = OptionsDropdown.values(ns.options, "achievementsHidden")
+        for _, achievementid in iterKeysByValue(values) do
+            local data = {}
+            data.text = values[achievementid]
+            data.keepShown = true
+            data.func = subfunc
+            data.args = {achievementid, "achievementsHidden"}
+            data.checked = not ns.db.achievementsHidden[achievementid]
+            if relevant[achievementid] then
+                data.text = BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(data.text) .. " " .. CreateAtlasMarkup("VignetteKill", 0)
+            end
+            table.insert(info.menu, data)
+        end
+        dropdown:AddLine(info)
+        displayed = true
+    end
+
+    if not OptionsDropdown.isHidden(ns.options, "zonesHidden") then
+        info.text = ZONE
+        info.value = "zonesHidden"
+        info.menu = {}
+        local values = OptionsDropdown.values(ns.options, "zonesHidden")
+        for _, zuiMapID in iterKeysByValue(values) do
+            local data = {}
+            data.text = values[zuiMapID]
+            data.keepShown = true
+            data.func = subfunc
+            data.args = {zuiMapID, "zonesHidden"}
+            data.checked = not ns.db.zonesHidden[zuiMapID]
+            if zuiMapID == uiMapID then
+                data.text = BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(data.text) .. " " .. CreateAtlasMarkup("VignetteKill", 0)
+            end
+            if not ns.hiddenConfig.groupsHiddenByZone and zoneHasGroups(zuiMapID) then
+                data.menu = {}
+                local groups = zoneGroups(zuiMapID)
+                for _, group in iterKeysByValue(groups) do
+                    local data2 = {}
+                    data2.text = ns.render_string(ns.groups[group] or group)
+                    data2.keepShown = true
+                    data2.func = subfunc
+                    data2.args = {group, "groupsHiddenByZone", zuiMapID}
+                    -- data2.tooltip = "Hide this type of point on this map"
+                    data2.checked = not ns.db.groupsHiddenByZone[zuiMapID][group]
+                    table.insert(data.menu, data2)
+                end
+            end
+            table.insert(info.menu, data)
+        end
+        dropdown:AddLine(info)
+        displayed = true
+    end
+
+    if not OptionsDropdown.isHidden(ns.options, "groupsHidden") and hasGroups() then
+        info.text = GROUP
+        info.value = "groupsHidden"
+        info.menu = {}
+        local groups = allGroups()
+        for _, group in iterKeysByValue(groups) do
+            local data = {}
+            data.tooltip = "Hide this type of point everywhere"
+            data.keepShown = true
+            data.text = ns.render_string(ns.groups[group] or group)
+            data.func = subfunc
+            data.args = {group, "groupsHidden"}
+            data.checked = not ns.db.groupsHidden[group]
+            table.insert(info.menu, data)
+        end
+        dropdown:AddLine(info)
+        displayed = true
+    end
+    wipe(info)
+
+    if displayed then
+        dropdown:AddLine(separator)
+    end
+
+    info.text = "Open HandyNotes options"
+    info.keepShown = nil
+    info.func = function(button)
+        InterfaceOptionsFrame_Show()
+        InterfaceOptionsFrame_OpenToCategory('HandyNotes')
+        LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', myname:gsub("HandyNotes_", ""))
+    end
+    dropdown:AddLine(info)
+
+    -- dropdown:SetAnchor('TOPLEFT', frame, 'BOTTOMLEFT', 10, -10)
+    dropdown:Toggle()
 end

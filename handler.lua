@@ -5,7 +5,7 @@ local HL = LibStub("AceAddon-3.0"):NewAddon(myname, "AceEvent-3.0")
 -- local L = LibStub("AceLocale-3.0"):GetLocale(myname, true)
 ns.HL = HL
 
-local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
+local LDD = LibStub("LibDropDown")
 
 ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@project-version@'
 
@@ -902,7 +902,7 @@ local function showAchievement(button, achievement)
     end
 end
 
-local function createWaypoint(button, uiMapID, coord)
+local function createWaypoint(self, button, uiMapID, coord)
     if TomTom then
         local x, y = HandyNotes:getXY(coord)
         TomTom:AddWaypoint(uiMapID, x, y, {
@@ -914,28 +914,28 @@ local function createWaypoint(button, uiMapID, coord)
     end
 end
 
-local function hideNode(button, uiMapID, coord)
+local function hideNode(self, button, uiMapID, coord)
     ns.hidden[uiMapID][coord] = true
     HL:Refresh()
 end
-local function hideAchievement(button, achievement)
+local function hideAchievement(self, button, achievement)
     ns.db.achievementsHidden[achievement] = true
     HL:Refresh()
 end
-local function hideGroup(button, uiMapID, coord)
+local function hideGroup(self, button, uiMapID, coord)
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
     if not (point and point.group) then return end
     ns.db.groupsHidden[point.group] = true
     HL:Refresh()
 end
-local function hideGroupZone(button, uiMapID, coord)
+local function hideGroupZone(self, button, uiMapID, coord)
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
     if not (point and point.group) then return end
     ns.db.groupsHiddenByZone[uiMapID][point.group] = true
     HL:Refresh()
 end
 
-local function sendToChat(button, uiMapID, coord)
+local function sendToChat(self, button, uiMapID, coord)
     local title = get_point_info_by_coord(uiMapID, coord)
     local x, y = HandyNotes:getXY(coord)
     local message = ("%s|cffffff00|Hworldmap:%d:%d:%d|h[%s]|h|r"):format(
@@ -957,116 +957,113 @@ local function sendToChat(button, uiMapID, coord)
 end
 
 local function closeAllDropdowns()
-    LibDD:CloseDropDownMenus(1)
+    LDD:CloseAll()
 end
 
 do
-    local currentZone, currentCoord
-    local function generateMenu(button, level)
+    local dropdown
+    local function showMenu(frame, currentZone, currentCoord)
         local point = ns.points[currentZone] and ns.points[currentZone][currentCoord]
-        if not (level and point) then return end
-        local info = LibDD:UIDropDownMenu_CreateInfo()
-        if (level == 1) then
-            -- Create the title of the menu
-            info.isTitle      = 1
-            info.text         = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
+        if not point then return end
+        if not dropdown then
+            dropdown = LDD:NewMenu(UIParent, myname .. "PointDropdown")
+            dropdown:SetStyle("MENU")
+            dropdown:SetFrameStrata("DIALOG")
+        end
+        dropdown:ClearLines()
+        local info = {}
+        -- Create the title of the menu
+        info.isTitle      = 1
+        info.text         = "HandyNotes - " .. myname:gsub("HandyNotes_", "")
+        info.notCheckable = 1
+        dropdown:AddLine(info)
+        wipe(info)
+
+        if point.achievement then
+            -- Waypoint menu item
+            info.text = OBJECTIVES_VIEW_ACHIEVEMENT
             info.notCheckable = 1
-            LibDD:UIDropDownMenu_AddButton(info, level)
-            wipe(info)
-
-            if point.achievement then
-                -- Waypoint menu item
-                info.text = OBJECTIVES_VIEW_ACHIEVEMENT
-                info.notCheckable = 1
-                info.func = showAchievement
-                info.arg1 = point.achievement
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                wipe(info)
-            end
-
-            if TomTom then
-                -- Waypoint menu item
-                info.text = "Create waypoint"
-                info.notCheckable = 1
-                info.func = createWaypoint
-                info.arg1 = currentZone
-                info.arg2 = currentCoord
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                wipe(info)
-            end
-
-            if _G.MAP_PIN_HYPERLINK then
-                info.text = COMMUNITIES_INVITE_MANAGER_LINK_TO_CHAT -- Link to chat
-                info.notCheckable = 1
-                info.func = sendToChat
-                info.arg1 = currentZone
-                info.arg2 = currentCoord
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                wipe(info)
-            end
-
-            -- Hide menu item
-            info.text         = "Hide node"
-            info.notCheckable = 1
-            info.func         = hideNode
-            info.arg1         = currentZone
-            info.arg2         = currentCoord
-            LibDD:UIDropDownMenu_AddButton(info, level)
-            wipe(info)
-
-            if point.achievement then
-                -- Waypoint menu item
-                info.text = render_string("Hide all {achievement:" .. point.achievement .. "} in all zones")
-                info.notCheckable = 1
-                info.func = hideAchievement
-                info.arg1 = point.achievement
-                LibDD:UIDropDownMenu_AddButton(info, level)
-                wipe(info)
-            end
-
-            if point.group then
-                if not ns.hiddenConfig.groupsHiddenByZone then
-                    local map = C_Map.GetMapInfo(currentZone)
-                    info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in " .. (map and map.name or "this zone")
-                    info.notCheckable = 1
-                    info.func = hideGroupZone
-                    info.arg1 = currentZone
-                    info.arg2 = currentCoord
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                    wipe(info)
-                end
-                if not ns.hiddenConfig.groupsHidden then
-                    info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in all zones"
-                    info.notCheckable = 1
-                    info.func = hideGroup
-                    info.arg1 = currentZone
-                    info.arg2 = currentCoord
-                    LibDD:UIDropDownMenu_AddButton(info, level)
-                    wipe(info)
-                end
-            end
-
-            -- Close menu item
-            info.text         = "Close"
-            info.func         = closeAllDropdowns
-            info.notCheckable = 1
-            LibDD:UIDropDownMenu_AddButton(info, level)
+            info.func = showAchievement
+            info.args = {point.achievement}
+            dropdown:AddLine(info)
             wipe(info)
         end
+
+        if TomTom then
+            -- Waypoint menu item
+            info.text = "Create waypoint"
+            info.notCheckable = 1
+            info.func = createWaypoint
+            info.args = {currentZone, currentCoord}
+            dropdown:AddLine(info)
+            wipe(info)
+        end
+
+        if _G.MAP_PIN_HYPERLINK then
+            info.text = COMMUNITIES_INVITE_MANAGER_LINK_TO_CHAT -- Link to chat
+            info.notCheckable = 1
+            info.func = sendToChat
+            info.args = {currentZone, currentCoord}
+            dropdown:AddLine(info)
+            wipe(info)
+        end
+
+        -- Hide menu item
+        info.text = "Hide node"
+        info.notCheckable = 1
+        info.func = hideNode
+        info.args = {currentZone, currentCoord}
+        dropdown:AddLine(info)
+        wipe(info)
+
+        if point.achievement then
+            -- Waypoint menu item
+            info.text = render_string("Hide all {achievement:" .. point.achievement .. "} in all zones")
+            info.notCheckable = 1
+            info.func = hideAchievement
+            info.args = {point.achievement}
+            dropdown:AddLine(info)
+            wipe(info)
+        end
+
+        if point.group then
+            if not ns.hiddenConfig.groupsHiddenByZone then
+                local map = C_Map.GetMapInfo(currentZone)
+                info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in " .. (map and map.name or "this zone")
+                info.notCheckable = 1
+                info.func = hideGroupZone
+                info.args = {currentZone, currentCoord}
+                dropdown:AddLine(info)
+                wipe(info)
+            end
+            if not ns.hiddenConfig.groupsHidden then
+                info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in all zones"
+                info.notCheckable = 1
+                info.func = hideGroup
+                info.args = {currentZone, currentCoord}
+                dropdown:AddLine(info)
+                wipe(info)
+            end
+        end
+
+        -- Close menu item
+        info.text         = "Close"
+        info.func         = closeAllDropdowns
+        info.notCheckable = 1
+        dropdown:AddLine(info)
+        wipe(info)
+
+        dropdown:SetAnchor('TOPLEFT', frame, 'BOTTOMLEFT', 10, -10)
+        dropdown:Toggle()
     end
-    local HL_Dropdown = LibDD:Create_UIDropDownMenu(myname .. "PointDropdown")
-    LibDD:UIDropDownMenu_SetInitializeFunction(HL_Dropdown, generateMenu)
-    LibDD:UIDropDownMenu_SetDisplayMode(HL_Dropdown, "MENU")
 
     function HLHandler:OnClick(button, down, uiMapID, coord)
         if down then return end
-        currentZone = uiMapID
-        currentCoord = coord
         -- given we're in a click handler, this really *should* exist, but just in case...
-        local point = ns.points[currentZone] and ns.points[currentZone][currentCoord]
+        local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
         if point then
             if button == "RightButton" then
-                LibDD:ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
+                showMenu(self, uiMapID, coord)
             end
             if button == "LeftButton" and IsShiftKeyDown() and _G.MAP_PIN_HYPERLINK then
                 sendToChat(button, uiMapID, coord)
