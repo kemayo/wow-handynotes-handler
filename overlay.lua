@@ -191,11 +191,10 @@ function ns.SetupMapOverlay()
         self.Icon:SetPoint("TOPLEFT", 8, -8);
         self.IconOverlay:Show()
 
-        local mapID = self:GetParent():GetMapID()
-        if not mapID then
+        local uiMapID = WorldMapFrame.mapID
+        if not uiMapID then
             return
         end
-        self.DropDown.mapID = mapID
         LibDD:ToggleDropDownMenu(1, nil, self.DropDown, self, 0, -5)
         PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
     end
