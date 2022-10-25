@@ -354,8 +354,12 @@ function ns.SetupMapOverlay()
             info.hasArrow = nil
             info.keepShownOnClick = nil
             info.func = function(button)
-                InterfaceOptionsFrame_Show()
-                InterfaceOptionsFrame_OpenToCategory('HandyNotes')
+                if InterfaceOptionsFrame_Show then
+                    InterfaceOptionsFrame_Show()
+                    InterfaceOptionsFrame_OpenToCategory('HandyNotes')
+                else
+                    Settings.OpenToCategory('HandyNotes')
+                end
                 LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', myname:gsub("HandyNotes_", ""))
             end
             LibDD:UIDropDownMenu_AddButton(info, level)
