@@ -137,7 +137,7 @@ do
 end
 function ns.SetupMapOverlay()
     local frame
-    local Krowi = LibStub("Krowi_WorldMapButtons-1.3", true)
+    local Krowi = LibStub("Krowi_WorldMapButtons-1.4", true) or LibStub("Krowi_WorldMapButtons-1.3", true)
     if Krowi then
         frame = Krowi:Add("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON")
     elseif WorldMapFrame.AddOverlayFrame then
