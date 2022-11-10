@@ -116,6 +116,12 @@ ns.conditions.Vignette = Class{
     end,
 }
 
+ns.conditions.Level = Class{
+    __parent = Condition,
+    type = 'level',
+    Matched = function() return UnitLevel('player') >= self.id end,
+}
+
 -- Helpers:
 
 do
