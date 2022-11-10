@@ -129,6 +129,7 @@ function ns.RegisterPoints(zone, points, defaults)
                     texture=nearby.texture or false,
                     minimap=true, worldmap=false, scale=0.95,
                     note=nearby.note or false,
+                    loot=nearby.loot, active=nearby.active,
                     _coord=ncoord,
                 }, proxy_meta)
                 if nearby.color then
@@ -146,6 +147,7 @@ function ns.RegisterPoints(zone, points, defaults)
                     texture=related.texture or false,
                     minimap=related.minimap ~= nil and related.minimap or true, worldmap=true, scale=0.95,
                     note=related.note or false,
+                    loot=related.loot, active=related.active,
                     route=coord,
                     _coord=rcoord,
                 }, proxy_meta)
