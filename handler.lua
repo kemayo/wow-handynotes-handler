@@ -211,25 +211,44 @@ ns.playerClassMask = ({
 ---------------------------------------------------------
 -- All the utility code
 
-local cache_tooltip = _G["HNTreasuresCacheScanningTooltip"]
-if not cache_tooltip then
-    cache_tooltip = CreateFrame("GameTooltip", "HNTreasuresCacheScanningTooltip")
-    cache_tooltip:AddFontStrings(
-        cache_tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
-        cache_tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
-    )
-end
-local name_cache = {}
-local function mob_name(id)
-    if not name_cache[id] then
-        -- this doesn't work with just clearlines and the setowner outside of this, and I'm not sure why
-        cache_tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-        cache_tooltip:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
-        if cache_tooltip:IsShown() then
-            name_cache[id] = HNTreasuresCacheScanningTooltipTextLeft1:GetText()
+local mob_name
+if _G.C_TooltipInfo then
+    local name_cache = {}
+    mob_name = function(id)
+        if not name_cache[id] then
+            local info = C_TooltipInfo.GetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
+            -- TooltipUtil.SurfaceArgs(info)
+            if info and info.lines and info.lines[1] then
+                TooltipUtil.SurfaceArgs(info.lines[1])
+                if info.lines[1].type == Enum.TooltipDataType.Unit then
+                    name_cache[id] = info.lines[1].leftText
+                end
+            end
         end
+        return name_cache[id]
     end
-    return name_cache[id]
+else
+    -- pre-10.0.2
+    local cache_tooltip = _G["HNTreasuresCacheScanningTooltip"]
+    if not cache_tooltip then
+        cache_tooltip = CreateFrame("GameTooltip", "HNTreasuresCacheScanningTooltip")
+        cache_tooltip:AddFontStrings(
+            cache_tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
+            cache_tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
+        )
+    end
+    local name_cache = {}
+    mob_name = function(id)
+        if not name_cache[id] then
+            -- this doesn't work with just clearlines and the setowner outside of this, and I'm not sure why
+            cache_tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+            cache_tooltip:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
+            if cache_tooltip:IsShown() then
+                name_cache[id] = HNTreasuresCacheScanningTooltipTextLeft1:GetText()
+            end
+        end
+        return name_cache[id]
+    end
 end
 local function quick_texture_markup(icon)
     -- needs less than CreateTextureMarkup
