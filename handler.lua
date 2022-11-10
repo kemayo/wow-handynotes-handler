@@ -103,7 +103,7 @@ function ns.RegisterPoints(zone, points, defaults)
             point.route = nil
         end
         local proxy_meta
-        if point.path or point.nearby then
+        if point.path or point.nearby or point.related then
             proxy_meta = {__index=point}
         end
         if point.path then
@@ -136,6 +136,26 @@ function ns.RegisterPoints(zone, points, defaults)
                 end
                 ns.points[zone][ncoord] = npoint
             end
+        end
+        if point.related then
+            -- like
+            for rcoord, related in pairs(point.related) do
+                local rpoint = setmetatable({
+                    label=related.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
+                    atlas=related.atlas or "playerpartyblip",
+                    texture=related.texture or false,
+                    minimap=related.minimap ~= nil and related.minimap or true, worldmap=true, scale=0.95,
+                    note=related.note or false,
+                    route=coord,
+                    _coord=rcoord,
+                }, proxy_meta)
+                if related.color then
+                    rpoint.texture = ns.atlas_texture(rpoint.atlas, related.color)
+                end
+                if not point.routes then point.routes = {} end
+                table.insert(point.routes, {coord, rcoord, highlightOnly=true})
+                ns.points[zone][rcoord] = rpoint
+            end 
         end
     end
 end
