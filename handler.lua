@@ -844,7 +844,12 @@ local function handle_tooltip(tooltip, point, skip_label)
     end
 
     if (ns.db.tooltip_item or IsShiftKeyDown()) and (point.loot or point.npc or point.spell) then
-        local comparison = ShoppingTooltip1
+        local comparison = _G[myname.."ComparisonTooltip"]
+        if not comparison then
+            comparison = CreateFrame("GameTooltip", myname.."ComparisonTooltip", UIParent, "ShoppingTooltipTemplate")
+            comparison:SetFrameStrata("TOOLTIP")
+            comparison:SetClampedToScreen(true)
+        end
 
         do
             local side
@@ -1122,7 +1127,7 @@ end
 
 function HLHandler:OnLeave(uiMapID, coord)
     GameTooltip:Hide()
-    ShoppingTooltip1:Hide()
+    if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
 
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
     if ns.RouteWorldMapDataProvider and (point.route or point.routes) then
@@ -1223,6 +1228,9 @@ hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
     -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
     handle_tooltip(GameTooltip, point, true)
 end)
+hooksecurefunc(AreaPOIPinMixin, "OnMouseLeave", function(self)
+    if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
+end)
 
 hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
     local vignetteInfo = self.vignetteInfo
@@ -1230,6 +1238,9 @@ hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
     local point = ns.VignetteIDsToPoints[vignetteInfo.vignetteID]
     -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
     handle_tooltip(GameTooltip, point, true)
+end)
+hooksecurefunc(VignettePinMixin, "OnMouseLeave", function(self)
+    if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
 end)
 
 if _G.TaskPoi_OnEnter then
@@ -1239,5 +1250,9 @@ if _G.TaskPoi_OnEnter then
         local point = ns.WorldQuestsToPoints[self.questID]
         -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
         handle_tooltip(GameTooltip, point, true)
+    end)
+    hooksecurefunc("TaskPOI_OnLeave", function(self)
+        -- 10.0.2 doesn't hide this by default any more
+        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
     end)
 end
