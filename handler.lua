@@ -640,10 +640,12 @@ end
 
 local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantityString)
     local getinfo = (criteriaid < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)
-    local criteria, _, complete, _, _, _, _, _, quantityString = getinfo(achievement, criteriaid, true) -- include hidden
+    local criteria, _, complete, _, _, _, flags, _, quantityString = getinfo(achievement, criteriaid, true) -- include hidden
     if quantityString and not ignore_quantityString then
+        local is_progressbar = bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR
+        local label = (criteria and #criteria > 0 and not is_progressbar) and criteria or PVP_PROGRESS_REWARDS_HEADER
         tooltip:AddDoubleLine(
-            (criteria and #criteria > 0) and criteria or PVP_PROGRESS_REWARDS_HEADER, quantityString,
+            label, quantityString,
             complete and 0 or 1, complete and 1 or 0, 0,
             complete and 0 or 1, complete and 1 or 0, 0
         )
