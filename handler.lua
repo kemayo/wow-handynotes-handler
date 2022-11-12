@@ -493,6 +493,9 @@ local function work_out_texture(point)
         return icon_cache[point.atlas]
     end
     if ns.db.icon_item or point.icon then
+        if point.icon then
+            return trimmed_icon(point.icon)
+        end
         if point.loot and #point.loot > 0 then
             local texture = select(10, GetItemInfo(ns.lootitem(point.loot[1])))
             if texture then
