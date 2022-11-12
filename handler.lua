@@ -335,6 +335,16 @@ local function render_string(s, context)
         elseif variant == "covenant" then
             local data = C_Covenants.GetCovenantData(id)
             return COVENANT_COLORS[id]:WrapTextInColorCode(data and data.name or ns.covenants[id])
+        elseif variant == "majorfaction" then
+            local info = C_MajorFactions.GetMajorFactionData(id)
+            if info and info.name then
+                return CreateAtlasMarkup(("majorFactions_icons_%s512"):format(info.textureKit)) .. " " .. info.name
+            end
+        elseif variant == "faction" then
+            local name = GetFactionInfoByID(id)
+            if name then
+                return name
+            end
         elseif variant == "garrisontalent" then
             local info = C_Garrison.GetTalentInfo(id)
             if info then
