@@ -1258,13 +1258,13 @@ hooksecurefunc(VignettePinMixin, "OnMouseLeave", function(self)
     if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
 end)
 
-if _G.TaskPoi_OnEnter then
+if _G.TaskPOI_OnEnter then
     hooksecurefunc("TaskPOI_OnEnter", function(self)
         if not self.questID then return end
         if not ns.WorldQuestsToPoints[self.questID] then return end
         local point = ns.WorldQuestsToPoints[self.questID]
         -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-        handle_tooltip(GameTooltip, point, true)
+        handle_tooltip(GameTooltip, point, false)
     end)
     hooksecurefunc("TaskPOI_OnLeave", function(self)
         -- 10.0.2 doesn't hide this by default any more
