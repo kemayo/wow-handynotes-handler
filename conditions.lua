@@ -51,6 +51,12 @@ ns.conditions.AuraActive = Class{
 }
 ns.conditions.AuraInactive = Class(Negated(ns.conditions.AuraActive))
 
+ns.conditions.SpellKnown = Class{
+    __parent = Condition,
+    type = 'spell',
+    Matched = function(self) return IsSpellKnown(self.id) end,
+}
+
 ns.conditions.Covenant = Class{
     __parent = RankedCondition,
     type = 'covenant',
