@@ -133,6 +133,11 @@ ns.conditions.Item = Class{
     Matched = function(self) return GetItemCount(self.id, true) >= (self.count or 1) end,
 }
 
+ns.conditions.Toy = Class{
+    __parent = ns.conditions.Item,
+    Matched = function(self) return PlayerHasToy(self.id) end,
+}
+
 ns.conditions.QuestComplete = Class{
     __parent = Condition,
     type = 'quest',
