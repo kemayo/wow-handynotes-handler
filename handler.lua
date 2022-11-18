@@ -235,6 +235,11 @@ ns.playerClassMask = ({
 ---------------------------------------------------------
 -- All the utility code
 
+function ns.GetCriteria(achievement, criteriaid)
+    local retOK, criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible = pcall(criteriaid < 100 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID, achievement, criteriaid, true)
+    return criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible
+end
+
 local mob_name
 if _G.C_TooltipInfo then
     local name_cache = {}
@@ -308,7 +313,7 @@ local function render_string(s, context)
             return CreateAtlasMarkup("questnormal") .. (C_QuestLog.IsQuestFlaggedCompleted(id) and completeColor or incompleteColor):WrapTextInColorCode(id)
         elseif variant == "achievement" then
             if mainid and subid then
-                local criteria = (subid < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)(mainid, subid)
+                local criteria = ns.GetCriteria(mainid, subid)
                 if criteria then
                     return criteria
                 end
@@ -438,7 +443,7 @@ local function work_out_label(point)
         return (render_string(point.label, point))
     end
     if point.achievement and point.criteria and type(point.criteria) ~= "table" and point.criteria ~= true then
-        local criteria = (point.criteria < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)(point.achievement, point.criteria)
+        local criteria = ns.GetCriteria(point.achievement, point.criteria)
         if criteria then
             return criteria
         end
@@ -644,8 +649,7 @@ local get_point_progress = function(point)
 end
 
 local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantityString)
-    local getinfo = (criteriaid < 40 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID)
-    local criteria, _, complete, _, _, _, flags, _, quantityString = getinfo(achievement, criteriaid, true) -- include hidden
+    local criteria, _, complete, _, _, _, flags, _, quantityString = ns.GetCriteria(achievement, criteriaid) -- include hidden
     if quantityString and not ignore_quantityString then
         local is_progressbar = bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR
         local label = (criteria and #criteria > 0 and not is_progressbar) and criteria or PVP_PROGRESS_REWARDS_HEADER
