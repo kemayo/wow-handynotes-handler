@@ -216,6 +216,7 @@ ns.playerClassColor = RAID_CLASS_COLORS[playerClass]
 ns.playerName = UnitName("player")
 ns.playerFaction = UnitFactionGroup("player")
 ns.playerClassMask = ({
+    -- this is 2^(classID - 1)
     WARRIOR = 0x1,
     PALADIN = 0x2,
     HUNTER = 0x4,
@@ -228,6 +229,7 @@ ns.playerClassMask = ({
     MONK = 0x200,
     DRUID = 0x400,
     DEMONHUNTER = 0x800,
+    EVOKER = 0x1000,
 })[playerClass] or 0
 
 ---------------------------------------------------------
