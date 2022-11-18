@@ -1154,9 +1154,14 @@ do
                     LibDD:UIDropDownMenu_SetDisplayMode(HL_Dropdown, "MENU")
                 end
                 LibDD:ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
+                return
             end
             if button == "LeftButton" and IsShiftKeyDown() and _G.MAP_PIN_HYPERLINK then
                 sendToChat(button, uiMapID, coord)
+                return
+            end
+            if point.OnClick then
+                point:OnClick(button, uiMapID, coord)
             end
         end
     end
