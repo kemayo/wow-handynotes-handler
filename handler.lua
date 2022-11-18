@@ -6,6 +6,7 @@ local HL = LibStub("AceAddon-3.0"):NewAddon(myname, "AceEvent-3.0")
 -- local L = LibStub("AceLocale-3.0"):GetLocale(myname, true)
 ns.HL = HL
 
+local HBD = LibStub("HereBeDragons-2.0")
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
 ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@project-version@'
@@ -158,6 +159,21 @@ function ns.RegisterPoints(zone, points, defaults)
                 table.insert(point.routes, {coord, rcoord, highlightOnly=true})
                 ns.points[zone][rcoord] = rpoint
             end 
+        end
+        if point.parent then
+            local x, y = HandyNotes:getXY(coord)
+            local mapinfo = C_Map.GetMapInfo(zone)
+            if mapinfo and mapinfo.parentMapID and mapinfo.parentMapID ~= 0 then
+                local pzone = mapinfo.parentMapID
+                local px, py = HBD:TranslateZoneCoordinates(x, y, zone, pzone)
+                if px and py then
+                    if not ns.points[pzone] then
+                        ns.points[pzone] = {}
+                    end
+                    local pcoord = HandyNotes:getCoord(px, py)
+                    ns.points[pzone][pcoord] = point
+                end
+            end
         end
     end
 end
