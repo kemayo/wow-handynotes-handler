@@ -987,14 +987,18 @@ local function showAchievement(button, achievement)
 end
 
 local function createWaypoint(button, uiMapID, coord)
+    local x, y = HandyNotes:getXY(coord)
     if TomTom then
-        local x, y = HandyNotes:getXY(coord)
         TomTom:AddWaypoint(uiMapID, x, y, {
             title = get_point_info_by_coord(uiMapID, coord),
             persistent = nil,
             minimap = true,
             world = true
         })
+    elseif C_Map and C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(uiMapID) then
+        local uiMapPoint = UiMapPoint.CreateFromCoordinates(uiMapID, x, y)
+        C_Map.SetUserWaypoint(uiMapPoint)
+        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
     end
 end
 
@@ -1068,7 +1072,7 @@ do
                 wipe(info)
             end
 
-            if TomTom then
+            if TomTom or (C_Map and C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(currentZone)) then
                 -- Waypoint menu item
                 info.text = "Create waypoint"
                 info.notCheckable = 1
