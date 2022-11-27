@@ -1318,6 +1318,9 @@ do
         if ns.RouteWorldMapDataProvider then
             ns.RouteWorldMapDataProvider:RefreshAllData()
         end
+        if ns.RouteMiniMapDataProvider then
+            ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
+        end
     end
     function HL:RefreshOnEvent(event)
         bucket:Show()
