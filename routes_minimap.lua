@@ -28,7 +28,9 @@ function dataProvider:RefreshAllData()
     for coord, point in pairs(ns.points[uiMapID]) do
         if point.routes and ns.should_show_point(coord, point, uiMapID, true) then
             for _, route in ipairs(point.routes) do
-                self:DrawRoute(route, point, uiMapID)
+                if not route.highlightOnly then
+                    self:DrawRoute(route, point, uiMapID)
+                end
             end
         end
     end
