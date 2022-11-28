@@ -23,6 +23,7 @@ function dataProvider:RefreshAllData()
     
     local uiMapID = HBD:GetPlayerZone()
     if not uiMapID then return end
+    if not ns.points[uiMapID] then return end
 
     for coord, point in pairs(ns.points[uiMapID]) do
         if point.routes and ns.should_show_point(coord, point, uiMapID, true) then
