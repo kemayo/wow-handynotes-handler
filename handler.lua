@@ -111,7 +111,7 @@ function ns.RegisterPoints(zone, points, defaults)
             local route = type(point.path) == "table" and point.path or {point.path}
             table.insert(route, 1, coord)
             ns.points[zone][route[#route]] = setmetatable({
-                label=route.label or (point.npc and "Path to NPC" or "Path to treasure"),
+                label=route.label or (point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure"),
                 atlas=route.atlas or "poi-door", scale=route.scale or 0.95, minimap=true, texture=false,
                 note=route.note or false,
                 loot=route.loot,
