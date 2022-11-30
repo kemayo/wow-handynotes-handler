@@ -116,7 +116,7 @@ function ns.RegisterPoints(zone, points, defaults)
                 note=route.note or false,
                 loot=route.loot,
                 routes={route},
-                _coord=route[#route],
+                _coord=route[#route], _uiMapID=zone,
             }, proxy_meta)
             -- highlight
             point.route = point.route or route[#route]
@@ -131,7 +131,7 @@ function ns.RegisterPoints(zone, points, defaults)
                     minimap=true, worldmap=false, scale=0.95,
                     note=nearby.note or false,
                     loot=nearby.loot, active=nearby.active,
-                    _coord=ncoord,
+                    _coord=rcoord, _uiMapID=zone,
                 }, proxy_meta)
                 if nearby.color then
                     npoint.texture = ns.atlas_texture(npoint.atlas, nearby.color)
@@ -151,13 +151,13 @@ function ns.RegisterPoints(zone, points, defaults)
                     loot=related.loot,
                     active=related.active, requires=related.requires, hide_before=related.hide_before, inbag=related.inbag,
                     route=coord,
-                    _coord=rcoord,
+                    _coord=rcoord, _uiMapID=zone,
                 }, proxy_meta)
                 if related.color then
                     rpoint.texture = ns.atlas_texture(rpoint.atlas, related.color)
                 end
                 if not point.routes then point.routes = {} end
-                table.insert(point.routes, {coord, rcoord, highlightOnly=true})
+                table.insert(point.routes, {rcoord, coord, highlightOnly=true})
                 ns.points[zone][rcoord] = rpoint
             end 
         end

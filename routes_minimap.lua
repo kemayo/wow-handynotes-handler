@@ -28,9 +28,7 @@ function dataProvider:RefreshAllData()
     for coord, point in pairs(ns.points[uiMapID]) do
         if point.routes and ns.should_show_point(coord, point, uiMapID, true) then
             for _, route in ipairs(point.routes) do
-                if not route.highlightOnly then
-                    self:DrawRoute(route, point, uiMapID)
-                end
+                self:DrawRoute(route, point, uiMapID)
             end
         end
     end
@@ -94,6 +92,13 @@ f:SetScript("OnUpdate", function(self)
 end)
 
 function dataProvider:DrawRoute(route, point, uiMapID)
+    if route.highlightOnly then
+        return
+    end
+    local related = point.related and point.related[route[1]] and ns.points[uiMapID][route[1]]
+    if related and not ns.should_show_point(related._coord, related, related._uiMapID, false) then
+        return
+    end
     for i=1, #route - 1 do
         self:DrawSegment(route[i], route[i+1], uiMapID, point, route)
     end
