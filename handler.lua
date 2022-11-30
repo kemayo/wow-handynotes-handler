@@ -149,7 +149,7 @@ function ns.RegisterPoints(zone, points, defaults)
                     minimap=related.minimap ~= nil and related.minimap or true, worldmap=true, scale=0.95,
                     note=related.note or false,
                     loot=related.loot,
-                    active=related.active, requires=related.requires, hide_before=related.hide_before,
+                    active=related.active, requires=related.requires, hide_before=related.hide_before, inbag=related.inbag,
                     route=coord,
                     _coord=rcoord,
                 }, proxy_meta)
