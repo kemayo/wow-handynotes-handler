@@ -16,6 +16,7 @@ function dataProvider:RefreshAllData()
     -- if we're here really early for some reason
     if not ns.db then return end
 
+    HBDPins:RemoveAllMinimapIcons(self)
     self:ReleaseAllPins()
 
     -- if we either can't display anything meaningful, or are disabled
