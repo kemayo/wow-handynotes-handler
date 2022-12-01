@@ -870,7 +870,7 @@ local function handle_tooltip(tooltip, point, skip_label)
     end
 
     if point.group then
-        tooltip:AddDoubleLine(GROUP, render_string(ns.groups[point.group] or point.group, point))
+        tooltip:AddDoubleLine(GROUP, (render_string(ns.groups[point.group] or point.group, point)))
     end
 
     if point.quest and ns.db.tooltip_questid then
