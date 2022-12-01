@@ -318,26 +318,29 @@ local function render_string(s, context)
             if name and icon then
                 return quick_texture_markup(icon) .. " " .. name
             end
-        elseif variant == "quest" or variant == "worldquest" then
+        elseif variant == "quest" or variant == "worldquest" or variant == "questname" then
             local name = C_QuestLog.GetTitleForQuestID(id)
             if not (name and name ~= "") then
                 name = tostring(id)
             end
+            if variant == "questname" then return name end
             local completed = C_QuestLog.IsQuestFlaggedCompleted(id)
             return CreateAtlasMarkup(variant == "worldquest" and "worldquest-tracker-questmarker" or "questnormal") ..
                 (completed and completeColor or incompleteColor):WrapTextInColorCode(name)
         elseif variant == "questid" then
             return CreateAtlasMarkup("questnormal") .. (C_QuestLog.IsQuestFlaggedCompleted(id) and completeColor or incompleteColor):WrapTextInColorCode(id)
-        elseif variant == "achievement" then
+        elseif variant == "achievement" or variant == "achievementname" then
             if mainid and subid then
-                local criteria = ns.GetCriteria(mainid, subid)
+                local criteria, _, completed = ns.GetCriteria(mainid, subid)
                 if criteria then
-                    return criteria
+                    if variant == "achievementname" then return criteria end
+                    return (completed and completeColor or incompleteColor):WrapTextInColorCode(criteria)
                 end
                 id = 'achievement:'..mainid..'.'..subid
             else
                 local _, name, _, completed = GetAchievementInfo(id)
                 if name and name ~= "" then
+                    if variant == "achievementname" then return name end
                     return CreateAtlasMarkup("storyheader-cheevoicon") .. " " .. (completed and completeColor or incompleteColor):WrapTextInColorCode(name)
                 end
             end
@@ -387,7 +390,7 @@ local function cache_string(s, context)
             C_Item.RequestLoadItemDataByID(id)
         elseif variant == "spell" then
             C_Spell.RequestLoadSpellData(id)
-        elseif variant == "quest" or variant == "worldquest" then
+        elseif variant == "quest" or variant == "worldquest" or variant == "questname" then
             C_QuestLog.RequestLoadQuestByID(id)
         elseif variant == "npc" then
             mob_name(id)
