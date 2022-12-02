@@ -1040,12 +1040,31 @@ local function createWaypoint(button, uiMapID, coord)
         C_SuperTrack.SetSuperTrackedUserWaypoint(true)
     end
 end
-local function createWaypointForAll(button, uiMapID, coord)
-    if not TomTom then return end
-    local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
-    if not point then return end
-    for rcoord, rpoint in ns.IterateRelatedPointsInZone(uiMapID, point) do
-        if ns.should_show_point(rcoord, rpoint, uiMapID, false) then
+local createWaypointForAll
+do
+    local function getDistance(x1, y1, x2, y2)
+        local deltaX, deltaY = x2 - x1, y2 - y1
+        return ((deltaX ^ 2) + (deltaY ^ 2)) ^ 0.5
+    end
+    local function distanceSort(lhs, rhs)
+        local px, py = HBD:GetPlayerZonePosition()
+        return getDistance(px, py, HandyNotes:getXY(lhs)) > getDistance(px, py, HandyNotes:getXY(rhs))
+    end
+    function createWaypointForAll(button, uiMapID, coord)
+        if not TomTom then return end
+        local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
+        if not point then return end
+        local points = {}
+        for rcoord, rpoint in ns.IterateRelatedPointsInZone(uiMapID, point) do
+            if ns.should_show_point(rcoord, rpoint, uiMapID, false) then
+                table.insert(points, rcoord)
+            end
+        end
+        -- Add waypoints in a useful order so we wind up with the closest one
+        -- on the arrow. Not just doing TomTom:SetClosestWaypoint because I
+        -- want to respect the crazy-arrow settings, and that forces it on.
+        table.sort(points, distanceSort)
+        for _, rcoord in ipairs(points) do
             local x, y = HandyNotes:getXY(rcoord)
             TomTom:AddWaypoint(uiMapID, x, y, {
                 title = get_point_info_by_coord(uiMapID, rcoord),
