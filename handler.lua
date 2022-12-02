@@ -776,6 +776,9 @@ local function handle_tooltip(tooltip, point, skip_label)
     if not skip_label and point.label ~= false then
         tooltip:AddLine(work_out_label(point))
     end
+    if point.OnTooltipShow then
+        point:OnTooltipShow(tooltip)
+    end
     if point.follower then
         local follower = C_Garrison.GetFollowerInfo(point.follower)
         if follower then
