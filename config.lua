@@ -534,7 +534,7 @@ local function everythingFound(point)
         end
         ret = true
     end
-    if (ns.db.achievedfound or not point.quest) and point.achievement then
+    if (ns.db.achievedfound or not point.quest) and point.achievement and not point.achievementNotFound then
         if point.criteria and point.criteria ~= true then
             if not allCriteriaComplete(point.criteria, point.achievement) then
                 return false
