@@ -58,6 +58,18 @@ ns.conditions.SpellKnown = Class{
     Matched = function(self) return IsSpellKnown(self.id) end,
 }
 
+ns.conditions.Profession = Class{
+    -- See https://wowpedia.fandom.com/wiki/TradeSkillLineID for IDs
+    -- TODO: make work in Classic? Whole different API.
+    __parent = RankedCondition,
+    type = "profession",
+    Matched = function(self)
+        local info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(self.id)
+        if not (info and info.skillLevel) then return false end
+        return info.skillLevel >= (self.rank or 1)
+    end,
+}
+
 ns.conditions.Covenant = Class{
     __parent = RankedCondition,
     type = 'covenant',
