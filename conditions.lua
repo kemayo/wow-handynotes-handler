@@ -43,6 +43,7 @@ ns.conditions.Achievement = Class{
     type = 'achievement',
     Matched = function(self) return (select(4, GetAchievementInfo(self.id))) end,
 }
+ns.conditions.AchievementIncomplete = Class(Negated(ns.conditions.Achievement))
 
 ns.conditions.AuraActive = Class{
     __parent = Condition,
