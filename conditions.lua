@@ -222,6 +222,7 @@ ns.conditions.Vignette = Class{
 ns.conditions.Level = Class{
     __parent = Condition,
     type = 'level',
+    Label = function(self) return UNIT_LEVEL_TEMPLATE:format(self.id) end,
     Matched = function(self) return UnitLevel('player') >= self.id end,
 }
 
