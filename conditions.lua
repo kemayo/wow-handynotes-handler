@@ -64,9 +64,41 @@ ns.conditions.Profession = Class{
     __parent = RankedCondition,
     type = "profession",
     Matched = function(self)
+        -- The problem: this is only reliable for skill levels after the trade skill has been opened
         local info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(self.id)
         if not (info and info.skillLevel) then return false end
-        return info.skillLevel >= (self.rank or 1)
+        if info.skillLevel > 0 then
+            -- we have good data
+            return info.skillLevel >= (self.rank or 1)
+        end
+        -- we need to start making guesses
+        return self:CheckProfessions(info, GetProfessions())
+    end,
+    CheckProfessions = function(self, info, ...)
+        for i = 1, select("#", ...) do
+            if self:CheckProfession(info, select(i, ...)) then
+                return true
+            end
+        end
+        return false
+    end,
+    CheckProfession = function(self, info, professionid)
+        if not professionid then return end
+        local skillName, _, skillLevel, maxSkillLevel, _, _, skillLineID, _, _, _, displayName = GetProfessionInfo(professionid)
+        if info.professionID == skillLineID then
+            -- This is the exact skill!
+            return skillLevel >= (self.rank or 1)
+        end
+        if info.parentProfessionID == skillLineID then
+            -- The overall skill is known
+            if displayName == info.professionName then
+                -- This is the highest expansion skill currently, so the reported skill level is correct
+                return skillLevel >= (self.rank or 1)
+            end
+            -- This is the wrong expansion skill... so ignore the rank check and just claim we know it
+            -- TODO: this the worst case, improve it somehow?
+            return true
+        end
     end,
 }
 
