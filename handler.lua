@@ -870,9 +870,25 @@ local function handle_tooltip(tooltip, point, skip_label)
     if point.level and point.level > UnitLevel("player") then
         tooltip:AddLine(ITEM_MIN_LEVEL:format(point.level), 1, 0, 0)
     end
-    if point.hide_before and not ns.conditions.check(point.hide_before) then
-        tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, 1, 0, 0)
-        tooltip:AddLine(ns.render_string(ns.conditions.summarize(point.hide_before), point), 1, 0, 0, true)
+    if point.hide_before then
+        local isHidden = not ns.conditions.check(point.hide_before)
+        if isHidden then
+            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, 1, 0, 0)
+        end
+        tooltip:AddLine(
+            ns.render_string(ns.conditions.summarize(point.hide_before), point),
+            isHidden and 1 or 0, isHidden and 0 or 1, 0, true
+        )
+    end
+    if point.requires then
+        local isHidden = not ns.conditions.check(point.requires)
+        if isHidden then
+            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, 1, 0, 0)
+        end
+        tooltip:AddLine(
+            ns.render_string(ns.conditions.summarize(point.requires), point),
+            isHidden and 1 or 0, isHidden and 0 or 1, 0, true
+        )
     end
     if point.active then
         local isActive = ns.point_active(point)
