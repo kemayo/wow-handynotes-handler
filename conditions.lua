@@ -196,6 +196,12 @@ ns.conditions.WorldQuestActive = Class{
     Matched = function(self) return C_TaskQuest.IsActive(self.id) or C_QuestLog.IsQuestFlaggedCompleted(self.id) end,
 }
 
+ns.conditions.OnQuest = Class{
+    __parent = Condition,
+    type = 'quest',
+    Matched = function(self) return C_QuestLog.IsOnQuest(self.id) end,
+}
+
 ns.conditions.Vignette = Class{
     __parent = Condition,
     type = 'vignette',
