@@ -131,7 +131,7 @@ function ns.RegisterPoints(zone, points, defaults)
                     minimap=true, worldmap=false, scale=0.95,
                     note=nearby.note or false,
                     loot=nearby.loot, active=nearby.active,
-                    _coord=rcoord, _uiMapID=zone,
+                    _coord=ncoord, _uiMapID=zone,
                 }, proxy_meta)
                 if nearby.color then
                     npoint.texture = ns.atlas_texture(npoint.atlas, nearby.color)
@@ -142,18 +142,14 @@ function ns.RegisterPoints(zone, points, defaults)
         if point.related then
             -- like
             for rcoord, related in pairs(point.related) do
-                local rpoint = setmetatable({
-                    label=related.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
-                    atlas=related.atlas or "playerpartyblip",
-                    texture=related.texture or false, scale=0.95, minimap=true, worldmap=true,
-                    note=related.note or false,
-                    loot=related.loot,
-                    active=related.active, requires=related.requires, hide_before=related.hide_before, inbag=related.inbag,
+                local rpoint = setmetatable(ns.merge({
+                    label=point.npc and "Related to nearby NPC" or "Related to nearby treasure",
+                    atlas="playerpartyblip",
+                    texture=false,
+                    note=false,
                     route=coord,
                     _coord=rcoord, _uiMapID=zone,
-                }, proxy_meta)
-                if related.minimap ~= nil then rpoint.minimap = related.minimap end
-                if related.worldmap ~= nil then rpoint.worldmap = related.worldmap end
+                }, related), proxy_meta)
                 if related.color then
                     rpoint.texture = ns.atlas_texture(rpoint.atlas, related.color)
                 end
