@@ -91,8 +91,11 @@ function ns.RegisterPoints(zone, points, defaults)
             points[coord] = nodeType(point)
         end
     end
-    ns.merge(ns.points[zone], points)
     for coord, point in pairs(points) do
+        if ns.DEBUG and ns.points[zone][coord] then
+            print(myname, "point collision", zone, coord)
+        end
+        ns.points[zone][coord] = point
         point._coord = coord
         point._uiMapID = zone
         intotable(ns.POIsToPoints, point.areaPoi, point)
