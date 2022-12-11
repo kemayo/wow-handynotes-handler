@@ -143,16 +143,17 @@ function ns.RegisterPoints(zone, points, defaults)
             end
         end
         if point.related then
-            -- like
+            local relatedNode = ns.nodeMaker(setmetatable({
+                label=point.npc and "Related to nearby NPC" or "Related to nearby treasure",
+                atlas="playerpartyblip",
+                texture=false,
+                note=false,
+                route=coord,
+                _uiMapID=zone,
+            }, proxy_meta))
             for rcoord, related in pairs(point.related) do
-                local rpoint = setmetatable(ns.merge({
-                    label=point.npc and "Related to nearby NPC" or "Related to nearby treasure",
-                    atlas="playerpartyblip",
-                    texture=false,
-                    note=false,
-                    route=coord,
-                    _coord=rcoord, _uiMapID=zone,
-                }, related), proxy_meta)
+                local rpoint = relatedNode(related)
+                rpoint._coord = rcoord
                 if related.color then
                     rpoint.texture = ns.atlas_texture(rpoint.atlas, related.color)
                 end
