@@ -9,7 +9,7 @@ ns.HL = HL
 local HBD = LibStub("HereBeDragons-2.0")
 local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
-ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@project-version@'
+ns.DEBUG = GetAddOnMetadata(myname, "Version") == '@'..'project-version@'
 
 ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 
