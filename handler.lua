@@ -106,6 +106,9 @@ function ns.RegisterPoints(zone, points, defaults)
             point.routes = {point.route}
             point.route = nil
         end
+        if point.atlas and point.color then
+            point.texture = ns.atlas_texture(point.atlas, point.color)
+        end
         local proxy_meta
         if point.path or point.nearby or point.related then
             proxy_meta = {__index=point}
