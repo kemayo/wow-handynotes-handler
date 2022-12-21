@@ -35,7 +35,7 @@ local RankedCondition = Class{
 }
 local Negated = function(parent) return {
     __parent = parent,
-    Matched = function(self) return not self.__parent.Matched(self) end,
+    Matched = function(self) return not parent.Matched(self) end,
 } end
 
 ns.conditions.Achievement = Class{
@@ -173,7 +173,7 @@ ns.conditions.Item = Class{
         if self.count and self.count > 1 then
             return ("{item:%d} x%d"):format(self.id, self.count)
         end
-        return self.__parent.Label(self)
+        return Condition.Label(self)
     end,
     Matched = function(self) return GetItemCount(self.id, true) >= (self.count or 1) end,
 }
@@ -221,7 +221,7 @@ ns.conditions.Vignette = Class{
         if vignetteInfo and vignetteInfo.name then
             return vignetteInfo.name
         end
-        return self.__parent.Label(self)
+        return Condition.Label(self)
     end,
 }
 
