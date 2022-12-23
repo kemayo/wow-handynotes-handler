@@ -189,10 +189,15 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
     for vignetteID, point in pairs(vignettes) do
         point._coord = point._coord or 0
         point._uiMapID = zone
+        point.vignette = vignetteID
         point.always = true
         point.label = false
 
-        ns.VignetteIDsToPoints[vignetteID] = defaults and defaults(point) or point
+        point = defaults and defaults(point) or point
+
+        intotable(ns.POIsToPoints, point.areaPoi, point)
+        intotable(ns.VignetteIDsToPoints, point.vignette, point)
+        intotable(ns.WorldQuestsToPoints, point.worldquest, point)
     end
 end
 
