@@ -285,9 +285,7 @@ if _G.C_TooltipInfo then
     mob_name = function(id)
         if not name_cache[id] then
             local info = C_TooltipInfo.GetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
-            -- TooltipUtil.SurfaceArgs(info)
             if info and info.lines and info.lines[1] then
-                TooltipUtil.SurfaceArgs(info.lines[1])
                 if info.lines[1].type == Enum.TooltipDataType.Unit then
                     name_cache[id] = info.lines[1].leftText
                 end
