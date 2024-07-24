@@ -389,9 +389,14 @@ local function render_string(s, context)
                 return CreateAtlasMarkup(("majorFactions_icons_%s512"):format(info.textureKit)) .. " " .. info.name
             end
         elseif variant == "faction" then
-            local name = GetFactionInfoByID(id)
-            if name then
-                return name
+            local name
+            if C_Reputation and C_Reputation.GetFactionDataByID then
+                local info = C_Reputation.GetFactionDataByID(id)
+                if info and info.name then
+                    name = info.name
+                end
+            elseif GetFactionInfoByID then
+                name = GetFactionInfoByID(id)
             end
         elseif variant == "garrisontalent" then
             local info = C_Garrison.GetTalentInfo(id)
