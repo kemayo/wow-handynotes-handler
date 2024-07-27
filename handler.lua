@@ -337,7 +337,15 @@ local function render_string(s, context)
                 return quick_texture_markup(icon) .. " " .. link:gsub("[%[%]]", "")
             end
         elseif variant == "spell" then
-            local name, _, icon = GetSpellInfo(id)
+            local name, icon, _
+            if C_Spell and C_Spell.GetSpellInfo then
+                local info = C_Spell.GetSpellInfo(id)
+                if info then
+                    name, icon = info.name, info.iconID
+                end
+            else
+                name, _, icon = GetSpellInfo(id)
+            end
             if name and icon then
                 return quick_texture_markup(icon) .. " " .. name
             end
