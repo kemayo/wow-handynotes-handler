@@ -181,7 +181,7 @@ ns.conditions.Item = Class{
         end
         return Condition.Label(self)
     end,
-    Matched = function(self) return GetItemCount(self.id, true) >= (self.count or 1) end,
+    Matched = function(self) return C_Item.GetItemCount(self.id, true) >= (self.count or 1) end,
 }
 
 ns.conditions.Toy = Class{

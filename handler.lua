@@ -730,7 +730,7 @@ local function tooltip_loot(tooltip, item)
     if ns.db.tooltip_charloot and not IsShiftKeyDown() then
         -- show loot for the current character only
         -- can't pass in a reusable table for the second argument because it changes the no-data case
-        local specTable = GetItemSpecInfo(id)
+        local specTable = C_Item.GetItemSpecInfo(id)
         -- Some cosmetic items seem to be flagged as not dropping for any spec. I
         -- could only confirm this for some cosmetic back items but let's play it
         -- safe and say that any cosmetic item can drop regardless of what the
