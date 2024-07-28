@@ -18,6 +18,8 @@ if ns.CLASSIC then
     ATLAS_CHECK, ATLAS_CROSS = "Tracker-Check", "Objective-Fail"
 end
 
+local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
+
 ---------------------------------------------------------
 -- Data model stuff:
 
@@ -275,6 +277,15 @@ ns.playerClassMask = ({
 
 ---------------------------------------------------------
 -- All the utility code
+
+function ns.IsCosmeticItem(itemInfo)
+    if _G.C_Item and C_Item.IsCosmeticItem then
+        return C_Item.IsCosmeticItem(itemInfo)
+    elseif _G.IsCosmeticItem then
+        return IsCosmeticItem(itemInfo)
+    end
+    return false
+end
 
 function ns.GetCriteria(achievement, criteriaid)
     local retOK, criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible = pcall(criteriaid < 100 and GetAchievementCriteriaInfo or GetAchievementCriteriaInfoByID, achievement, criteriaid, true)
@@ -746,7 +757,7 @@ local function tooltip_loot(tooltip, item)
         -- could only confirm this for some cosmetic back items but let's play it
         -- safe and say that any cosmetic item can drop regardless of what the
         -- spec info says...
-        if specTable and #specTable == 0 and not (_G.IsCosmeticItem and IsCosmeticItem(id)) then
+        if specTable and #specTable == 0 and not ns.IsCosmeticItem(id) then
             return true
         end
         -- then catch covenants / classes / etc
@@ -808,6 +819,9 @@ local function tooltip_loot(tooltip, item)
         else
             link = link .. " " .. CreateAtlasMarkup(known and ATLAS_CHECK or ATLAS_CROSS)
         end
+    end
+    if label and ns.IsCosmeticItem(id) then
+        label = TEXT_MODE_A_STRING_VALUE_TYPE:format(label, COSMETIC_COLOR:WrapTextInColorCode(ITEM_COSMETIC))
     end
     tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link,
         NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
