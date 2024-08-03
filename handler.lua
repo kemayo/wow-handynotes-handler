@@ -521,12 +521,26 @@ local function work_out_label(point)
     if point.label then
         return (render_string(point.label, point))
     end
-    if point.achievement and point.criteria and type(point.criteria) ~= "table" and point.criteria ~= true then
-        local criteria = ns.GetCriteria(point.achievement, point.criteria)
-        if criteria then
-            return criteria
+    if point.achievement and point.criteria and point.criteria ~= true then
+        if type(point.criteria) == "table" then
+            local t = {}
+            for _, criteriaid in ipairs(point.criteria) do
+                local criteria = ns.GetCriteria(point.achievement, criteriaid)
+                if criteria then
+                    table.insert(t, criteria)
+                end
+            end
+            if #t == #point.criteria then
+                return string.join(', ', unpack(t))
+            end
+            fallback = 'achievement:'..point.achievement..'.'..string.join('+', unpack(point.criteria))
+        else
+            local criteria = ns.GetCriteria(point.achievement, point.criteria)
+            if criteria then
+                return criteria
+            end
+            fallback = 'achievement:'..point.achievement..'.'..point.criteria
         end
-        fallback = 'achievement:'..point.achievement..'.'..point.criteria
     end
     if point.follower then
         local follower = C_Garrison.GetFollowerInfo(point.follower)
