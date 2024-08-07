@@ -436,6 +436,12 @@ local function render_string(s, context)
             if info and info.name then
                 return info.name
             end
+        elseif variant == "area" then
+            -- See: https://wago.tools/db2/AreaTable or C_MapExplorationInfo.GetExploredAreaIDsAtPosition
+            local name = C_Map.GetAreaInfo(id)
+            if name then
+                return name
+            end
         end
         return fallback ~= "" and fallback or (variant .. ':' .. id)
     end)
