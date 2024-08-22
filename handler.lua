@@ -1162,7 +1162,15 @@ end
 
 local function createWaypoint(button, uiMapID, coord)
     local x, y = HandyNotes:getXY(coord)
-    if TomTom then
+    if MapPinEnhanced and MapPinEnhanced.AddPin then
+        MapPinEnhanced:AddPin{
+            mapID = uiMapID,
+            x = x,
+            y = y,
+            setTracked = true,
+            title = get_point_info_by_coord(uiMapID, coord),
+        }
+    elseif TomTom then
         TomTom:AddWaypoint(uiMapID, x, y, {
             title = get_point_info_by_coord(uiMapID, coord),
             persistent = nil,
