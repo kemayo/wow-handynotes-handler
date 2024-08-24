@@ -153,7 +153,7 @@ function ns.RegisterPoints(zone, points, defaults)
                 atlas=point.related.atlas or "playerpartyblip", color=point.related.color,
                 texture=point.related.atlas or false, minimap=point.related.minimap,
                 note=point.related.note or false,
-                active=point.related.active, required=point.related.required,
+                active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
                 route=coord,
                 _uiMapID=zone,
             }, proxy_meta))
