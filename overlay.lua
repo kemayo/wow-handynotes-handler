@@ -370,7 +370,7 @@ function ns.SetupMapOverlay()
                 else
                     Settings.OpenToCategory('HandyNotes')
                 end
-                LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', myname:gsub("HandyNotes_", ""))
+                LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', (myname:gsub("HandyNotes_", "")))
             end
             LibDD:UIDropDownMenu_AddButton(info, level)
 
