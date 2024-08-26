@@ -435,10 +435,17 @@ local function CanLearnAppearance(itemLinkOrID)
     return canLearnCache[itemID]
 end
 local hasAppearanceCache = {}
+ns.run_caches.appearances = {}
 local function HasAppearance(itemLinkOrID)
     local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
     if not itemID then return end
+    if ns.run_caches.appearances[itemID] ~= nil then
+        return ns.run_caches.appearances[itemID]
+    end
     if hasAppearanceCache[itemID] ~= nil then
+        -- We cache unchanging things: true or false-because-not-knowable
+        -- *Technically* this could persist a false-positive if you obtain something and then trade/refund it
+        ns.run_caches.appearances[itemID] = hasAppearanceCache[itemID]
         return hasAppearanceCache[itemID]
     end
     if C_TransmogCollection.PlayerHasTransmogByItemInfo(itemLinkOrID) then
@@ -460,6 +467,7 @@ local function HasAppearance(itemLinkOrID)
             return true
         end
     end
+    ns.run_caches.appearances[itemID] = false
     return false
 end
 

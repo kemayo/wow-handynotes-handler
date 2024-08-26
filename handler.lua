@@ -20,6 +20,8 @@ end
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
 
+ns.run_caches = {}
+
 ---------------------------------------------------------
 -- Data model stuff:
 
@@ -1429,6 +1431,9 @@ do
     end
     function HLHandler:GetNodes2(uiMapID, minimap)
         -- Debug("GetNodes2", uiMapID, minimap)
+        for _, cache in ipairs(ns.run_caches) do
+            table.wipe(cache)
+        end
         currentZone = uiMapID
         isMinimap = minimap
         return iter, ns.points[uiMapID], nil
