@@ -298,7 +298,7 @@ ns.options = {
                 for uiMapID, points in pairs(ns.points) do
                     for coord, point in pairs(points) do
                         if point.group and not values[point.group] then
-                            values[point.group] = ns.groups[point.group] or point.group
+                            values[point.group] = ns.render_string(ns.groups[point.group] or point.group)
                         end
                     end
                 end
