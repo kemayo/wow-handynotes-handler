@@ -146,6 +146,7 @@ function ns.RegisterPoints(zone, points, defaults)
         ns.points[zone][coord] = point
         point._coord = coord
         point._uiMapID = zone
+        point._main = point
         intotable(ns.POIsToPoints, point.areaPoi, point)
         intotable(ns.VignetteIDsToPoints, point.vignette, point)
         intotable(ns.WorldQuestsToPoints, point.worldquest, point)
@@ -777,6 +778,7 @@ local function work_out_texture(point)
     end
     return default_textures[ns.db.default_icon] or default_textures["VignetteLoot"]
 end
+ns.work_out_texture = work_out_texture
 ns.point_active = function(point)
     if point.IsActive and not point:IsActive() then
         return false
@@ -1153,6 +1155,9 @@ function HLHandler:OnEnter(uiMapID, coord)
         end
         ns.RouteWorldMapDataProvider:HighlightRoute(point, uiMapID, coord)
     end
+    if ns.DecorationWorldMapDataProvider then
+        ns.DecorationWorldMapDataProvider:OnMouseEnter(point, uiMapID, coord)
+    end
     local tooltip = GameTooltip
     if ns.db.tooltip_pointanchor or self:GetParent() == Minimap then
         if self:GetCenter() > UIParent:GetCenter() then -- compare X coordinate
@@ -1421,6 +1426,9 @@ do
             if point.OnClick then
                 point:OnClick(button, uiMapID, coord)
             end
+            if ns.DecorationWorldMapDataProvider then
+                ns.DecorationWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
+            end
         end
     end
 end
@@ -1435,6 +1443,9 @@ function HLHandler:OnLeave(uiMapID, coord)
             point = ns.points[uiMapID][point.route]
         end
         ns.RouteWorldMapDataProvider:UnhighlightRoute(point, uiMapID, coord)
+    end
+    if ns.DecorationWorldMapDataProvider then
+        ns.DecorationWorldMapDataProvider:OnMouseLeave(point, uiMapID, coord)
     end
 end
 
@@ -1505,6 +1516,9 @@ function HL:OnInitialize()
     if ns.RouteWorldMapDataProvider then
         WorldMapFrame:AddDataProvider(ns.RouteWorldMapDataProvider)
     end
+    if ns.DecorationWorldMapDataProvider then
+        WorldMapFrame:AddDataProvider(ns.DecorationWorldMapDataProvider)
+    end
 end
 
 do
@@ -1525,6 +1539,9 @@ do
         end
         if ns.RouteMiniMapDataProvider then
             ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
+        end
+        if ns.BackdropWorldMapDataProvider then
+            ns.BackdropWorldMapDataProvider:RefreshAllData()
         end
     end
     function HL:RefreshOnEvent(event)
