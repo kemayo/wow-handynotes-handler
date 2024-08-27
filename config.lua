@@ -16,6 +16,7 @@ ns.defaults = {
         collectablefound = true,
         achievedfound = true,
         questfound = true,
+        transmog_specific = true, -- consider whether you know the appearance from *this* item specifically
         icon_scale = 1.0,
         icon_alpha = 1.0,
         icon_item = false,
@@ -249,6 +250,12 @@ ns.options = {
                             disabled = function() return not ns.RouteWorldMapDataProvider end,
                             order = 37,
                         },
+                        transmog_specific = {
+                            type = "toggle",
+                            name = "Transmog exact items",
+                            desc = "For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance",
+                            order = 45,
+                        },
                     },
                     order = 50,
                 },
@@ -475,7 +482,7 @@ local function CanLearnAppearance(itemLinkOrID)
 end
 local hasAppearanceCache = {}
 ns.run_caches.appearances = {}
-local function HasAppearance(itemLinkOrID)
+local function HasAppearance(itemLinkOrID, specific)
     local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
     if not itemID then return end
     if ns.run_caches.appearances[itemID] ~= nil then
@@ -492,11 +499,22 @@ local function HasAppearance(itemLinkOrID)
         hasAppearanceCache[itemID] = true
         return true
     end
-    -- Although this isn't known, its appearance might be known from another item
-    local appearanceID = GetAppearanceAndSource(itemLinkOrID)
+    local appearanceID, sourceID = GetAppearanceAndSource(itemLinkOrID)
     if not appearanceID then
+        -- This just isn't knowable according to the API
         hasAppearanceCache[itemID] = false
         return
+    end
+    local fromCurrentItem = C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(sourceID)
+    if fromCurrentItem then
+        -- It might *also* be from another item, but we don't care or need to find out
+        hasAppearanceCache[itemID] = true
+        return true
+    end
+    -- Although this isn't known, its appearance might be known from another item
+    if specific then
+        ns.run_caches.appearances[itemID] = false
+        return false
     end
     local sources = C_TransmogCollection.GetAllAppearanceSources(appearanceID)
     if not sources then return end
@@ -584,9 +602,9 @@ ns.itemIsKnown = function(item)
             end
             return false
         end
-        if CanLearnAppearance(item[1]) then return HasAppearance(item[1]) end
+        if CanLearnAppearance(item[1]) then return HasAppearance(item[1], ns.db.transmog_specific) end
     elseif CanLearnAppearance(item) then
-        return HasAppearance(item)
+        return HasAppearance(item, ns.db.transmog_specific)
     end
 end
 local hasKnowableLoot = testMaker(ns.itemIsKnowable, doTestAny)
