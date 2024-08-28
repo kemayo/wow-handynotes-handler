@@ -802,7 +802,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
             end
         else
             -- Not an NPC, not a follower, must be treasure
-            if not ns.db.show_treasure then
+            if not ns.db.show_treasure and point.loot then
                 return false
             end
         end
