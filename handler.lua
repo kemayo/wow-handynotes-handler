@@ -537,18 +537,25 @@ local trimmed_icon = function(texture)
     end
     return icon_cache[texture]
 end
-local atlas_texture = function(atlas, extra, crop)
+local atlas_texture = function(atlas, extra, left, right, top, bottom)
     atlas = C_Texture.GetAtlasInfo(atlas)
     if type(extra) == "number" then
         extra = {scale=extra}
     end
-    if crop then
-        local xcrop = (atlas.rightTexCoord - atlas.leftTexCoord) * crop
-        local ycrop = (atlas.bottomTexCoord - atlas.topTexCoord) * crop
-        atlas.rightTexCoord = atlas.rightTexCoord - xcrop
-        atlas.leftTexCoord = atlas.leftTexCoord + xcrop
-        atlas.bottomTexCoord = atlas.bottomTexCoord - ycrop
-        atlas.topTexCoord = atlas.topTexCoord + xcrop
+    if left and not right then
+        -- this is the "trim every side by this" path
+        right = 1 - left
+        top = left
+        bottom = 1 - left
+    end
+    if left then
+        -- An atlas is already cropped into a texture, so we need to treat something else as our 1
+        local horizontal = atlas.rightTexCoord - atlas.leftTexCoord
+        local vertical = atlas.bottomTexCoord - atlas.topTexCoord
+        atlas.rightTexCoord = atlas.leftTexCoord + (right * horizontal)
+        atlas.leftTexCoord = atlas.leftTexCoord + (left * horizontal)
+        atlas.bottomTexCoord = atlas.topTexCoord + (bottom * vertical)
+        atlas.topTexCoord = atlas.topTexCoord + (top * vertical)
     end
     return ns.merge({
         icon = atlas.file,
@@ -557,6 +564,11 @@ local atlas_texture = function(atlas, extra, crop)
 end
 ns.atlas_texture = atlas_texture
 local default_textures = {
+    --[[
+    note to self:
+    atlas_texture("delves-scenario-treasure-unavailable", nil, 0, 0.9, 0.1, 1)
+    atlas_texture("delves-scenario-treasure-available", nil, 0, 0.9, 0.05, 0.95)
+    --]]
     VignetteLoot = atlas_texture("VignetteLoot", 1.1),
     VignetteLootElite = atlas_texture("VignetteLootElite", 1.2),
     Garr_TreasureIcon = atlas_texture("Garr_TreasureIcon", 2.2),
