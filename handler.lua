@@ -523,7 +523,7 @@ end
 ns.render_string = render_string
 ns.render_string_list = render_string_list
 
-local npc_texture, follower_texture, currency_texture, junk_texture
+local npc_texture, follower_texture, currency_texture, junk_texture, notable_npc_texture
 local icon_cache = {}
 local trimmed_icon = function(texture)
     if not icon_cache[texture] then
@@ -687,9 +687,14 @@ local function work_out_texture(point)
     end
     if point.npc then
         if not npc_texture then
+            notable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
             npc_texture = atlas_texture("DungeonSkull", 1)
         end
-        return npc_texture
+        if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point) then
+            return notable_npc_texture
+        else
+            return npc_texture
+        end
     end
     if point.currency then
         if not currency_texture then

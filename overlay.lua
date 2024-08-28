@@ -109,22 +109,24 @@ do
         end)
         for _, key in ipairs(sorted) do
             local option = args[key]
-            info.text = option.name
-            info.tooltipTitle = option.desc
-            info.value = key
-            if option.type == "toggle" then
-                info.notCheckable = nil
-                info.checked = ns.db[key]
-            elseif option.type == "execute" then
-                info.notCheckable = true
-                info.checked = nil
+            if option.type == "toggle" or option.type == "execute" then
+                info.text = option.name
+                info.tooltipTitle = option.desc
+                info.value = key
+                if option.type == "toggle" then
+                    info.notCheckable = nil
+                    info.checked = ns.db[key]
+                elseif option.type == "execute" then
+                    info.notCheckable = true
+                    info.checked = nil
+                end
+                if option.disabled then
+                    info.disabled = option.disabled()
+                else
+                    info.disabled = nil
+                end
+                LibDD:UIDropDownMenu_AddButton(info, level)
             end
-            if option.disabled then
-                info.disabled = option.disabled()
-            else
-                info.disabled = nil
-            end
-            LibDD:UIDropDownMenu_AddButton(info, level)
         end
     end
 end
@@ -278,6 +280,7 @@ function ns.SetupMapOverlay()
             info.text = SHOW
             LibDD:UIDropDownMenu_AddButton(info, level)
 
+            OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, info, level)
             OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args, info, level)
             LibDD:UIDropDownMenu_AddSeparator(level)
 

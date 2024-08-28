@@ -9,6 +9,7 @@ ns.defaults = {
         show_on_minimap = false,
         show_npcs = true,
         show_npcs_onlynotable = false,
+        show_npcs_emphasizeNotable = true,
         show_treasure = true,
         show_routes = true,
         upcoming = true,
@@ -127,17 +128,32 @@ ns.options = {
                     inline = true,
                     order = 20,
                     args = {
-                        show_npcs = {
-                            type = "toggle",
-                            name = "Show NPCs",
-                            desc = "Show rare NPCs to be killed, generally for items or achievements",
+                        npcs = {
+                            type = "group",
+                            inline = true,
+                            name = "NPCs",
+                            args = {
+                                show_npcs = {
+                                    type = "toggle",
+                                    name = "Show NPCs",
+                                    desc = "Show rare NPCs to be killed, generally for items or achievements",
+                                    order = 10,
+                                },
+                                show_npcs_onlynotable = {
+                                    type = "toggle",
+                                    name = "Only show notable NPCs",
+                                    desc = "Only show the NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys",
+                                    order = 20,
+                                },
+                                show_npcs_emphasizeNotable = {
+                                    type = "toggle",
+                                    name = "Emphasize notable NPCs",
+                                    desc = "Put more emphasis on NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys",
+                                    order = 30,
+                                },
+
+                            },
                             order = 10,
-                        },
-                        show_npcs_onlynotable = {
-                            type = "toggle",
-                            name = "...but only notable ones",
-                            desc = "Only show the NPCs that you can still get something from: achievements, transmogs, mounts, pets ,toys",
-                            order = 11,
                         },
                         show_treasure = {
                             type = "toggle",
@@ -280,7 +296,7 @@ ns.options = {
                             for coord, point in pairs(points) do
                                 if point.achievement and not values[point.achievement] then
                                     local _, achievement = GetAchievementInfo(point.achievement)
-                                    values[point.achievement] = achievement or 'achievement:'..point.achievement
+                                    values[point.achievement] = achievement or ('achievement:'..point.achievement)
                                 end
                             end
                         end
@@ -645,6 +661,7 @@ local function isNotable(point)
         return true
     end
 end
+ns.PointIsNotable = isNotable
 local function everythingFound(point)
     local ret
     if ns.db.collectablefound and point.loot and hasKnowableLoot(point.loot) then
