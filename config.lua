@@ -722,17 +722,30 @@ end
 
 local function PointIsFound(point)
     if ns.db.found or point.always then return false end
-    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) and not allLootKnown(point.loot, not ns.db.transmog_notable) then
-        return false
+    local found
+    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) then
+        if not allLootKnown(point.loot, not ns.db.transmog_notable) then
+            return false
+        end
+        found = true
     end
-    if point.achievement and not point.achievementNotFound and not isAchieved(point) then
-        return false
+    if point.achievement and not point.achievementNotFound then
+        if not isAchieved(point) then
+            return false
+        end
+        found = true
     end
-    if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
-        return false
+    if point.follower then
+        if not C_Garrison.IsFollowerCollected(point.follower) then
+            return false
+        end
+        found = true
     end
-    if point.quest and not allQuestsComplete(point.quest) then
-        return false
+    if point.quest then
+        if not allQuestsComplete(point.quest) then
+            return false
+        end
+        found = true
     end
     -- the rest are proxies for the actual "found" status:
     if point.inbag and itemInBags(point.inbag) then
@@ -747,10 +760,13 @@ local function PointIsFound(point)
         -- hidden (Draenor treasure maps, so far):
         return true
     end
-    if point.found and ns.conditions.check(point.found) then
-        return true
+    if point.found then
+        if not ns.conditions.check(point.found) then
+            return false
+        end
+        found = true
     end
-    return true
+    return found, found ~= nil -- gets us a true/false/nil found/notfound/unfindable
 end
 
 ns.should_show_point = function(coord, point, currentZone, isMinimap)
@@ -789,37 +805,36 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         return false
     end
 
+    local isFound, isFindable = PointIsFound(point)
     if point.follower then
-        if not ns.db.found and PointIsFound(point) then
+        if not ns.db.found and isFound then
             return false
         end
+    elseif point.npc then
+        -- only npcs that are questless or that have an uncompleted quest
+        if not ns.db.show_npcs then
+            return false
+        end
+        if ns.db.show_npcs_filter == "notable" and not isNotable(point) then
+            -- notable npcs have loot you can use or have an incomplete achievement
+            return false
+        end
+        if
+            (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
+            and point.quest and allQuestsComplete(point.quest)
+        then
+            -- rewarding npcs either have no affiliated quest, or their quest is incomplete
+            if not ns.db.found then
+                return false
+            end
+        end
     else
-        if point.npc then
-            -- only npcs that are questless or that have an uncompleted quest
-            if not ns.db.show_npcs then
-                return false
-            end
-            if ns.db.show_npcs_filter == "notable" and not isNotable(point) then
-                -- notable npcs have loot you can use or have an incomplete achievement
-                return false
-            end
-            if
-                (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
-                and point.quest and allQuestsComplete(point.quest)
-            then
-                -- rewarding npcs either have no affiliated quest, or their quest is incomplete
-                if not ns.db.found then
-                    return false
-                end
-            end
-        else
-            -- Not an NPC, not a follower, must be treasure
-            if not ns.db.show_treasure and (point.loot or point.currency) then
-                return false
-            end
-            if not ns.db.found and PointIsFound(point) then
-                return false
-            end
+        -- Not an NPC, not a follower, must be treasure if it has some sort of loot
+        if not ns.db.show_treasure and (point.loot or point.currency) then
+            return false
+        end
+        if not ns.db.found and isFindable and isFound then
+            return false
         end
     end
     if point.requires_buff and not doTest(GetPlayerAuraBySpellID, point.requires_buff) then
