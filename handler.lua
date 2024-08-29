@@ -888,8 +888,12 @@ local function tooltip_loot(tooltip, item)
     if label and ns.IsCosmeticItem(id) then
         label = TEXT_MODE_A_STRING_VALUE_TYPE:format(label, COSMETIC_COLOR:WrapTextInColorCode(ITEM_COSMETIC))
     end
+    local lr, lg, lb = NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
+    if ns.db.show_npcs_emphasizeNotable and ns.itemIsNotable(item) then
+        lr, lg, lb = 1, 0, 1
+    end
     tooltip:AddDoubleLine(label, quick_texture_markup(icon) .. " " .. link,
-        NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,
+        lr, lg, lb,
         r, g, b
     )
 end
