@@ -109,7 +109,7 @@ do
         end)
         for _, key in ipairs(sorted) do
             local option = args[key]
-            if option.type == "toggle" or option.type == "execute" then
+            if not option.dropdownHidden and (option.type == "toggle" or option.type == "execute") then
                 info.text = option.name
                 info.tooltipTitle = option.desc
                 info.value = key
@@ -280,7 +280,31 @@ function ns.SetupMapOverlay()
             info.text = SHOW
             LibDD:UIDropDownMenu_AddButton(info, level)
 
-            OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, info, level)
+            wipe(info)
+            info.text = "NPCs"
+            info.hasArrow = true
+            info.isNotRadio = true
+            info.notCheckable = nil
+            info.keepShownOnClick = true
+            info.func = function(button)
+                local checked = button.checked
+                local value = button.value
+                if (checked) then
+                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+                else
+                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+                end
+                ns.db[value] = checked
+                ns.HL:Refresh()
+            end
+            info.checked = ns.db.show_npcs
+            info.value = "show_npcs"
+            -- info.isNotRadio = true
+            -- info.keepShownOnClick = true
+            -- info.tooltipOnButton = true
+            LibDD:UIDropDownMenu_AddButton(info, level)
+
+            -- OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, info, level)
             OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args, info, level)
             LibDD:UIDropDownMenu_AddSeparator(level)
 
@@ -406,6 +430,37 @@ function ns.SetupMapOverlay()
             end
             LibDD:UIDropDownMenu_AddButton(info, level)
 
+        elseif level == 2 and L_UIDROPDOWNMENU_MENU_VALUE == "show_npcs" then
+            wipe(info)
+            info.func = function(button, arg1)
+                local checked = button.checked
+                local value = button.value
+                if (checked) then
+                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+                else
+                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+                end
+                ns.db[value] = arg1
+                ns.HL:Refresh()
+            end
+            info.value = "show_npcs_filter"
+            info.keepShownOnClick = false
+
+            info.text = ALL
+            info.arg1 = "all"
+            info.checked = ns.db[info.value] == "all"
+            LibDD:UIDropDownMenu_AddButton(info, level)
+            info.text = "Will drop loot"
+            info.arg1 = "lootable"
+            info.checked = ns.db[info.value] == "lootable"
+            LibDD:UIDropDownMenu_AddButton(info, level)
+            info.text = "Will drop notable loot"
+            info.arg1 = "notable"
+            info.checked = ns.db[info.value] == "notable"
+            LibDD:UIDropDownMenu_AddButton(info, level)
+
+            LibDD:UIDropDownMenu_AddSeparator(level)
+            OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, info, level)
         elseif level == 2 and L_UIDROPDOWNMENU_MENU_VALUE == "settings" then
             wipe(info)
             info.isTitle = true

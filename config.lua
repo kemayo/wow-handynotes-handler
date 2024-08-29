@@ -8,15 +8,13 @@ ns.defaults = {
         show_on_world = true,
         show_on_minimap = false,
         show_npcs = true,
-        show_npcs_onlynotable = false,
+        show_npcs_filter = "lootable", -- [lootable, notable]
         show_npcs_emphasizeNotable = true,
         show_treasure = true,
         show_routes = true,
         upcoming = true,
         found = false,
-        collectablefound = true,
-        achievedfound = true,
-        questfound = true,
+        transmog_notable = true,
         transmog_specific = true, -- consider whether you know the appearance from *this* item specifically
         icon_scale = 1.0,
         icon_alpha = 1.0,
@@ -136,13 +134,20 @@ ns.options = {
                                 show_npcs = {
                                     type = "toggle",
                                     name = "Show NPCs",
-                                    desc = "Show rare NPCs to be killed, generally for items or achievements",
+                                    desc = "Show rare NPCs, generally to be killed for items or achievements",
                                     order = 10,
+                                    dropdownHidden = true,
                                 },
-                                show_npcs_onlynotable = {
-                                    type = "toggle",
-                                    name = "Only show notable NPCs",
-                                    desc = "Only show the NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys",
+                                show_npcs_filter = {
+                                    type = "select",
+                                    name = "Filter",
+                                    desc = "Show rare NPCs, generally to be killed for items or achievements",
+                                    values = {
+                                        all = ALL,
+                                        lootable = "Will drop loot",
+                                        notable = "Will drop notable loot",
+                                    },
+                                    sorting = {"all", "lootable", "notable"},
                                     order = 20,
                                 },
                                 show_npcs_emphasizeNotable = {
@@ -157,7 +162,7 @@ ns.options = {
                         },
                         show_treasure = {
                             type = "toggle",
-                            name = "Show treasure",
+                            name = "Treasure",
                             desc = "Show treasure that can be looted",
                             order = 20,
                         },
@@ -187,24 +192,6 @@ ns.options = {
                             name = "Show found",
                             desc = "Show waypoints for items you've already found?",
                             order = 20,
-                        },
-                        achievedfound = {
-                            type = "toggle",
-                            name = "Count achievement-complete as found",
-                            desc = "For nodes which are repeatable on a daily quest *and* tied to an achievement, only consider the achievement",
-                            order = 21,
-                        },
-                        collectablefound = {
-                            type = "toggle",
-                            name = "Count collectables as found",
-                            desc = "For account-level items like mounts, pets, and toys, count them being known as this being found",
-                            order = 22,
-                        },
-                        questfound = {
-                            type = "toggle",
-                            name = "Count tracking quest as found",
-                            desc = "Lots of things have a hidden quest that tracks whether you've looted them this day / week /ever and thus whether you can loot them again",
-                            order = 23,
                         },
                     },
                 },
@@ -271,6 +258,12 @@ ns.options = {
                             name = "Transmog exact items",
                             desc = "For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance",
                             order = 45,
+                        },
+                        transmog_notable = {
+                            type = "toggle",
+                            name = "Notable transmog?",
+                            desc = "Count unlearned transmogrification appearances as notable loot",
+                            order = 50,
                         },
                     },
                     order = 50,
@@ -569,7 +562,7 @@ ns.itemRestricted = function(item)
     -- TODO: profession recipes
     return false
 end
-ns.itemIsKnowable = function(item)
+ns.itemIsKnowable = function(item, notransmog)
     if ns.CLASSIC then return false end
     if type(item) == "table" then
         if ns.itemRestricted(item) then
@@ -581,17 +574,14 @@ ns.itemIsKnowable = function(item)
                 return bit.band(info.classMask, ns.playerClassMask) == ns.playerClassMask
             end
         end
-        return (item.toy or item.mount or item.pet or item.quest or item.questComplete or item.set or item.spell or CanLearnAppearance(item[1]))
+        return (item.toy or item.mount or item.pet or item.quest or item.questComplete or item.set or item.spell or (not notransmog and CanLearnAppearance(item[1])))
     end
-    return CanLearnAppearance(item)
+    return not notransmog and CanLearnAppearance(item)
 end
-ns.itemIsKnown = function(item)
+ns.itemIsKnown = function(item, notransmog)
     -- returns true/false/nil for yes/no/not-knowable
     if ns.CLASSIC then return GetItemCount(ns.lootitem(item), true) > 0 end
     if type(item) == "table" then
-        -- TODO: could arguably do transmog here, too. Since we're mostly
-        -- considering soulbound things, the restrictions on seeing appearances
-        -- known cross-armor-type wouldn't really matter...
         if item.toy then return PlayerHasToy(item[1]) end
         if item.mount then return PlayerHasMount(item[1], item.mount) end
         if item.pet then return PlayerHasPet(item[1], item.pet) end
@@ -618,16 +608,16 @@ ns.itemIsKnown = function(item)
             end
             return false
         end
-        if CanLearnAppearance(item[1]) then return HasAppearance(item[1], ns.db.transmog_specific) end
-    elseif CanLearnAppearance(item) then
+        if not notransmog and CanLearnAppearance(item[1]) then return HasAppearance(item[1], ns.db.transmog_specific) end
+    elseif not notransmog and CanLearnAppearance(item) then
         return HasAppearance(item, ns.db.transmog_specific)
     end
 end
 local hasKnowableLoot = testMaker(ns.itemIsKnowable, doTestAny)
-local allLootKnown = testMaker(function(item)
+local allLootKnown = testMaker(function(item, notransmog)
     -- This returns true if all loot is known-or-unknowable
     -- If the "no knowable loot" case matters this should be gated behind hasKnowableLoot
-    local known = ns.itemIsKnown(item)
+    local known = ns.itemIsKnown(item, notransmog)
     if known == nil then
         return true
     end
@@ -647,14 +637,17 @@ local function isAchieved(point)
     end
     return true
 end
-local function isNotable(point)
+local function isNotable(point, lootable)
     -- A point is notable if it has loot you can use, or is tied to an
-    -- achievement you can still earn. It ignores quest-completion, because
-    -- repeatable mobs are a nightmare here.
+    -- achievement you can still earn
+    if lootable and point.quest and allQuestsComplete(point.quest) then
+        -- asked for only notable points that are currently lootable, which means questless or quest-incomplete
+        return false
+    end
     if point.achievement and not isAchieved(point) then
         return true
     end
-    if point.loot and hasKnowableLoot(point.loot) and not allLootKnown(point.loot) then
+    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) and not allLootKnown(point.loot, not ns.db.transmog_notable) then
         return true
     end
     if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
@@ -662,28 +655,6 @@ local function isNotable(point)
     end
 end
 ns.PointIsNotable = isNotable
-local function everythingFound(point)
-    local ret
-    if ns.db.collectablefound and point.loot and hasKnowableLoot(point.loot) then
-        if not allLootKnown(point.loot) then
-            return false
-        end
-        ret = true
-    end
-    if (ns.db.achievedfound or not point.quest) and point.achievement and not point.achievementNotFound then
-        if not isAchieved(point) then
-            return false
-        end
-        ret = true
-    end
-    if point.follower then
-        if not C_Garrison.IsFollowerCollected(point.follower) then
-            return false
-        end
-        ret = true
-    end
-    return ret
-end
 
 local zoneHidden
 zoneHidden = function(uiMapID)
@@ -749,6 +720,39 @@ local function showOnMapType(point, uiMapID, isMinimap)
     return ns.db.show_on_world
 end
 
+local function PointIsFound(point)
+    if ns.db.found or point.always then return false end
+    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) and not allLootKnown(point.loot, not ns.db.transmog_notable) then
+        return false
+    end
+    if point.achievement and not point.achievementNotFound and not isAchieved(point) then
+        return false
+    end
+    if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
+        return false
+    end
+    if point.quest and not allQuestsComplete(point.quest) then
+        return false
+    end
+    -- the rest are proxies for the actual "found" status:
+    if point.inbag and itemInBags(point.inbag) then
+        return true
+    end
+    if point.onquest and C_QuestLog.IsOnQuest(type(point.onquest) == "number" and point.onquest or point.quest) then
+        return true
+    end
+    if point.hide_quest and C_QuestLog.IsQuestFlaggedCompleted(point.hide_quest) then
+        -- This is distinct from point.quest as it's supposed to be for
+        -- other trackers that make the point not _complete_ but still
+        -- hidden (Draenor treasure maps, so far):
+        return true
+    end
+    if point.found and ns.conditions.check(point.found) then
+        return true
+    end
+    return true
+end
+
 ns.should_show_point = function(coord, point, currentZone, isMinimap)
     if not coord or coord < 0 then return false end
     if not showOnMapType(point, currentZone, isMinimap) then
@@ -784,42 +788,36 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
     if point.faction and point.faction ~= ns.playerFaction then
         return false
     end
-    if not ns.db.found and not point.always then
-        if everythingFound(point) == true then
+
+    if point.follower then
+        if not ns.db.found and PointIsFound(point) then
             return false
         end
-        if ns.db.questfound and point.quest and allQuestsComplete(point.quest) then
-            return false
-        end
-        -- the rest are proxies for the actual "found" status:
-        if point.inbag and itemInBags(point.inbag) then
-            return false
-        end
-        if point.onquest and C_QuestLog.IsOnQuest(type(point.onquest) == "number" and point.onquest or point.quest) then
-            return false
-        end
-        if point.hide_quest and C_QuestLog.IsQuestFlaggedCompleted(point.hide_quest) then
-            -- This is distinct from point.quest as it's supposed to be for
-            -- other trackers that make the point not _complete_ but still
-            -- hidden (Draenor treasure maps, so far):
-            return false
-        end
-        if point.found and ns.conditions.check(point.found) then
-            return false
-        end
-    end
-    if not point.follower then
+    else
         if point.npc then
+            -- only npcs that are questless or that have an uncompleted quest
             if not ns.db.show_npcs then
                 return false
             end
-            if ns.db.show_npcs_onlynotable and not isNotable(point) then
-                -- Only show "notable" npcs, which we define as "has loot you can use or has an achievement"
+            if ns.db.show_npcs_filter == "notable" and not isNotable(point) then
+                -- notable npcs have loot you can use or have an incomplete achievement
                 return false
+            end
+            if
+                (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
+                and point.quest and allQuestsComplete(point.quest)
+            then
+                -- rewarding npcs either have no affiliated quest, or their quest is incomplete
+                if not ns.db.found then
+                    return false
+                end
             end
         else
             -- Not an NPC, not a follower, must be treasure
-            if not ns.db.show_treasure and point.loot then
+            if not ns.db.show_treasure and (point.loot or point.currency) then
+                return false
+            end
+            if not ns.db.found and PointIsFound(point) then
                 return false
             end
         end

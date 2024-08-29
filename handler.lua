@@ -690,7 +690,7 @@ local function work_out_texture(point)
             notable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
             npc_texture = atlas_texture("DungeonSkull", 1)
         end
-        if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point) then
+        if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point, true) then
             return notable_npc_texture
         else
             return npc_texture
@@ -1469,6 +1469,12 @@ function HL:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New(myname.."DB", ns.defaults)
     ns.db = self.db.profile
     ns.hidden = self.db.char.hidden
+    -- Quick upgrade-cycle:
+    if ns.db.show_npcs_onlynotable then
+        ns.db.show_npcs_filter = "notable"
+        ns.db.show_npcs_onlynotable = nil
+    end
+
     -- Initialize our database with HandyNotes
     HandyNotes:RegisterPluginDB(myname:gsub("HandyNotes_", ""), HLHandler, ns.options)
 
