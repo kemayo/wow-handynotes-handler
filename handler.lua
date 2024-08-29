@@ -1442,7 +1442,7 @@ do
     end
     function HLHandler:GetNodes2(uiMapID, minimap)
         -- Debug("GetNodes2", uiMapID, minimap)
-        for _, cache in ipairs(ns.run_caches) do
+        for _, cache in pairs(ns.run_caches) do
             table.wipe(cache)
         end
         currentZone = uiMapID
