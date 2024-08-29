@@ -548,6 +548,26 @@ end
 local function PlayerHasPet(itemid, petid)
     return (C_PetJournal.GetNumCollectedInfo(petid) > 0)
 end
+ns.itemMightDrop = function(item)
+    -- We think an item might drop if it either has no spec information, or
+    -- returns any spec information at all (because the game will only give
+    -- specs for the current character)
+    local id = ns.lootitem(item)
+    -- can't pass in a reusable table for the second argument because it changes the no-data case
+    local specTable = C_Item.GetItemSpecInfo(id)
+    -- Some cosmetic items seem to be flagged as not dropping for any spec. I
+    -- could only confirm this for some cosmetic back items but let's play it
+    -- safe and say that any cosmetic item can drop regardless of what the
+    -- spec info says...
+    if specTable and #specTable == 0 and not ns.IsCosmeticItem(id) then
+        return false
+    end
+    -- then catch covenants / classes / etc
+    if ns.itemRestricted(item) then
+        return false
+    end
+    return true
+end
 ns.itemRestricted = function(item)
     if type(item) ~= "table" then return false end
     if item.covenant and item.covenant ~= C_Covenants.GetActiveCovenantID() then
@@ -562,8 +582,11 @@ ns.itemRestricted = function(item)
     -- TODO: profession recipes
     return false
 end
-ns.itemIsKnowable = function(item, notransmog)
+ns.itemIsKnowable = function(item, notransmog, droppable)
     if ns.CLASSIC then return false end
+    if droppable and not ns.itemMightDrop(item) then
+        return false
+    end
     if type(item) == "table" then
         if ns.itemRestricted(item) then
             return false
@@ -613,10 +636,19 @@ ns.itemIsKnown = function(item, notransmog)
         return HasAppearance(item, ns.db.transmog_specific)
     end
 end
+ns.itemIsNotable = function(item)
+    return ns.itemMightDrop(item) and
+        ns.itemIsKnowable(item, not ns.db.transmog_notable) and
+        not ns.itemIsKnown(item)
+end
+local hasNotableLoot = testMaker(ns.itemIsNotable, doTestAny)
 local hasKnowableLoot = testMaker(ns.itemIsKnowable, doTestAny)
-local allLootKnown = testMaker(function(item, notransmog)
+local allLootKnown = testMaker(function(item, notransmog, droppable)
     -- This returns true if all loot is known-or-unknowable
     -- If the "no knowable loot" case matters this should be gated behind hasKnowableLoot
+    if droppable and not ns.itemMightDrop(item) then
+        return false
+    end
     local known = ns.itemIsKnown(item, notransmog)
     if known == nil then
         return true
@@ -641,13 +673,14 @@ local function isNotable(point, lootable)
     -- A point is notable if it has loot you can use, or is tied to an
     -- achievement you can still earn
     if lootable and point.quest and allQuestsComplete(point.quest) then
-        -- asked for only notable points that are currently lootable, which means questless or quest-incomplete
+        -- asked for only notable points that are currently lootable, which
+        -- means questless or quest-incomplete
         return false
     end
     if point.achievement and not isAchieved(point) then
         return true
     end
-    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) and not allLootKnown(point.loot, not ns.db.transmog_notable) then
+    if point.loot and hasNotableLoot(point.loot) then
         return true
     end
     if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
@@ -723,7 +756,8 @@ end
 local function PointIsFound(point)
     if ns.db.found or point.always then return false end
     local found
-    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable) then
+    if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable, true) then
+        -- has knowable loot that might drop
         if not allLootKnown(point.loot, not ns.db.transmog_notable) then
             return false
         end
