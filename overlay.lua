@@ -246,6 +246,11 @@ function ns.SetupMapOverlay()
         end
     end
     frame.OnMouseDown = function(self, button)
+        if IsAltKeyDown() then
+            -- undiscoverable debug helper:
+            ns.db.found = not ns.db.found
+            return ns.HL:Refresh()
+        end
         self.Icon:SetPoint("TOPLEFT", 8, -8);
         self.IconOverlay:Show()
 
