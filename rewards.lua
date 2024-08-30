@@ -50,7 +50,10 @@ ns.rewards.Reward = ns.Class{
         end
         return result
     end,
-    Notable = function(self) return nil end,
+    Notable = function(self)
+        -- Is it knowable and not obtained?
+        return self:MightDrop() and self:Obtained() == false
+    end,
     Available = function(self)
         if self.requires and not ns.conditions.check(self.requires) then
             return false
@@ -157,6 +160,7 @@ ns.rewards.Item = ns.Class{
     end,
     Notable = function(self)
         -- notable if: it might drop, its obtainability is knowable, and it hasn't been obtained
+        -- (close override of the parent, to add the transmog preference)
         return self:MightDrop() and
             self:Obtained(false, ns.db.transmog_notable) == false
     end,
