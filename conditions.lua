@@ -4,6 +4,7 @@ local Class = ns.Class
 local GetPlayerAuraBySpellID = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID or _G.GetPlayerAuraBySpellID
 
 ns.conditions = {}
+-- _G.COND = ns.conditions
 
 --[[
 API:

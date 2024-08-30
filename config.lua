@@ -489,6 +489,7 @@ local function CanLearnAppearance(itemLinkOrID)
     end
     return canLearnCache[itemID]
 end
+ns.CanLearnAppearance = CanLearnAppearance
 local hasAppearanceCache = {}
 ns.run_caches.appearances = {}
 local function HasAppearance(itemLinkOrID, specific)
@@ -536,6 +537,7 @@ local function HasAppearance(itemLinkOrID, specific)
     ns.run_caches.appearances[itemID] = false
     return false
 end
+ns.HasAppearance = HasAppearance
 
 local function PlayerHasMount(itemid, mountid)
     if not _G.C_MountJournal then return false end
@@ -548,112 +550,24 @@ end
 local function PlayerHasPet(itemid, petid)
     return (C_PetJournal.GetNumCollectedInfo(petid) > 0)
 end
-ns.itemMightDrop = function(item)
-    -- We think an item might drop if it either has no spec information, or
-    -- returns any spec information at all (because the game will only give
-    -- specs for the current character)
-    local id = ns.lootitem(item)
-    -- can't pass in a reusable table for the second argument because it changes the no-data case
-    local specTable = C_Item.GetItemSpecInfo(id)
-    -- Some cosmetic items seem to be flagged as not dropping for any spec. I
-    -- could only confirm this for some cosmetic back items but let's play it
-    -- safe and say that any cosmetic item can drop regardless of what the
-    -- spec info says...
-    if specTable and #specTable == 0 and not ns.IsCosmeticItem(id) then
-        return false
-    end
-    -- then catch covenants / classes / etc
-    if ns.itemRestricted(item) then
-        return false
-    end
-    return true
-end
-ns.itemRestricted = function(item)
-    if type(item) ~= "table" then return false end
-    if item.covenant and item.covenant ~= C_Covenants.GetActiveCovenantID() then
-        return true
-    end
-    if item.class and ns.playerClass ~= item.class then
-        return true
-    end
-    if item.requires and not ns.conditions.check(item.requires) then
-        return true
-    end
-    -- TODO: profession recipes
-    return false
-end
-ns.itemIsKnowable = function(item, notransmog, droppable)
+local hasNotableLoot = testMaker(function(item)
+    return item:Notable()
+end, doTestAny)
+local hasKnowableLoot = testMaker(function(item, notransmog, droppable)
     if ns.CLASSIC then return false end
-    if droppable and not ns.itemMightDrop(item) then
+    if droppable and not item:MightDrop() then
         return false
     end
-    if type(item) == "table" then
-        if ns.itemRestricted(item) then
-            return false
-        end
-        if item.set and ns.playerClassMask then
-            local info = C_TransmogSets.GetSetInfo(item.set)
-            if info and info.classMask then
-                return bit.band(info.classMask, ns.playerClassMask) == ns.playerClassMask
-            end
-        end
-        return (item.toy or item.mount or item.pet or item.quest or item.questComplete or item.set or item.spell or (not notransmog and CanLearnAppearance(item[1])))
-    end
-    return not notransmog and CanLearnAppearance(item)
-end
-ns.itemIsKnown = function(item, notransmog)
-    -- returns true/false/nil for yes/no/not-knowable
-    if ns.CLASSIC then return GetItemCount(ns.lootitem(item), true) > 0 end
-    if type(item) == "table" then
-        if item.toy then return PlayerHasToy(item[1]) end
-        if item.mount then return PlayerHasMount(item[1], item.mount) end
-        if item.pet then return PlayerHasPet(item[1], item.pet) end
-        if item.quest then return C_QuestLog.IsQuestFlaggedCompleted(item.quest) or C_QuestLog.IsOnQuest(item.quest) end
-        if item.questComplete then return C_QuestLog.IsQuestFlaggedCompleted(item.questComplete) end
-        if item.set then
-            local info = C_TransmogSets.GetSetInfo(item.set)
-            if info then
-                if info.collected then return true end
-                -- we want to return nil for sets the current class can't learn:
-                if info.classMask and bit.band(info.classMask, ns.playerClassMask) == ns.playerClassMask then return false end
-            end
-            return false
-        end
-        if item.spell then
-            -- can't use the tradeskill functions + the recipe-spell because that data's only available after the tradeskill window has been opened...
-            local info = C_TooltipInfo.GetItemByID(item[1])
-            if info then
-                for _, line in ipairs(info.lines) do
-                    if line.leftText and string.match(line.leftText, _G.ITEM_SPELL_KNOWN) then
-                        return true
-                    end
-                end
-            end
-            return false
-        end
-        if not notransmog and CanLearnAppearance(item[1]) then return HasAppearance(item[1], ns.db.transmog_specific) end
-    elseif not notransmog and CanLearnAppearance(item) then
-        return HasAppearance(item, ns.db.transmog_specific)
-    end
-end
-ns.itemIsNotable = function(item)
-    return ns.itemMightDrop(item) and
-        ns.itemIsKnowable(item, not ns.db.transmog_notable) and
-        not ns.itemIsKnown(item)
-end
-local hasNotableLoot = testMaker(ns.itemIsNotable, doTestAny)
-local hasKnowableLoot = testMaker(ns.itemIsKnowable, doTestAny)
+    return item:Obtained(nil, not notransmog) ~= nil
+end, doTestAny)
 local allLootKnown = testMaker(function(item, notransmog, droppable)
     -- This returns true if all loot is known-or-unknowable
     -- If the "no knowable loot" case matters this should be gated behind hasKnowableLoot
-    if droppable and not ns.itemMightDrop(item) then
+    if droppable and not item:MightDrop() then
         return false
     end
-    local known = ns.itemIsKnown(item, notransmog)
-    if known == nil then
-        return true
-    end
-    return known
+    -- true-or-nil means known or not-knowable
+    return item:Obtained(nil, not notransmog) ~= false
 end)
 
 local function isAchieved(point)
