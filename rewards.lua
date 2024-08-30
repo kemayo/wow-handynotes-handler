@@ -270,3 +270,34 @@ ns.rewards.Set = ns.Class{
         return self:super("ObtainedTag")
     end,
 }
+
+ns.rewards.Currency = ns.Class{
+    __classname = "Currency",
+    __parent = ns.rewards.Reward,
+    Initialize = function(self, id, amount, ...)
+        self:super("Initialize", id, ...)
+        self.amount = amount
+    end,
+    Name = function(self, color)
+        local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id, self.amount)
+        if info and info.name then
+            local name = color and ITEM_QUALITY_COLORS[info.quality].color:WrapTextInColorCode(info.name) or info.name
+            return (self.amount and self.amount > 1) and
+                ("%s x %d"):format(name, self.amount) or
+                name
+        end
+        return self:Super("Name", color)
+    end,
+    Icon = function(self)
+        local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id)
+        if info and info.icon then
+            return info.icon
+        end
+    end,
+    TooltipLabel = function(self)
+        if C_CurrencyInfo.GetFactionGrantedByCurrency(self.id) then
+            return REPUTATION
+        end
+        return CURRENCY
+    end,
+}
