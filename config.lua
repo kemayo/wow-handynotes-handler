@@ -14,8 +14,15 @@ ns.defaults = {
         show_routes = true,
         upcoming = true,
         found = false,
+        -- notability!
+        achievement_notable = true,
+        mount_notable = true,
+        toy_notable = true,
+        pet_notable = true,
         transmog_notable = true,
+        quest_notable = true,
         transmog_specific = true, -- consider whether you know the appearance from *this* item specifically
+        -- icon stuff
         icon_scale = 1.0,
         icon_alpha = 1.0,
         icon_item = false,
@@ -228,6 +235,51 @@ ns.options = {
                     },
                     order = 25,
                 },
+                notable = {
+                    type = "group",
+                    name = "What's notable?",
+                    desc = "Define exactly what counts as being \"notable\"",
+                    inline = true,
+                    args = {
+                        achievement_notable = {
+                            type = "toggle",
+                            name = TRANSMOG_SOURCE_5,
+                            desc = "Count unlearned achievement-progress as notable",
+                            order = 10,
+                        },
+                        mount_notable = {
+                            type = "toggle",
+                            name = MOUNT,
+                            desc = "Count unlearned mounts as notable loot",
+                            order = 10,
+                        },
+                        toy_notable = {
+                            type = "toggle",
+                            name = TOY,
+                            desc = "Count unlearned toys as notable loot",
+                            order = 20,
+                        },
+                        pet_notable = {
+                            type = "toggle",
+                            name = TOOLTIP_BATTLE_PET,
+                            desc = "Count uncaught pets as notable loot",
+                            order = 30,
+                        },
+                        transmog_notable = {
+                            type = "toggle",
+                            name = "Transmog",
+                            desc = "Count unlearned transmogrification appearances as notable loot",
+                            order = 40,
+                        },
+                        quest_notable = {
+                            type = "toggle",
+                            name = "Quest-attached",
+                            desc = "Count items with attached uncompleted quests as notable loot (this includes a lot of \"learnable\" items, weekly reputation drops, etc)",
+                            order = 50,
+                        },
+                    },
+                    order = 40,
+                },
                 fiddly = {
                     type = "group",
                     name = "Fiddly details",
@@ -258,12 +310,6 @@ ns.options = {
                             name = "Transmog exact items",
                             desc = "For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance",
                             order = 45,
-                        },
-                        transmog_notable = {
-                            type = "toggle",
-                            name = "Notable transmog?",
-                            desc = "Count unlearned transmogrification appearances as notable loot",
-                            order = 50,
                         },
                     },
                     order = 50,
@@ -591,7 +637,7 @@ local function isNotable(point, lootable)
         -- means questless or quest-incomplete
         return false
     end
-    if point.achievement and not isAchieved(point) then
+    if ns.db.achievement_notable and point.achievement and not isAchieved(point) then
         return true
     end
     if point.loot and hasNotableLoot(point.loot) then

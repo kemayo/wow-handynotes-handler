@@ -52,7 +52,7 @@ ns.rewards.Reward = ns.Class{
     end,
     Notable = function(self)
         -- Is it knowable and not obtained?
-        return self:MightDrop() and self:Obtained() == false
+        return ns.db.quest_notable and self:MightDrop() and self:Obtained() == false
     end,
     Available = function(self)
         if self.requires and not ns.conditions.check(self.requires) then
@@ -138,7 +138,7 @@ ns.rewards.Item = ns.Class{
         return self:super("TooltipLabelColor")
     end,
     Icon = function(self) return (select(5, C_Item.GetItemInfoInstant(self.id))) end,
-    Obtained = function(self, for_tooltip, include_transmog)
+    Obtained = function(self, for_tooltip)
         local result = self:super("Obtained", for_tooltip)
         if self.spell then
             -- can't use the tradeskill functions + the recipe-spell because that data's only available after the tradeskill window has been opened...
@@ -153,7 +153,7 @@ ns.rewards.Item = ns.Class{
             result = false
         end
         if ns.CLASSIC then return result and GetItemCount(self.id, true) > 0 end
-        if (for_tooltip or include_transmog) and ns.CanLearnAppearance(self.id) then
+        if (for_tooltip or ns.db.transmog_notable) and ns.CanLearnAppearance(self.id) then
             return ns.HasAppearance(self.id, ns.db.transmog_specific)
         end
         return result
@@ -161,8 +161,9 @@ ns.rewards.Item = ns.Class{
     Notable = function(self)
         -- notable if: it might drop, its obtainability is knowable, and it hasn't been obtained
         -- (close override of the parent, to add the transmog preference)
-        return self:MightDrop() and
-            self:Obtained(false, ns.db.transmog_notable) == false
+        return ns.db.transmog_notable and
+            self:MightDrop() and
+            self:Obtained() == false
     end,
     MightDrop = function(self)
         -- We think an item might drop if it either has no spec information, or
@@ -195,6 +196,7 @@ ns.rewards.Toy = ns.Class{
         if ns.CLASSIC then return GetItemCount(self.id, true) > 0 end
         return self:super("Obtained", ...) ~= false and PlayerHasToy(self.id)
     end,
+    Notable = function(self, ...) return ns.db.toy_notable and self:super("Notable", ...) end,
 }
 ns.rewards.Mount = ns.Class{
     __classname = "Mount",
@@ -213,6 +215,7 @@ ns.rewards.Mount = ns.Class{
         end
         return self.mountid and (select(11, C_MountJournal.GetMountInfoByID(self.mountid)))
     end,
+    Notable = function(self, ...) return ns.db.mount_notable and self:super("Notable", ...) end,
 }
 ns.rewards.Pet = ns.Class{
     __classname = "Pet",
@@ -230,6 +233,7 @@ ns.rewards.Pet = ns.Class{
         end
         return self.petid and C_PetJournal.GetNumCollectedInfo(self.petid) > 0
     end,
+    Notable = function(self, ...) return ns.db.pet_notable and self:super("Notable", ...) end,
 }
 ns.rewards.Set = ns.Class{
     __classname = "Set",
