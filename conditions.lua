@@ -39,6 +39,10 @@ local Negated = function(parent) return {
     Matched = function(self) return not parent.Matched(self) end,
 } end
 
+ns.conditions._Condition = Condition
+ns.conditions._RankedCondition = RankedCondition
+ns.conditions._Negated = Negated
+
 ns.conditions.Achievement = Class{
     __parent = Condition,
     type = 'achievement',
