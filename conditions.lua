@@ -348,15 +348,16 @@ do
     end
 
     local t = {}
-    ns.conditions.summarize = function(conditions)
+    ns.conditions.summarize = function(conditions, short)
         -- ERR_USE_LOCKED_WITH_ITEM_S
+        local fs = short and "%s" or ERR_USE_LOCKED_WITH_ITEM_S
         table.wipe(t)
         if type(conditions) == "table" and not conditions.__parent then
             for _, condition in ipairs(conditions) do
                 table.insert(t, condition:Label())
             end
-            return ERR_USE_LOCKED_WITH_ITEM_S:format(string.join(', ', unpack(t)))
+            return fs:format(string.join(', ', unpack(t)))
         end
-        return ERR_USE_LOCKED_WITH_ITEM_S:format(conditions:Label())
+        return fs:format(conditions:Label())
     end
 end
