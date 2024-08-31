@@ -853,7 +853,11 @@ local get_point_progress = function(point)
 end
 
 local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantityString)
-    local criteria, _, complete, _, _, _, flags, _, quantityString = ns.GetCriteria(achievement, criteriaid) -- include hidden
+    local criteria, _, complete, _, _, completedBy, flags, _, quantityString = ns.GetCriteria(achievement, criteriaid) -- include hidden
+    -- by this current character, or by any character if the setting says it's okay
+    if completedBy and not complete then
+        name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GREEN_FONT_COLOR:WrapTextInColorCode(completedBy))
+    end
     if quantityString and not ignore_quantityString then
         local is_progressbar = bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR
         local label = (criteria and #criteria > 0 and not is_progressbar) and criteria or PVP_PROGRESS_REWARDS_HEADER
@@ -910,7 +914,11 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddDoubleLine(CURRENCY, name or point.currency)
     end
     if point.achievement then
-        local _, name, _, complete = GetAchievementInfo(point.achievement)
+        local _, name, _, anyComplete, _, _, _, _, _, _, _, _, completedByMe, earnedBy = GetAchievementInfo(point.achievement)
+        local complete = completedByMe or (ns.db.alts_achievements_count and anyComplete)
+        if anyComplete and not complete then
+            name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GREEN_FONT_COLOR:WrapTextInColorCode(earnedBy or ALT_KEY_TEXT))
+        end
         tooltip:AddDoubleLine(BATTLE_PET_SOURCE_6, name or point.achievement,
             nil, nil, nil,
             complete and 0 or 1, complete and 1 or 0, 0

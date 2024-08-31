@@ -14,6 +14,7 @@ ns.defaults = {
         show_routes = true,
         upcoming = true,
         found = false,
+        alts_achievements_count = false,
         -- notability!
         achievement_notable = true,
         mount_notable = true,
@@ -311,6 +312,12 @@ ns.options = {
                             desc = "For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance",
                             order = 45,
                         },
+                        alts_achievements_count = {
+                            type = "toggle",
+                            name = "Alts achievements count",
+                            desc = "Consider achievement-related things done if you have it completed on another character already. Lots of achievement criteria are warband-shared, in which case this setting won't make a difference.",
+                            order = 55,
+                        },
                     },
                     order = 50,
                 },
@@ -471,10 +478,8 @@ ns.allQuestsComplete = allQuestsComplete
 local temp_criteria = {}
 local allCriteriaComplete = testMaker(function(criteria, achievement)
     local _, _, completed, _, _, completedBy = ns.GetCriteria(achievement, criteria)
-    if not (completed and (not completedBy or completedBy == ns.playerName)) then
-        return false
-    end
-    return true
+    -- by this current character, or by any character if the setting says it's okay
+    return completed and (not completedBy or completedBy == ns.playerName or ns.db.alts_achievements_count)
 end, function(test, input, achievement, ...)
     if input == true then
         wipe(temp_criteria)
@@ -618,16 +623,10 @@ end)
 
 local function isAchieved(point)
     if point.criteria and point.criteria ~= true then
-        if not allCriteriaComplete(point.criteria, point.achievement) then
-            return false
-        end
-    else
-        local completedByMe = select(13, GetAchievementInfo(point.achievement))
-        if not completedByMe then
-            return false
-        end
+        return allCriteriaComplete(point.criteria, point.achievement)
     end
-    return true
+    local _, _, _, complete, _, _, _, _, _, _, _, _, completedByMe = GetAchievementInfo(point.achievement)
+    return completedByMe or (ns.db.alts_achievements_count and complete)
 end
 local function isNotable(point, lootable)
     -- A point is notable if it has loot you can use, or is tied to an
