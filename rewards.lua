@@ -40,19 +40,23 @@ ns.rewards.Reward = ns.Class{
             if C_QuestLog.IsQuestFlaggedCompleted(self.quest) or C_QuestLog.IsOnQuest(self.quest) then
                 return true
             end
-            result = false
+            if for_tooltip or ns.db.quest_notable then
+                result = false
+            end
         end
         if self.questComplete then
             if C_QuestLog.IsQuestFlaggedCompleted(self.questComplete) then
                 return true
             end
-            result = false
+            if for_tooltip or ns.db.quest_notable then
+                result = false
+            end
         end
         return result
     end,
     Notable = function(self)
         -- Is it knowable and not obtained?
-        return ns.db.quest_notable and self:MightDrop() and self:Obtained() == false
+        return self:MightDrop() and (self:Obtained() == false)
     end,
     Available = function(self)
         if self.requires and not ns.conditions.check(self.requires) then
@@ -98,7 +102,12 @@ ns.rewards.Reward = ns.Class{
         return NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
     end,
     TooltipLabel = function(self) return UNKNOWN end,
-    TooltipLabelColor = function(self) return NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b end,
+    TooltipLabelColor = function(self)
+        if ns.db.show_npcs_emphasizeNotable and self:Notable() then
+            return 1, 0, 1
+        end
+        return NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
+    end,
     ObtainedTag = function(self)
         local known = self:Obtained(true) -- for_tooltip
         if known == nil then return end
@@ -131,12 +140,6 @@ ns.rewards.Item = ns.Class{
         end
         return label
     end,
-    TooltipLabelColor = function(self)
-        if ns.db.show_npcs_emphasizeNotable and self:Notable() then
-            return 1, 0, 1
-        end
-        return self:super("TooltipLabelColor")
-    end,
     Icon = function(self) return (select(5, C_Item.GetItemInfoInstant(self.id))) end,
     Obtained = function(self, for_tooltip)
         local result = self:super("Obtained", for_tooltip)
@@ -158,13 +161,12 @@ ns.rewards.Item = ns.Class{
         end
         return result
     end,
-    Notable = function(self)
-        -- notable if: it might drop, its obtainability is knowable, and it hasn't been obtained
-        -- (close override of the parent, to add the transmog preference)
-        return ns.db.transmog_notable and
-            self:MightDrop() and
-            self:Obtained() == false
-    end,
+    -- Notable = function(self)
+    --     -- notable if: it might drop, its obtainability is knowable, and it hasn't been obtained
+    --     -- (close override of the parent, to add the transmog preference)
+    --     return self:super("Notable") or
+    --         (self:MightDrop() and self:Obtained() == false)
+    -- end,
     MightDrop = function(self)
         -- We think an item might drop if it either has no spec information, or
         -- returns any spec information at all (because the game will only give
