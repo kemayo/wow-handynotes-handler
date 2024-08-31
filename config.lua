@@ -11,6 +11,8 @@ ns.defaults = {
         show_npcs_filter = "lootable", -- [lootable, notable]
         show_npcs_emphasizeNotable = true,
         show_treasure = true,
+        show_treasure_filter = "lootable", -- [lootable, notable]
+        -- show_treasure_emphasizeNotable = true,
         show_routes = true,
         upcoming = true,
         found = false,
@@ -168,10 +170,38 @@ ns.options = {
                             },
                             order = 10,
                         },
-                        show_treasure = {
-                            type = "toggle",
+                        treasure = {
+                            type = "group",
+                            inline = true,
                             name = "Treasure",
-                            desc = "Show treasure that can be looted",
+                            args = {
+                                show_treasure = {
+                                    type = "toggle",
+                                    name = "Show Treasure",
+                                    desc = "Show treasures that can be found in the world",
+                                    order = 10,
+                                    dropdownHidden = true,
+                                },
+                                show_treasure_filter = {
+                                    type = "select",
+                                    name = "Filter",
+                                    desc = "Show treasures that can be found in the world",
+                                    values = {
+                                        all = ALL,
+                                        lootable = "Will drop loot",
+                                        notable = "Will drop notable loot",
+                                    },
+                                    sorting = {"all", "lootable", "notable"},
+                                    order = 20,
+                                },
+                                -- show_treasure_emphasizeNotable = {
+                                --     type = "toggle",
+                                --     name = "Emphasize notable NPCs",
+                                --     desc = "Put more emphasis on NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys",
+                                --     order = 30,
+                                -- },
+
+                            },
                             order = 20,
                         },
                         unhide = {
@@ -814,21 +844,30 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         end
         if
             (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
-            and point.quest and allQuestsComplete(point.quest)
-        then
             -- rewarding npcs either have no affiliated quest, or their quest is incomplete
-            if not ns.db.found then
-                return false
-            end
+            and isFindable and isFound and not ns.db.found
+        then
+            return false
         end
-    else
+    elseif point.loot or point.currency then
         -- Not an NPC, not a follower, must be treasure if it has some sort of loot
-        if not ns.db.show_treasure and (point.loot or point.currency) then
+        if not ns.db.show_treasure then
             return false
         end
-        if not ns.db.found and isFindable and isFound then
+        if ns.db.show_treasure_filter == "notable" and not isNotable(point) then
+            -- notable npcs have loot you can use or have an incomplete achievement
             return false
         end
+        if
+            (ns.db.show_treasure_filter == "lootable" or ns.db.show_treasure_filter == "notable")
+            -- rewarding treasure either has no affiliated quest, or their quest is incomplete
+            and isFindable and isFound and not ns.db.found
+        then
+            return false
+        end
+    elseif not ns.db.found and isFindable and isFound then
+        -- Other stuff
+        return false
     end
     if point.requires_buff and not doTest(GetPlayerAuraBySpellID, point.requires_buff) then
         return false
