@@ -858,18 +858,18 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
     if completedBy and not complete then
         name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GREEN_FONT_COLOR:WrapTextInColorCode(completedBy))
     end
+    local r, g, b = (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
     if quantityString and not ignore_quantityString then
         local is_progressbar = bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR
         local label = (criteria and #criteria > 0 and not is_progressbar) and criteria or PVP_PROGRESS_REWARDS_HEADER
         tooltip:AddDoubleLine(
             label, quantityString,
-            complete and 0 or 1, complete and 1 or 0, 0,
-            complete and 0 or 1, complete and 1 or 0, 0
+            r, g, b, r, g, b
         )
     else
         tooltip:AddDoubleLine(" ", criteria,
             nil, nil, nil,
-            complete and 0 or 1, complete and 1 or 0, 0
+            r, g, b, r, g, b
         )
     end
 end
@@ -921,7 +921,7 @@ local function handle_tooltip(tooltip, point, skip_label)
         end
         tooltip:AddDoubleLine(BATTLE_PET_SOURCE_6, name or point.achievement,
             nil, nil, nil,
-            complete and 0 or 1, complete and 1 or 0, 0
+            (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
         )
         if point.criteria then
             if point.criteria == true then
@@ -935,7 +935,7 @@ local function handle_tooltip(tooltip, point, skip_label)
                     end
                     tooltip:AddDoubleLine(" ", GENERIC_FRACTION_STRING:format(numComplete, numCriteria),
                         nil, nil, nil,
-                        complete and 0 or 1, complete and 1 or 0, 0
+                        (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
                     )
                 else
                     for criteria=1, numCriteria do
@@ -975,36 +975,39 @@ local function handle_tooltip(tooltip, point, skip_label)
         local data = C_Covenants.GetCovenantData(point.covenant)
         local active = point.covenant == C_Covenants.GetActiveCovenantID()
         local cname = COVENANT_COLORS[point.covenant]:WrapTextInColorCode(data and data.name or ns.covenants[point.covenant])
-        tooltip:AddLine(ITEM_REQ_SKILL:format(cname), active and 0 or 1, active and 1 or 0, 0)
+        tooltip:AddLine(ITEM_REQ_SKILL:format(cname), (active and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB())
     end
     if point.level and point.level > UnitLevel("player") then
-        tooltip:AddLine(ITEM_MIN_LEVEL:format(point.level), 1, 0, 0)
+        tooltip:AddLine(ITEM_MIN_LEVEL:format(point.level), RED_FONT_COLOR:GetRGB())
     end
     if point.hide_before then
         local isHidden = not ns.conditions.check(point.hide_before)
         if isHidden then
-            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, 1, 0, 0)
+            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, RED_FONT_COLOR:GetRGB())
         end
+        local r, g, b = (isHidden and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
         tooltip:AddLine(
             ns.render_string(ns.conditions.summarize(point.hide_before), point),
-            isHidden and 1 or 0, isHidden and 0 or 1, 0, true
+            r, g, b, true
         )
     end
     if point.requires then
         local isHidden = not ns.conditions.check(point.requires)
         if isHidden then
-            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, 1, 0, 0)
+            tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, RED_FONT_COLOR:GetRGB())
         end
+        local r, g, b = (isHidden and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
         tooltip:AddLine(
             ns.render_string(ns.conditions.summarize(point.requires), point),
-            isHidden and 1 or 0, isHidden and 0 or 1, 0, true
+            r, g, b, true
         )
     end
     if point.active then
         local isActive = ns.point_active(point)
+        local r, g, b = (isActive and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
         tooltip:AddLine(
             ns.render_string(point.active.note or ns.conditions.summarize(point.active), point),
-            isActive and 0 or 1, isActive and 1 or 0, 0, true
+            r, g, b, true
         )
     end
 
