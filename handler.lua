@@ -15,9 +15,6 @@ ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 ns.WARBANDS_AVAILABLE = LE_EXPANSION_LEVEL_CURRENT >= (LE_EXPANSION_WAR_WITHIN or math.huge)
 
 local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
-if ns.CLASSIC then
-    ATLAS_CHECK, ATLAS_CROSS = "Tracker-Check", "Objective-Fail"
-end
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
 

@@ -2,9 +2,6 @@ local myname, ns = ...
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
 local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
-if ns.CLASSIC then
-    ATLAS_CHECK, ATLAS_CROSS = "Tracker-Check", "Objective-Fail"
-end
 
 local formatif = function(value, format, fallback)
     if not value then return fallback or "" end
