@@ -828,7 +828,6 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         return false
     end
 
-    local isFound, isFindable = PointIsFound(point)
     if point.follower then
         if not ns.db.found and isFound then
             return false
@@ -845,7 +844,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         if
             (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
             -- rewarding npcs either have no affiliated quest, or their quest is incomplete
-            and isFindable and isFound and not ns.db.found
+            and point.quest and allQuestsComplete(point.quest) and not ns.db.found
         then
             return false
         end
@@ -861,13 +860,17 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         if
             (ns.db.show_treasure_filter == "lootable" or ns.db.show_treasure_filter == "notable")
             -- rewarding treasure either has no affiliated quest, or their quest is incomplete
-            and isFindable and isFound and not ns.db.found
+            and point.quest and allQuestsComplete(point.quest) and not ns.db.found
         then
             return false
         end
-    elseif not ns.db.found and isFindable and isFound then
-        -- Other stuff
-        return false
+    end
+    if not ns.db.found then
+        local isFound = PointIsFound(point)
+        local isFindable = isFound ~= nil
+        if isFindable and isFound then
+            return false
+        end
     end
     if point.requires_buff and not doTest(GetPlayerAuraBySpellID, point.requires_buff) then
         return false
