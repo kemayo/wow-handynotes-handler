@@ -870,12 +870,59 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
         )
     end
 end
+local function tooltip_achievement(tooltip, achievement, criteria)
+    local _, name, _, anyComplete, _, _, _, _, _, _, _, _, completedByMe, earnedBy = GetAchievementInfo(achievement)
+    local complete = completedByMe or (ns.db.alts_achievements_count and anyComplete)
+    if anyComplete and not complete then
+        name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GREEN_FONT_COLOR:WrapTextInColorCode(earnedBy or ALT_KEY_TEXT))
+    end
+    tooltip:AddDoubleLine(BATTLE_PET_SOURCE_6, name or achievement,
+        nil, nil, nil,
+        (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
+    )
+    if criteria then
+        if criteria == true then
+            local numCriteria = GetAchievementNumCriteria(achievement, true) -- include hidden
+            if numCriteria > 10 then
+                local numComplete = 0
+                for criteria=1, numCriteria do
+                    if select(3, GetAchievementCriteriaInfo(achievement, criteria, true)) then
+                        numComplete = numComplete + 1
+                    end
+                end
+                tooltip:AddDoubleLine(" ", GENERIC_FRACTION_STRING:format(numComplete, numCriteria),
+                    nil, nil, nil,
+                    (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
+                )
+            else
+                for criteria=1, numCriteria do
+                    tooltip_criteria(tooltip, achievement, criteria, true)
+                end
+            end
+        elseif type(criteria) == "table" then
+            for _, criteria in ipairs(criteria) do
+                tooltip_criteria(tooltip, achievement, criteria, true)
+            end
+        elseif type(criteria) == "number" then
+            tooltip_criteria(tooltip, achievement, criteria, true)
+        end
+    elseif GetAchievementNumCriteria(achievement) == 1 then
+        tooltip_criteria(tooltip, achievement, 1)
+    end
+end
 local function tooltip_loot(tooltip, item)
     if ns.db.tooltip_charloot and not IsShiftKeyDown() and not item:MightDrop() then
         return true
     end
     item:AddToTooltip(tooltip)
 end
+
+ns.tooltipHelpers = {
+    loot = tooltip_loot,
+    achievement = tooltip_achievement,
+    criteria = tooltip_criteria,
+}
+
 local function handle_tooltip(tooltip, point, skip_label)
     if not point then
         tooltip:SetText(UNKNOWN)
@@ -911,44 +958,7 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddDoubleLine(CURRENCY, name or point.currency)
     end
     if point.achievement then
-        local _, name, _, anyComplete, _, _, _, _, _, _, _, _, completedByMe, earnedBy = GetAchievementInfo(point.achievement)
-        local complete = completedByMe or (ns.db.alts_achievements_count and anyComplete)
-        if anyComplete and not complete then
-            name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GREEN_FONT_COLOR:WrapTextInColorCode(earnedBy or ALT_KEY_TEXT))
-        end
-        tooltip:AddDoubleLine(BATTLE_PET_SOURCE_6, name or point.achievement,
-            nil, nil, nil,
-            (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
-        )
-        if point.criteria then
-            if point.criteria == true then
-                local numCriteria = GetAchievementNumCriteria(point.achievement, true) -- include hidden
-                if numCriteria > 10 then
-                    local numComplete = 0
-                    for criteria=1, numCriteria do
-                        if select(3, GetAchievementCriteriaInfo(point.achievement, criteria, true)) then
-                            numComplete = numComplete + 1
-                        end
-                    end
-                    tooltip:AddDoubleLine(" ", GENERIC_FRACTION_STRING:format(numComplete, numCriteria),
-                        nil, nil, nil,
-                        (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
-                    )
-                else
-                    for criteria=1, numCriteria do
-                        tooltip_criteria(tooltip, point.achievement, criteria, true)
-                    end
-                end
-            elseif type(point.criteria) == "table" then
-                for _, criteria in ipairs(point.criteria) do
-                    tooltip_criteria(tooltip, point.achievement, criteria, true)
-                end
-            elseif type(point.criteria) == "number" then
-                tooltip_criteria(tooltip, point.achievement, point.criteria, true)
-            end
-        elseif GetAchievementNumCriteria(point.achievement) == 1 then
-            tooltip_criteria(tooltip, point.achievement, 1)
-        end
+        tooltip_achievement(tooltip, point.achievement, point.criteria)
     end
     if point.progress then
         local fulfilled, required = get_point_progress(point)
