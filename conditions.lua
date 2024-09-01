@@ -371,7 +371,7 @@ ns.conditions.DayOfWeek = Class{
 do
     local function check(cond) return cond:Matched() end
     ns.conditions.check = function(conditions)
-        return ns.doTest(check, conditions)
+        return conditions and ns.doTest(check, conditions)
     end
 
     local t = {}
