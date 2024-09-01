@@ -19,6 +19,7 @@ ns.rewards.Reward = ns.Class{
     -- todo: consolidate these somehow?
     quest = false,
     questComplete = false,
+    warband = false,
     Initialize = function(self, id, extra)
         self.id = id
         if extra then
@@ -35,6 +36,9 @@ ns.rewards.Reward = ns.Class{
         local result
         if self.quest then
             if C_QuestLog.IsQuestFlaggedCompleted(self.quest) or C_QuestLog.IsOnQuest(self.quest) then
+                return true
+            end
+            if self.warband and C_QuestLog.IsQuestFlaggedCompletedOnAccount(self.quest) then
                 return true
             end
             if for_tooltip or ns.db.quest_notable then
@@ -284,6 +288,11 @@ ns.rewards.Currency = ns.Class{
     Initialize = function(self, id, amount, ...)
         self:super("Initialize", id, ...)
         self.amount = amount
+        self.faction = C_CurrencyInfo.GetFactionGrantedByCurrency(id)
+        -- This effect is a little specialized around the rep drops from rares
+        -- in War Within; will need to revisit it if there's future warband
+        -- currency rewards that are character-gated not account-gated...
+        self.warband = self.faction and C_Reputation.IsAccountWideReputation(self.faction)
     end,
     Name = function(self, color)
         local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id, self.amount)
@@ -302,9 +311,6 @@ ns.rewards.Currency = ns.Class{
         end
     end,
     TooltipLabel = function(self)
-        if C_CurrencyInfo.GetFactionGrantedByCurrency(self.id) then
-            return REPUTATION
-        end
-        return CURRENCY
+        return self.faction and REPUTATION or CURRENCY
     end,
 }
