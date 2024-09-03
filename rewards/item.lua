@@ -1,117 +1,6 @@
 local myname, ns = ...
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
-local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
-
-ns.rewards = {}
-
--- Base reward specification, which should never really be used:
-ns.rewards.Reward = ns.Class({
-    classname = "Reward",
-    note = false,
-    requires = false,
-    -- todo: consolidate these somehow?
-    quest = false,
-    questComplete = false,
-    warband = false,
-})
-local Reward = ns.rewards.Reward
-
-function Reward:init(id, extra)
-    self.id = id
-    if extra then
-        for k, v in pairs(extra) do
-            if self[k] == false then
-                self[k] = v
-            end
-        end
-    end
-end
-function Reward:Name(color) return UNKNOWN end
-function Reward:Icon() return 134400 end -- question mark
-function Reward:Obtained(for_tooltip)
-    local result
-    if self.quest then
-        if C_QuestLog.IsQuestFlaggedCompleted(self.quest) or C_QuestLog.IsOnQuest(self.quest) then
-            return true
-        end
-        if self.warband and C_QuestLog.IsQuestFlaggedCompletedOnAccount(self.quest) then
-            return true
-        end
-        if for_tooltip or ns.db.quest_notable then
-            result = false
-        end
-    end
-    if self.questComplete then
-        if C_QuestLog.IsQuestFlaggedCompleted(self.questComplete) then
-            return true
-        end
-        if for_tooltip or ns.db.quest_notable then
-            result = false
-        end
-    end
-    return result
-end
-function Reward:Notable()
-    -- Is it knowable and not obtained?
-    return self:MightDrop() and (self:Obtained() == false)
-end
-function Reward:Available()
-    if self.requires and not ns.conditions.check(self.requires) then
-        return false
-    end
-    -- TODO: profession recipes?
-    return true
-end
-function Reward:MightDrop() return self:Available() end
-function Reward:SetTooltip(tooltip) return false end
-function Reward:AddToTooltip(tooltip)
-    local r, g, b = self:TooltipNameColor()
-    local lr, lg, lb = self:TooltipLabelColor()
-    tooltip:AddDoubleLine(
-        self:TooltipLabel(),
-        self:TooltipName(),
-        lr, lg, lb,
-        r, g, b
-    )
-end
-function Reward:TooltipName()
-    local name = self:Name(true)
-    local icon = self:Icon()
-    if not name then
-        name = SEARCH_LOADING_TEXT
-    end
-    if self.requires then
-        name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, ns.conditions.summarize(self.requires, true))
-    end
-    if self.note then
-        name = TEXT_MODE_A_STRING_VALUE_TYPE:format(name, self.note)
-    end
-    return ("%s%s%s"):format(
-        (icon and (ns.quick_texture_markup(icon) .. " ") or ""),
-        ns.render_string(name),
-        self:ObtainedTag() or ""
-    )
-end
-function Reward:TooltipNameColor()
-    if not self:Name() then
-        return 0, 1, 1
-    end
-    return NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
-end
-function Reward:TooltipLabel() return UNKNOWN end
-function Reward:TooltipLabelColor()
-    if ns.db.show_npcs_emphasizeNotable and self:Notable() then
-        return 1, 0, 1
-    end
-    return NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b
-end
-function Reward:ObtainedTag()
-    local known = self:Obtained(true) -- for_tooltip
-    if known == nil then return end
-    return " " .. CreateAtlasMarkup(known and ATLAS_CHECK or ATLAS_CROSS)
-end
-function Reward:Cache() end
 
 ns.rewards.Item = ns.rewards.Reward:extends({classname="Item", spell=false})
 
@@ -151,8 +40,8 @@ function ns.rewards.Item:Obtained(for_tooltip)
         result = false
     end
     if ns.CLASSIC then return result and GetItemCount(self.id, true) > 0 end
-    if (for_tooltip or ns.db.transmog_notable) and ns.CanLearnAppearance(self.id) then
-        return ns.HasAppearance(self.id, ns.db.transmog_specific)
+    if (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
+        return self.HasAppearance(self.id, ns.db.transmog_specific)
     end
     return result
 end
@@ -177,6 +66,107 @@ function ns.rewards.Item:SetTooltip(tooltip)
 end
 function ns.rewards.Item:Cache()
     C_Item.RequestLoadItemDataByID(self.id)
+end
+
+do
+    local brokenItems = {
+        -- itemid : {appearanceid, sourceid}
+        [153268] = {25124, 90807}, -- Enclave Aspirant's Axe
+        [153316] = {25123, 90885}, -- Praetor's Ornamental Edge
+    }
+    local function GetAppearanceAndSource(itemLinkOrID)
+        local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
+        if not itemID then return end
+        local appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemLinkOrID)
+        if not appearanceID then
+            -- sometimes the link won't actually give us an appearance, but itemID will
+            -- e.g. mythic Drape of Iron Sutures from Shadowmoon Burial Grounds
+            appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemID)
+        end
+        if not appearanceID and brokenItems[itemID] then
+            -- ...and there's a few that just need to be hardcoded
+            appearanceID, sourceID = unpack(brokenItems[itemID])
+        end
+        return appearanceID, sourceID
+    end
+
+    local canLearnCache = {}
+    function ns.rewards.Item.CanLearnAppearance(itemLinkOrID)
+        if not _G.C_Transmog then return false end
+        local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
+        if not itemID then return end
+        if canLearnCache[itemID] ~= nil then
+            return canLearnCache[itemID]
+        end
+        -- First, is this a valid source at all?
+        local canBeChanged, noChangeReason, canBeSource, noSourceReason = C_Transmog.CanTransmogItem(itemID)
+        if canBeSource == nil or noSourceReason == 'NO_ITEM' then
+            -- data loading, don't cache this
+            return
+        end
+        if not canBeSource then
+            canLearnCache[itemID] = false
+            return false
+        end
+        local appearanceID, sourceID = GetAppearanceAndSource(itemLinkOrID)
+        if not appearanceID then
+            canLearnCache[itemID] = false
+            return false
+        end
+        local hasData, canCollect = C_TransmogCollection.PlayerCanCollectSource(sourceID)
+        if hasData then
+            canLearnCache[itemID] = canCollect
+        end
+        return canLearnCache[itemID]
+    end
+
+    local hasAppearanceCache = {}
+    ns.run_caches.appearances = {}
+    function ns.rewards.Item.HasAppearance(itemLinkOrID, specific)
+        local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
+        if not itemID then return end
+        if ns.run_caches.appearances[itemID] ~= nil then
+            return ns.run_caches.appearances[itemID]
+        end
+        if hasAppearanceCache[itemID] ~= nil then
+            -- We cache unchanging things: true or false-because-not-knowable
+            -- *Technically* this could persist a false-positive if you obtain something and then trade/refund it
+            ns.run_caches.appearances[itemID] = hasAppearanceCache[itemID]
+            return hasAppearanceCache[itemID]
+        end
+        if C_TransmogCollection.PlayerHasTransmogByItemInfo(itemLinkOrID) then
+            -- short-circuit further checks because this specific item is known
+            hasAppearanceCache[itemID] = true
+            return true
+        end
+        local appearanceID, sourceID = GetAppearanceAndSource(itemLinkOrID)
+        if not appearanceID then
+            -- This just isn't knowable according to the API
+            hasAppearanceCache[itemID] = false
+            return
+        end
+        local fromCurrentItem = C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(sourceID)
+        if fromCurrentItem then
+            -- It might *also* be from another item, but we don't care or need to find out
+            hasAppearanceCache[itemID] = true
+            return true
+        end
+        -- Although this isn't known, its appearance might be known from another item
+        if specific then
+            ns.run_caches.appearances[itemID] = false
+            return false
+        end
+        local sources = C_TransmogCollection.GetAllAppearanceSources(appearanceID)
+        if not sources then return end
+        for _, sourceID in ipairs(sources) do
+            if C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(sourceID) then
+                hasAppearanceCache[itemID] = true
+                return true
+            end
+        end
+        ns.run_caches.appearances[itemID] = false
+        return false
+    end
 end
 
 -- These are all Items becuase the loot is an actual item, but they're very
@@ -264,32 +254,5 @@ function ns.rewards.Set:ObtainedTag()
     return self:super("ObtainedTag")
 end
 
-ns.rewards.Currency = Reward:extends({classname="Currency"})
-function ns.rewards.Currency:init(id, amount, ...)
-    self:super("init", id, ...)
-    self.amount = amount
-    self.faction = C_CurrencyInfo.GetFactionGrantedByCurrency(id)
-    -- This effect is a little specialized around the rep drops from rares
-    -- in War Within; will need to revisit it if there's future warband
-    -- currency rewards that are character-gated not account-gated...
-    self.warband = self.faction and C_Reputation.IsAccountWideReputation(self.faction)
-end
-function ns.rewards.Currency:Name(color)
-    local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id, self.amount)
-    if info and info.name then
-        local name = color and ITEM_QUALITY_COLORS[info.quality].color:WrapTextInColorCode(info.name) or info.name
-        return (self.amount and self.amount > 1) and
-            ("%s x %d"):format(name, self.amount) or
-            name
-    end
-    return self:Super("Name", color)
-end
-function ns.rewards.Currency:Icon()
-    local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id)
-    if info and info.icon then
-        return info.icon
-    end
-end
-function ns.rewards.Currency:TooltipLabel()
-    return self.faction and REPUTATION or CURRENCY
-end
+_G.HNItem = ns.rewards.Item
+_G.HNMount = ns.rewards.Mount
