@@ -265,6 +265,3 @@ function ns.rewards.Set:ObtainedTag()
     end
     return self:super("ObtainedTag")
 end
-
-_G.HNItem = ns.rewards.Item
-_G.HNMount = ns.rewards.Mount
