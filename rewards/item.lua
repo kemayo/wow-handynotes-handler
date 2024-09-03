@@ -12,7 +12,6 @@ function ns.rewards.Item:Name(color)
 end
 function ns.rewards.Item:TooltipLabel()
     local _, itemType, itemSubtype, equipLoc, icon, classID, subclassID = C_Item.GetItemInfoInstant(self.id)
-    local _, link = C_Item.GetItemInfo(self.id)
     local label = ENCOUNTER_JOURNAL_ITEM
     if classID == Enum.ItemClass.Armor and subclassID ~= Enum.ItemArmorSubclass.Shield then
         label = _G[equipLoc] or label
@@ -170,8 +169,8 @@ do
         end
         local sources = C_TransmogCollection.GetAllAppearanceSources(appearanceID)
         if not sources then return end
-        for _, sourceID in ipairs(sources) do
-            if C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(sourceID) then
+        for _, otherSourceID in ipairs(sources) do
+            if C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(otherSourceID) then
                 hasAppearanceCache[itemID] = true
                 return true
             end

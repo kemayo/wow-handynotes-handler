@@ -54,7 +54,7 @@ function ns.conditions.AuraActive:Matched() return GetPlayerAuraBySpellID(self.i
 ns.conditions.AuraInactive = Negated(ns.conditions.AuraActive)
 
 ns.conditions.SpellKnown = Condition:extends{classname = "SpellKnown", type = "spell"}
-function ns.conditions.SpellKnown:Matched(self) return IsSpellKnown(self.id) end
+function ns.conditions.SpellKnown:Matched() return IsSpellKnown(self.id) end
 
 -- See https://wowpedia.fandom.com/wiki/TradeSkillLineID for IDs
 -- TODO: make work in Classic? Whole different API.
@@ -126,7 +126,7 @@ function ns.conditions.Faction:Matched()
 end
 
 ns.conditions.MajorFaction = RankedCondition:extends{classname = "MajorFaction", type = 'majorfaction'}
-function ns.conditions.MajorFaction:Matched(self)
+function ns.conditions.MajorFaction:Matched()
     local info = C_MajorFactions.GetMajorFactionData(self.id)
     if info then
         if self.rank then
@@ -176,7 +176,7 @@ function ns.conditions.QuestComplete:Matched() return C_QuestLog.IsQuestFlaggedC
 ns.conditions.QuestIncomplete = Negated(ns.conditions.QuestComplete)
 
 ns.conditions.WorldQuestActive = Condition:extends{classname = "WorldQuestActive", type = 'worldquest'}
-function ns.conditions.WorldQuestActiveMatched() return C_TaskQuest.IsActive(self.id) or C_QuestLog.IsQuestFlaggedCompleted(self.id) end
+function ns.conditions.WorldQuestActive:Matched() return C_TaskQuest.IsActive(self.id) or C_QuestLog.IsQuestFlaggedCompleted(self.id) end
 
 ns.conditions.OnQuest = Condition:extends{classname = "OnQuest", type = 'quest'}
 function ns.conditions.OnQuest:Matched() return C_QuestLog.IsOnQuest(self.id) end

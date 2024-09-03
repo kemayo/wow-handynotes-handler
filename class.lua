@@ -133,7 +133,7 @@ local function instantiateFromClass(self, ...)
         __addr = tostring(instance):gsub("table: ", ""),
     }
 
-    local instance = setmetatable(instance, self)
+    instance = setmetatable(instance, self)
     if self.init then
         self.init(instance, ...)
     end
@@ -252,6 +252,20 @@ Class = function(members)
     return setmetatable(newClass, baseClassMt)
 end
 
+-- Static classes
+local function abstractClass(members)
+    local class = Class(members)
+    _registry.class[class].__abstract = true
+    return class
+end
+
+-- Final classes
+local function finalClass(members)
+    local class = Class(members)
+    _registry.class[class].__final = true
+    return class
+end
+
 -- Stands for "e*x*tended type". Like the built-in `type`, returns a string for
 -- the type of the given object. If the value `which` is a known object or a
 -- class, returns 'object' or 'class' respectively, otherwise defers to `type`.
@@ -276,4 +290,5 @@ ns.Class = setmetatable(
 )
 ns.IsClass = isClass
 ns.IsObject = isObject
+ns.IsA = instanceOf
 ns.xtype = xtype
