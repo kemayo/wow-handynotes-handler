@@ -89,6 +89,18 @@ do
         end
         return appearanceID, sourceID
     end
+    local function PlayerHasTransmogByItemInfo(itemLinkOrID)
+        -- Cata classic is specifically missing C_TransmogCollection.PlayerHasTransmogByItemInfo
+        if C_TransmogCollection.PlayerHasTransmogByItemInfo then
+            return C_TransmogCollection.PlayerHasTransmogByItemInfo(itemLinkOrID)
+        end
+        local itemID = C_Item.GetItemInfoInstant(itemLinkOrID)
+        if itemID then
+            -- this is a bit worse, because of items with varying appearances based on the link-details
+            -- but because this path should only be hit in classic, we should be fine
+            return C_TransmogCollection.PlayerHasTransmog(itemID)
+        end
+    end
 
     local canLearnCache = {}
     function ns.rewards.Item.CanLearnAppearance(itemLinkOrID)
@@ -134,7 +146,7 @@ do
             ns.run_caches.appearances[itemID] = hasAppearanceCache[itemID]
             return hasAppearanceCache[itemID]
         end
-        if C_TransmogCollection.PlayerHasTransmogByItemInfo(itemLinkOrID) then
+        if PlayerHasTransmogByItemInfo(itemLinkOrID) then
             -- short-circuit further checks because this specific item is known
             hasAppearanceCache[itemID] = true
             return true
