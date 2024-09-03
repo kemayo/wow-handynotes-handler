@@ -481,7 +481,7 @@ local doTest, doTestDefaultAny
 do
     local function doTestMaker(default)
         return function(test, input, ...)
-            if type(input) == "table" and not input.__parent then
+            if ns.xtype(input) == "table" then
                 if input.any then return doTestAny(test, input, ...) end
                 if input.all then return doTestAll(test, input, ...) end
                 return default(test, input, ...)
