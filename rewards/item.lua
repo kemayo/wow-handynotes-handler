@@ -47,7 +47,7 @@ function ns.rewards.Item:Obtained(for_tooltip)
         end
         result = false
     end
-    if ns.CLASSIC then return result and GetItemCount(self.id, true) > 0 end
+    if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
     if (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
         return self.HasAppearance(self.id, ns.db.transmog_specific)
     end
@@ -71,6 +71,12 @@ function ns.rewards.Item:MightDrop()
 end
 function ns.rewards.Item:SetTooltip(tooltip)
     tooltip:SetItemByID(self.id)
+end
+function ns.rewards.Item:AddToItemButton(button)
+    button:SetItem(self.id)
+    if self.count or self.amount then
+        button:SetItemButtonCount(self.count or self.amount)
+    end
 end
 function ns.rewards.Item:Cache()
     C_Item.RequestLoadItemDataByID(self.id)
@@ -195,7 +201,7 @@ end
 ns.rewards.Toy = ns.rewards.Item:extends({classname="Toy"})
 function ns.rewards.Toy:TooltipLabel() return TOY end
 function ns.rewards.Toy:Obtained(...)
-    if ns.CLASSIC then return GetItemCount(self.id, true) > 0 end
+    if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self:super("Obtained", ...) ~= false and PlayerHasToy(self.id)
 end
 function ns.rewards.Toy:Notable(...) return ns.db.toy_notable and self:super("Notable", ...) end
@@ -208,7 +214,7 @@ end
 function ns.rewards.Mount:TooltipLabel() return MOUNT end
 function ns.rewards.Mount:Obtained(...)
     if self:super("Obtained", ...) == false then return false end
-    if ns.CLASSIC then return GetItemCount(self.id, true) > 0 end
+    if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     if not _G.C_MountJournal then return false end
     return self.mountid and (select(11, C_MountJournal.GetMountInfoByID(self.mountid)))
 end
@@ -242,7 +248,7 @@ end
 function ns.rewards.Pet:TooltipLabel() return TOOLTIP_BATTLE_PET end
 function ns.rewards.Pet:Obtained(...)
     if self:super("Obtained", ...) == false then return false end
-    if ns.CLASSIC then return GetItemCount(self.id, true) > 0 end
+    if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self.petid and C_PetJournal.GetNumCollectedInfo(self.petid) > 0
 end
 function ns.rewards.Pet:Notable(...) return ns.db.pet_notable and self:super("Notable", ...) end
