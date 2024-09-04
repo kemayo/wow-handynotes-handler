@@ -1,6 +1,12 @@
 local myname, ns = ...
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
+local materials = {
+    [Enum.ItemArmorSubclass.Cloth] = true,
+    [Enum.ItemArmorSubclass.Leather] = true,
+    [Enum.ItemArmorSubclass.Mail] = true,
+    [Enum.ItemArmorSubclass.Plate] = true,
+}
 
 ns.rewards.Item = ns.rewards.Reward:extends({classname="Item", spell=false})
 
@@ -15,6 +21,9 @@ function ns.rewards.Item:TooltipLabel()
     local label = ENCOUNTER_JOURNAL_ITEM
     if classID == Enum.ItemClass.Armor and subclassID ~= Enum.ItemArmorSubclass.Shield then
         label = _G[equipLoc] or label
+        if materials[subclassID] and equipLoc ~= "INVTYPE_CLOAK" then
+            label = TEXT_MODE_A_STRING_VALUE_TYPE:format(label, itemSubtype)
+        end
     else
         label = itemSubtype
     end
