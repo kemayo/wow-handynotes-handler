@@ -525,7 +525,7 @@ local hasNotableLoot = testMaker(function(item, notransmog)
     if item:Notable() then
         if notransmog and ns.IsA(item, ns.rewards.Item) then
             -- still notable without transmog involved?
-            return item:ObtainedIgnoringTransmog() == false
+            return item:IsTransmog() == false
         end
         return true
     end

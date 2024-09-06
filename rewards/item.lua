@@ -7,7 +7,7 @@ local materials = {
     [Enum.ItemArmorSubclass.Plate] = true,
 }
 
-ns.rewards.Item = ns.rewards.Reward:extends({classname="Item", spell=false})
+ns.rewards.Item = ns.rewards.Reward:extends({classname="Item"})
 
 ns.rewards.Item.COSMETIC_COLOR = CreateColor(1, 0.5, 1)
 ns.rewards.Item.NOTABLE_TRANSMOG_COLOR = CreateColor(1, 0, 1)
@@ -41,21 +41,16 @@ function ns.rewards.Item:TooltipLabelColor()
     return self:super('TooltipLabelColor')
 end
 function ns.rewards.Item:Icon() return (select(5, C_Item.GetItemInfoInstant(self.id))) end
-function ns.rewards.Item:Obtained(for_tooltip)
-    local result = self:ObtainedIgnoringTransmog()
-    if not result then
-        if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
-        if (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
-            return self.HasAppearance(self.id, ns.db.transmog_specific)
-        end
+function ns.rewards.Item:Obtained(for_tooltip, ...)
+    local result = self:super("Obtained", for_tooltip, ...)
+    if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
+    if not result and (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
+        return self.HasAppearance(self.id, ns.db.transmog_specific)
     end
     return result
 end
 function ns.rewards.Item:IsTransmog()
     return self.CanLearnAppearance(self.id)
-end
-function ns.rewards.Item:ObtainedIgnoringTransmog()
-    local result = self:super("Obtained", for_tooltip)
 end
 function ns.rewards.Item:MightDrop()
     -- We think an item might drop if it either has no spec information, or
@@ -204,7 +199,7 @@ end
 
 ns.rewards.Toy = ns.rewards.Item:extends({classname="Toy"})
 function ns.rewards.Toy:TooltipLabel() return TOY end
-function ns.rewards.Toy:ObtainedIgnoringTransmog(...)
+function ns.rewards.Toy:Obtained(...)
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self:super("Obtained", ...) ~= false and PlayerHasToy(self.id)
 end
@@ -216,7 +211,7 @@ function ns.rewards.Mount:init(id, mountid, ...)
     self.mountid = mountid or (C_MountJournal and C_MountJournal.GetMountFromItem and C_MountJournal.GetMountFromItem(self.id))
 end
 function ns.rewards.Mount:TooltipLabel() return MOUNT end
-function ns.rewards.Mount:ObtainedIgnoringTransmog(...)
+function ns.rewards.Mount:Obtained(...)
     if self:super("Obtained", ...) == false then return false end
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     if not _G.C_MountJournal then return false end
@@ -250,7 +245,7 @@ function ns.rewards.Pet:init(id, petid, ...)
     self.petid = petid or (C_PetJournal and select(13, C_PetJournal.GetPetInfoByItemID(self.id)))
 end
 function ns.rewards.Pet:TooltipLabel() return TOOLTIP_BATTLE_PET end
-function ns.rewards.Pet:ObtainedIgnoringTransmog(...)
+function ns.rewards.Pet:Obtained(...)
     if self:super("Obtained", ...) == false then return false end
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self.petid and C_PetJournal.GetNumCollectedInfo(self.petid) > 0
