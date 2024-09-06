@@ -56,18 +56,6 @@ function ns.rewards.Item:IsTransmog()
 end
 function ns.rewards.Item:ObtainedIgnoringTransmog()
     local result = self:super("Obtained", for_tooltip)
-    if self.spell then
-        -- can't use the tradeskill functions + the recipe-spell because that data's only available after the tradeskill window has been opened...
-        local info = C_TooltipInfo.GetItemByID(self.id)
-        if info then
-            for _, line in ipairs(info.lines) do
-                if line.leftText and string.match(line.leftText, _G.ITEM_SPELL_KNOWN) then
-                    return true
-                end
-            end
-        end
-        result = false
-    end
 end
 function ns.rewards.Item:MightDrop()
     -- We think an item might drop if it either has no spec information, or
@@ -335,4 +323,26 @@ function ns.rewards.Set:ObtainedTag()
         end
     end
     return self:super("ObtainedTag")
+end
+
+ns.rewards.Recipe = ns.rewards.Item:extends{classname="Recipe"}
+function ns.rewards.Recipe:init(id, spellid, ...)
+    self:super("init", id, ...)
+    self.spellid = spellid
+end
+function ns.rewards.Recipe:Obtained(...)
+    if self:super("Obtained", ...) then
+        -- covers quests etc
+        return true
+    end
+    -- can't use the tradeskill functions + the recipe-spell because that data's only available after the tradeskill window has been opened...
+    local info = C_TooltipInfo.GetItemByID(self.id)
+    if info then
+        for _, line in ipairs(info.lines) do
+            if line.leftText and string.match(line.leftText, _G.ITEM_SPELL_KNOWN) then
+                return true
+            end
+        end
+    end
+    return false
 end
