@@ -521,9 +521,17 @@ end, function(test, input, achievement, ...)
     return doTest(test, input, achievement, ...)
 end)
 
-local hasNotableLoot = testMaker(function(item)
-    return item:Notable()
+local hasNotableLoot = testMaker(function(item, notransmog)
+    if item:Notable() then
+        if notransmog and ns.IsA(item, ns.rewards.Item) then
+            -- still notable without transmog involved?
+            return item:ObtainedIgnoringTransmog() == false
+        end
+        return true
+    end
+    return false
 end, doTestAny)
+ns.hasNotableLoot = hasNotableLoot
 local hasKnowableLoot = testMaker(function(item, notransmog, droppable)
     if ns.CLASSIC then return false end
     if droppable and not item:MightDrop() then

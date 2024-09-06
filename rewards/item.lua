@@ -34,6 +34,16 @@ function ns.rewards.Item:TooltipLabel()
 end
 function ns.rewards.Item:Icon() return (select(5, C_Item.GetItemInfoInstant(self.id))) end
 function ns.rewards.Item:Obtained(for_tooltip)
+    local result = self:ObtainedIgnoringTransmog()
+    if not result then
+        if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
+        if (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
+            return self.HasAppearance(self.id, ns.db.transmog_specific)
+        end
+    end
+    return result
+end
+function ns.rewards.Item:ObtainedIgnoringTransmog()
     local result = self:super("Obtained", for_tooltip)
     if self.spell then
         -- can't use the tradeskill functions + the recipe-spell because that data's only available after the tradeskill window has been opened...
@@ -47,11 +57,6 @@ function ns.rewards.Item:Obtained(for_tooltip)
         end
         result = false
     end
-    if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
-    if (for_tooltip or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
-        return self.HasAppearance(self.id, ns.db.transmog_specific)
-    end
-    return result
 end
 function ns.rewards.Item:MightDrop()
     -- We think an item might drop if it either has no spec information, or
