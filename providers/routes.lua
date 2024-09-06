@@ -10,6 +10,8 @@ ns.RouteWorldMapDataProvider = RouteWorldMapDataProvider
 local RoutePinMixin = CreateFromMixins(MapCanvasPinMixin)
 local RoutePinConnectionMixin = {}
 
+local highlights = {}
+
 function RouteWorldMapDataProvider:RemoveAllData()
     if not self:GetMap() then return end
 
@@ -94,7 +96,7 @@ function RouteWorldMapDataProvider:ConnectPins(pin1, pin2, route, point)
     connection.route = route
     connection:Connect(pin1, pin2)
     connection.Line:SetVertexColor(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
-    if not route.highlightOnly then
+    if highlights[point] or not route.highlightOnly then
         connection:Show()
     end
 end
@@ -113,6 +115,7 @@ end
 
 function RouteWorldMapDataProvider:UnhighlightRoute(point, uiMapID, coord)
     if not self.connectionPool then return end
+    if highlights[point] then return end
     for connection in self.connectionPool:EnumerateActive() do
         if connection.point == point then
             connection.Line:SetThickness(20)
@@ -121,6 +124,11 @@ function RouteWorldMapDataProvider:UnhighlightRoute(point, uiMapID, coord)
             end
         end
     end
+end
+
+function RouteWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
+    highlights[point] = not highlights[point]
+    self:RefreshAllData()
 end
 
 function RoutePinMixin:OnLoad()

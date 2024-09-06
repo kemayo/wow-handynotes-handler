@@ -1426,6 +1426,9 @@ do
             if point.OnClick then
                 point:OnClick(button, uiMapID, coord)
             end
+            if ns.RouteWorldMapDataProvider then
+                ns.RouteWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
+            end
             if ns.DecorationWorldMapDataProvider then
                 ns.DecorationWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
             end
