@@ -316,7 +316,7 @@ ns.nodeMaker = function(defaults)
         end
         local meta2 = getmetatable(details)
         if meta2 and meta2.__index then
-            return setmetatable(details, {__index = ns.merge(CopyTable(defaults), meta2.__index)})
+            return setmetatable(details, {__index = ns.merge(CopyTable(defaults, true), meta2.__index)})
         end
         return setmetatable(details, meta)
     end
