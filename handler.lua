@@ -741,8 +741,8 @@ local function work_out_texture(point)
     end
     if point.npc then
         if not npc_texture then
-            lessnotable_npc_texture = atlas_texture("nazjatar-nagaevent", {r=0.5, g=1, b=1}, 0.2)
-            notable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
+            lessnotable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
+            notable_npc_texture = atlas_texture("nazjatar-nagaevent", {r=0.5, g=1, b=1}, 0.2)
             npc_texture = atlas_texture("DungeonSkull", 1)
         end
         if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point, true) then

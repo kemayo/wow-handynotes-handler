@@ -1,6 +1,5 @@
 local myname, ns = ...
 
-local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
 local materials = {
     [Enum.ItemArmorSubclass.Cloth] = true,
     [Enum.ItemArmorSubclass.Leather] = true,
@@ -9,6 +8,9 @@ local materials = {
 }
 
 ns.rewards.Item = ns.rewards.Reward:extends({classname="Item", spell=false})
+
+ns.rewards.Item.COSMETIC_COLOR = CreateColor(1, 0.5, 1)
+ns.rewards.Item.NOTABLE_TRANSMOG_COLOR = CreateColor(1, 0, 1)
 
 function ns.rewards.Item:Name(color)
     local name, link = C_Item.GetItemInfo(self.id)
@@ -28,9 +30,15 @@ function ns.rewards.Item:TooltipLabel()
         label = itemSubtype
     end
     if label and ns.IsCosmeticItem(self.id) then
-        label = TEXT_MODE_A_STRING_VALUE_TYPE:format(label, COSMETIC_COLOR:WrapTextInColorCode(ITEM_COSMETIC))
+        label = TEXT_MODE_A_STRING_VALUE_TYPE:format(label, self.COSMETIC_COLOR:WrapTextInColorCode(ITEM_COSMETIC))
     end
     return label
+end
+function ns.rewards.Item:TooltipLabelColor()
+    if ns.db.show_npcs_emphasizeNotable and self:Notable() and self.CanLearnAppearance(self.id) then
+        return self.NOTABLE_TRANSMOG_COLOR
+    end
+    return self:super('TooltipLabelColor')
 end
 function ns.rewards.Item:Icon() return (select(5, C_Item.GetItemInfoInstant(self.id))) end
 function ns.rewards.Item:Obtained(for_tooltip)
@@ -42,6 +50,9 @@ function ns.rewards.Item:Obtained(for_tooltip)
         end
     end
     return result
+end
+function ns.rewards.Item:IsTransmog()
+    return self.CanLearnAppearance(self.id)
 end
 function ns.rewards.Item:ObtainedIgnoringTransmog()
     local result = self:super("Obtained", for_tooltip)
@@ -205,7 +216,7 @@ end
 
 ns.rewards.Toy = ns.rewards.Item:extends({classname="Toy"})
 function ns.rewards.Toy:TooltipLabel() return TOY end
-function ns.rewards.Toy:Obtained(...)
+function ns.rewards.Toy:ObtainedIgnoringTransmog(...)
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self:super("Obtained", ...) ~= false and PlayerHasToy(self.id)
 end
@@ -217,7 +228,7 @@ function ns.rewards.Mount:init(id, mountid, ...)
     self.mountid = mountid or (C_MountJournal and C_MountJournal.GetMountFromItem and C_MountJournal.GetMountFromItem(self.id))
 end
 function ns.rewards.Mount:TooltipLabel() return MOUNT end
-function ns.rewards.Mount:Obtained(...)
+function ns.rewards.Mount:ObtainedIgnoringTransmog(...)
     if self:super("Obtained", ...) == false then return false end
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     if not _G.C_MountJournal then return false end
@@ -251,7 +262,7 @@ function ns.rewards.Pet:init(id, petid, ...)
     self.petid = petid or (C_PetJournal and select(13, C_PetJournal.GetPetInfoByItemID(self.id)))
 end
 function ns.rewards.Pet:TooltipLabel() return TOOLTIP_BATTLE_PET end
-function ns.rewards.Pet:Obtained(...)
+function ns.rewards.Pet:ObtainedIgnoringTransmog(...)
     if self:super("Obtained", ...) == false then return false end
     if ns.CLASSICERA then return GetItemCount(self.id, true) > 0 end
     return self.petid and C_PetJournal.GetNumCollectedInfo(self.petid) > 0
@@ -324,13 +335,4 @@ function ns.rewards.Set:ObtainedTag()
         end
     end
     return self:super("ObtainedTag")
-end
-function ns.rewards.Currency:AddToItemButton(button, ...)
-    self:super("AddToItemButton", button, ...)
-    local info = C_CurrencyInfo.GetBasicCurrencyInfo(self.id, self.amount)
-    if info then
-        SetItemButtonQuality(button, info.quality)
-    end
-    -- could use info.displayAmount here, but I think this makes more sense:
-    SetItemButtonCount(button, self.amount)
 end
