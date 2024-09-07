@@ -698,13 +698,16 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
     if not showOnMapType(point, currentZone, isMinimap) then
         return false
     end
+    if point.force ~= nil then
+        return point.force
+    end
+    if ns.hidden[currentZone] and ns.hidden[currentZone][coord] then
+        return false
+    end
     if zoneHidden(currentZone) then
         return false
     end
     if achievementHidden(point.achievement) then
-        return false
-    end
-    if ns.hidden[currentZone] and ns.hidden[currentZone][coord] then
         return false
     end
     if point.group and ns.db.groupsHidden[point.group] or ns.db.groupsHiddenByZone[currentZone][point.group] then
