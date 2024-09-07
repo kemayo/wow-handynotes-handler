@@ -642,6 +642,22 @@ end
 
 local function PointIsFound(point)
     if ns.db.found or point.always then return false end
+
+    -- these are overrides:
+    if point.inbag and itemInBags(point.inbag) then
+        return true
+    end
+    if point.onquest and C_QuestLog.IsOnQuest(type(point.onquest) == "number" and point.onquest or point.quest) then
+        return true
+    end
+    if point.hide_quest and C_QuestLog.IsQuestFlaggedCompleted(point.hide_quest) then
+        -- This is distinct from point.quest as it's supposed to be for
+        -- other trackers that make the point not _complete_ but still
+        -- hidden (Draenor treasure maps, so far):
+        return true
+    end
+
+    -- from here on it's actually found:
     local found
     if point.loot and hasKnowableLoot(point.loot, not ns.db.transmog_notable, true) then
         -- has knowable loot that might drop
@@ -667,19 +683,6 @@ local function PointIsFound(point)
             return false
         end
         found = true
-    end
-    -- the rest are proxies for the actual "found" status:
-    if point.inbag and itemInBags(point.inbag) then
-        return true
-    end
-    if point.onquest and C_QuestLog.IsOnQuest(type(point.onquest) == "number" and point.onquest or point.quest) then
-        return true
-    end
-    if point.hide_quest and C_QuestLog.IsQuestFlaggedCompleted(point.hide_quest) then
-        -- This is distinct from point.quest as it's supposed to be for
-        -- other trackers that make the point not _complete_ but still
-        -- hidden (Draenor treasure maps, so far):
-        return true
     end
     if point.found then
         if not ns.conditions.check(point.found) then
