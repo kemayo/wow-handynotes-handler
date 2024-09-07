@@ -130,6 +130,9 @@ end
 
 function RouteWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
     highlights[point] = not highlights[point]
+    if point.route and ns.points[uiMapID] and ns.points[uiMapID][point.route] then
+        highlights[ns.points[uiMapID][point.route]] = highlights[point]
+    end
     self:RefreshAllData()
 end
 
