@@ -9,9 +9,8 @@ local TEMPLATE = myname .. "WorldMapRoutePinTemplate"
 local RouteWorldMapDataProvider = CreateFromMixins(MapCanvasDataProviderMixin)
 ns.RouteWorldMapDataProvider = RouteWorldMapDataProvider
 
-_G.RRRR = RouteWorldMapDataProvider
-
 local RoutePinMixin = CreateFromMixins(MapCanvasPinMixin)
+RoutePinMixin.SetPassThroughButtons = function() end -- avoid potential taint from inside the map
 local RoutePinConnectionMixin = {}
 
 local highlights = {}
