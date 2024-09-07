@@ -204,6 +204,10 @@ function ns.rewards.Toy:Obtained(...)
     return self:super("Obtained", ...) ~= false and PlayerHasToy(self.id)
 end
 function ns.rewards.Toy:Notable(...) return ns.db.toy_notable and self:super("Notable", ...) end
+function ns.rewards.Toy:Cache()
+    self:super("Cache")
+    PlayerHasToy(self.id)
+end
 
 ns.rewards.Mount = ns.rewards.Item:extends({classname="Mount"})
 function ns.rewards.Mount:init(id, mountid, ...)
@@ -237,6 +241,10 @@ function ns.rewards.Mount:SetTooltip(tooltip, ...)
     if isCollected then
         tooltip:AddLine(USED, 1, 0, 0)
     end
+end
+function ns.rewards.Mount:Cache()
+    self:super("Cache")
+    if C_MountJournal then C_MountJournal.GetMountInfoByID(self.mountid) end
 end
 
 ns.rewards.Pet = ns.rewards.Item:extends({classname="Pet"})
@@ -277,6 +285,10 @@ function ns.rewards.Pet:SetTooltip(tooltip, ...)
     tooltip:AddLine(description, 1, 1, 1, true)
     tooltip:AddLine(source)
     tooltip:AddLine(ITEM_PET_KNOWN:format(owned, limit))
+end
+function ns.rewards.Pet:Cache()
+    self:super("Cache")
+    if C_PetJournal then C_PetJournal.GetPetInfoBySpeciesID(self.petid) end
 end
 
 ns.rewards.Set = ns.rewards.Item:extends({classname="Set"})
@@ -340,4 +352,8 @@ function ns.rewards.Recipe:Obtained(...)
         end
     end
     return false
+end
+function ns.rewards.Recipe:Cache()
+    self:super("Cache")
+    C_Spell.RequestLoadSpellData(self.spellid)
 end
