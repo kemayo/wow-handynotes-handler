@@ -26,6 +26,10 @@ function DecorationWorldMapDataProvider:RefreshAllData(fromOnShow)
     if not (self:GetMap() and self:GetMap():IsShown()) then return end
     self:RemoveAllData()
 
+    if HandyNotes.db.profile.enabledPlugins[myname:gsub("HandyNotes_", "")] == false or not HandyNotes.db.profile.enabled then
+        return
+    end
+
     local uiMapID = self:GetMap():GetMapID()
     if not uiMapID then return end
     if not ns.points[uiMapID] then return end
