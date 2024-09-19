@@ -1363,7 +1363,7 @@ do
 
             if point.achievement then
                 -- Waypoint menu item
-                info.text = render_string("Hide all {achievement:" .. point.achievement .. "} in all zones")
+                info.text = render_string("Hide {achievement:" .. point.achievement .. "}", point)
                 info.notCheckable = 1
                 info.func = hideAchievement
                 info.arg1 = point.achievement
@@ -1373,8 +1373,7 @@ do
 
             if point.group then
                 if not ns.hiddenConfig.groupsHiddenByZone then
-                    local map = C_Map.GetMapInfo(currentZone)
-                    info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in " .. (map and map.name or "this zone")
+                    info.text = render_string(("Hide %s only in {zone:%s}"):format(ns.groups[point.group] or point.group, currentZone), point)
                     info.notCheckable = 1
                     info.func = hideGroupZone
                     info.arg1 = currentZone
@@ -1383,7 +1382,7 @@ do
                     wipe(info)
                 end
                 if not ns.hiddenConfig.groupsHidden then
-                    info.text = "Hide all " .. render_string(ns.groups[point.group] or point.group, point) .. " in all zones"
+                    info.text = render_string(("Hide %s in all zones"):format(ns.groups[point.group] or point.group), point)
                     info.notCheckable = 1
                     info.func = hideGroup
                     info.arg1 = currentZone
@@ -1394,7 +1393,7 @@ do
             end
 
             -- Close menu item
-            info.text         = "Close"
+            info.text         = CLOSE
             info.func         = closeAllDropdowns
             info.notCheckable = 1
             LibDD:UIDropDownMenu_AddButton(info, level)
