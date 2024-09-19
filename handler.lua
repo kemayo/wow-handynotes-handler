@@ -1522,6 +1522,8 @@ function HL:OnInitialize()
     if ns.DecorationWorldMapDataProvider then
         WorldMapFrame:AddDataProvider(ns.DecorationWorldMapDataProvider)
     end
+
+    self:FillCaches()
 end
 
 do
@@ -1552,6 +1554,35 @@ do
             ns.DecorationWorldMapDataProvider:RefreshAllData()
         end
     end
+end
+
+function HL:FillCaches()
+    local CacheWalker = coroutine.wrap(function()
+        local count = 0
+        for uiMapID, coords in pairs(ns.points) do
+            for coord, point in pairs(coords) do
+                if point.loot then
+                    for _, item in pairs(point.loot) do
+                        item:Cache()
+                    end
+                    count = count + 1
+                end
+                if count % 10 == 0 then
+                    coroutine.yield(count, false)
+                end
+            end
+        end
+        coroutine.yield(count, true)
+    end)
+    if ns.DEBUG then print(("%s: starting caching"):format(myname)) end
+    local ticker
+    ticker = C_Timer.NewTicker(0.1, function()
+        local count, finished = CacheWalker()
+        if finished then
+            ticker:Cancel()
+            if ns.DEBUG then print(("%s: done caching %d points"):format(myname, count)) end
+        end
+    end)
 end
 
 hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
