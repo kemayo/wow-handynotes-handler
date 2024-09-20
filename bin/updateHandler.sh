@@ -18,7 +18,7 @@ echo "The handler is in: $HANDLER"
 if git status -uno --ignore-submodules | grep -i changes > /dev/null
 then
 	echo >&2 "Handler working directory must be clean"
-	# exit 1
+	exit 1
 fi
 cd ..
 if git status -uno --ignore-submodules | grep -i changes > /dev/null
@@ -29,21 +29,20 @@ fi
 BRANCH=$(git branch --show-current)
 
 git fetch origin
-if ! git merge-base --is-ancestor origin/$BRANCH $BRANCH; then
-	echo "Pull remote changes first"
-	exit 1
-fi
-
-git submodule update
-
-cd $HANDLER
-git fetch origin
 
 if [ $(git rev-parse $BRANCH) != $(git rev-parse origin/$BRANCH) ]; then
 	echo >&2 "Local and remote $BRANCH need to be in sync"
 	echo >&2 "$(git rev-parse $BRANCH) != $(git rev-parse origin/$BRANCH)"
 	exit 1
 fi
+
+# git submodule update
+
+# Current commit for the submodule
+SUBMODULE=$(git rev-parse @:$HANDLER)
+
+cd $HANDLER
+git fetch origin
 
 # Figure out what to set the submodule to
 if [ -n "${1:-}" ]
@@ -53,12 +52,18 @@ then
 else
 	TARGET=main
 	TARGETDESC="main ($(git rev-parse --short origin/main))"
+	# If we're falling back to main, it has to be up to date
+	if [ $(git rev-parse $TARGET) != $(git rev-parse origin/$TARGET) ]; then
+		echo >&2 "Local and remote $TARGET need to be in sync"
+		echo >&2 "$(git rev-parse $TARGET) != $(git rev-parse origin/$TARGET)"
+		exit 1
+	fi
 fi
 
 # Generate commit summary
 # TODO recurse
-NEWCHANGES=$(git log ..$TARGET --oneline --no-merges --topo-order --reverse --color=never)
-NEWCHANGESDISPLAY=$(git log ..$TARGET --oneline --no-merges --reverse --color=always)
+NEWCHANGES=$(git log $SUBMODULE..$TARGET --oneline --no-merges --topo-order --reverse --color=never)
+NEWCHANGESDISPLAY=$(git log $SUBMODULE..$TARGET --oneline --no-merges --reverse --color=always)
 COMMITMSG=$(cat <<END
 Update handler submodule to $TARGETDESC
 
@@ -66,7 +71,7 @@ New changes:
 $NEWCHANGES
 END
 )
-# Check out master (or hash) of handler
+# Check out main (or hash) of handler
 git checkout $TARGET
 
 # Commit
