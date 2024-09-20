@@ -17,7 +17,7 @@ echo "The handler is in: $HANDLER"
 # Check that both working directories are clean
 if git status -uno --ignore-submodules | grep -i changes > /dev/null
 then
-	echo >&2 "handler working directory must be clean"
+	echo >&2 "Handler working directory must be clean"
 	# exit 1
 fi
 cd ..
@@ -33,10 +33,17 @@ if ! git merge-base --is-ancestor origin/$BRANCH $BRANCH; then
 	echo "Pull remote changes first"
 	exit 1
 fi
+
 git submodule update
 
 cd $HANDLER
 git fetch origin
+
+if [ $(git rev-parse $BRANCH) != $(git rev-parse origin/$BRANCH) ]; then
+	echo >&2 "Local and remote $BRANCH need to be in sync"
+	echo >&2 "$(git rev-parse $BRANCH) != $(git rev-parse origin/$BRANCH)"
+	exit 1
+fi
 
 # Figure out what to set the submodule to
 if [ -n "${1:-}" ]
