@@ -291,6 +291,7 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
         point.vignette = vignetteID
         point.always = true
         point.label = false
+        point.loot = upgradeloot(point.loot)
 
         point = defaults and defaults(point) or point
 
