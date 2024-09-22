@@ -1044,8 +1044,17 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddDoubleLine(GROUP, (render_string(ns.groups[point.group] or point.group, point)))
     end
 
-    if point.quest and ns.db.tooltip_questid then
-        tooltip:AddDoubleLine("QuestID", render_string_list(point, "questid", point.quest), NORMAL_FONT_COLOR:GetRGB())
+    if point.quest then
+        local isAvailable = not C_QuestLog.IsQuestFlaggedCompleted(point.quest)
+        local r, g, b = (isAvailable and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
+        tooltip:AddDoubleLine(
+            " ",
+            isAvailable and AVAILABLE or GOAL_COMPLETED,
+            1, 1, 1, r, g, b, true
+        )
+        if ns.db.tooltip_questid then
+            tooltip:AddDoubleLine("QuestID", render_string_list(point, "questid", point.quest), NORMAL_FONT_COLOR:GetRGB())
+        end
     end
 
     if ns.DEBUG then
