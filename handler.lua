@@ -475,16 +475,22 @@ local function render_string(s, context)
             return CreateAtlasMarkup("questnormal") .. (C_QuestLog.IsQuestFlaggedCompleted(id) and completeColor or incompleteColor):WrapTextInColorCode(id)
         elseif variant == "achievement" or variant == "achievementname" then
             if mainid and subid then
-                local criteria, _, completed = ns.GetCriteria(mainid, subid)
+                local criteria, _, completed, _, _, completedBy = ns.GetCriteria(mainid, subid)
                 if criteria then
                     if variant == "achievementname" or subvariant == "plain" then return criteria end
+                    if subvariant == "character" then
+                        completed = completedBy == ns.playerName
+                    end
                     return (completed and completeColor or incompleteColor):WrapTextInColorCode(criteria)
                 end
                 id = 'achievement:'..mainid..'.'..subid
             else
-                local _, name, _, completed = GetAchievementInfo(id)
+                local _, name, _, completed, _, _, _, _, _, _, _, _, wasEarnedByMe = GetAchievementInfo(id)
                 if name and name ~= "" then
                     if variant == "achievementname" or subvariant == "plain" then return name end
+                    if subvariant == "character" then
+                        completed = wasEarnedByMe
+                    end
                     return CreateAtlasMarkup("storyheader-cheevoicon") .. " " .. (completed and completeColor or incompleteColor):WrapTextInColorCode(name)
                 end
             end
