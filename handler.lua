@@ -1064,7 +1064,7 @@ local function handle_tooltip(tooltip, point, skip_label)
     end
 
     if point.quest then
-        local isAvailable = not C_QuestLog.IsQuestFlaggedCompleted(point.quest)
+        local isAvailable = not ns.allQuestsComplete(point.quest)
         local r, g, b = (isAvailable and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
         tooltip:AddDoubleLine(
             " ",
