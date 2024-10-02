@@ -287,14 +287,14 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
         defaults = ns.nodeMaker(defaults)
     end
     for vignetteID, point in pairs(vignettes) do
+        point = defaults and defaults(point) or point
+
         point._coord = point._coord or 0
         point._uiMapID = zone
         point.vignette = vignetteID
         point.always = true
         point.label = false
         point.loot = upgradeloot(point.loot)
-
-        point = defaults and defaults(point) or point
 
         intotable(ns.POIsToPoints, point.areaPoi, point)
         intotable(ns.VignetteIDsToPoints, point.vignette, point)
