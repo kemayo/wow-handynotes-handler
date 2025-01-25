@@ -313,6 +313,26 @@ function ns.conditions.DayOfWeek:Matched()
     return tonumber(date('%w')) == self.id
 end
 
+ns.conditions.Vehicle = Condition:extends{classname = "Vehicle", type = "npc"}
+function ns.conditions.Vehicle:Matched()
+    return UnitInVehicle("player") and self:UnitID("vehicle") == self.id
+end
+do
+    local valid_unit_types = {
+        Creature = true, -- npcs
+        Vehicle = true, -- vehicles
+    }
+    function ns.conditions.Vehicle:UnitID(unit)
+        local guid = UnitGUID(unit)
+        if not guid then return end
+        local unit_type, id = guid:match("(%a+)-%d+-%d+-%d+-%d+-(%d+)-.+")
+        if not (unit_type and valid_unit_types[unit_type]) then
+            return
+        end
+        return tonumber(id)
+    end
+end
+
 -- Helpers:
 
 do
