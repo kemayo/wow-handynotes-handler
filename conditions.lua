@@ -196,6 +196,11 @@ function ns.conditions.QuestComplete:Matched() return C_QuestLog.IsQuestFlaggedC
 
 ns.conditions.QuestIncomplete = Negated(ns.conditions.QuestComplete)
 
+ns.conditions.QuestCompleteOnAccount = Condition:extends{classname = "QuestCompleteOnAccount", type = 'quest'}
+function ns.conditions.QuestCompleteOnAccount:Matched() return C_QuestLog.IsQuestFlaggedCompletedOnAccount(self.id) end
+
+ns.conditions.QuestIncompleteOnAccount = Negated(ns.conditions.QuestCompleteOnAccount)
+
 ns.conditions.WorldQuestActive = Condition:extends{classname = "WorldQuestActive", type = 'worldquest'}
 function ns.conditions.WorldQuestActive:Matched() return C_TaskQuest.IsActive(self.id) or C_QuestLog.IsQuestFlaggedCompleted(self.id) end
 
