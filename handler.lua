@@ -433,7 +433,7 @@ local function render_string(s, context)
     return s:gsub("{([^:}]+):([^:}]+):?([^}]*)}", function(variant, id, fallback)
         local mainid, subid = id:match("(%d+)%.(%d+)")
         mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
-        id = tonumber(id)
+        id = mainid or tonumber(id)
         -- TODO: multiple variants?
         local mainvariant, subvariant = variant:match("(%l+)%.(%l+)")
         if subvariant then
@@ -531,6 +531,9 @@ local function render_string(s, context)
                 name = GetFactionInfoByID(id)
             end
             if name then
+                if subid then
+                    return TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GetText("FACTION_STANDING_LABEL"..subid, UnitSex("player")) or string(subid))
+                end
                 return name
             end
         elseif variant == "garrisontalent" then
