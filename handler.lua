@@ -113,6 +113,15 @@ do
         if item.covenant then
             table.insert(available, ns.conditions.Covenant(item.covenant))
         end
+        if item.requires then
+            if ns.IsObject(item.requires) then
+                table.insert(available, item.requires)
+            else
+                for i,v in ipairs(item.requires) do
+                    table.insert(available, v)
+                end
+            end
+        end
         if #available > 0 then
             upgrade.requires = available
             available = {}
