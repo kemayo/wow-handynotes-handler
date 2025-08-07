@@ -551,6 +551,28 @@ local function render_string(s, context)
                 if subvariant == "plain" then return info.name end
                 return quick_texture_markup(info.icon) .. " " .. (info.researched and completeColor or incompleteColor):WrapTextInColorCode(info.name)
             end
+        elseif variant == "trait" then
+            local treeID, nodeID = mainid, subid
+            local configID = C_Traits.GetConfigIDByTreeID(treeID)
+            local nodeInfo = configID and C_Traits.GetNodeInfo(configID, nodeID)
+            if nodeInfo and nodeInfo.ID ~= 0 then
+                local known = nodeInfo.ranksPurchased > 0
+                local entryID = nodeInfo.activeEntry and nodeInfo.activeEntry.entryID
+                local entryInfo = entryID and C_Traits.GetEntryInfo(configID, entryID)
+                if entryInfo and entryInfo.definitionID then
+                    local definitionInfo = C_Traits.GetDefinitionInfo(entryInfo.definitionID)
+                    local name = TalentUtil.GetTalentNameFromInfo(definitionInfo)
+                    if name and name ~= "" then
+                        if subvariant == "plain" then return name end
+                        name = (known and completeColor or incompleteColor):WrapTextInColorCode(name)
+                        local texture = TalentButtonUtil.CalculateIconTextureFromInfo(definitionInfo)
+                        if texture then
+                            return quick_texture_markup(texture) .. " " .. name
+                        end
+                        return name
+                    end
+                end
+            end
         elseif variant == "profession" then
             local info = C_TradeSkillUI.GetProfessionInfoBySkillLineID(id)
             if (info and info.professionName and info.professionName ~= "") then

@@ -16,7 +16,7 @@ condition:Label() -> string
 
 local Condition = ns.Class({classname = "Condition"})
 function Condition:init(id) self.id = id end
-function Condition:Label() return ('{%s:%d}'):format(self.type, self.id) end
+function Condition:Label() return ('{%s:%s}'):format(self.type, self.id) end
 function Condition:Matched() return false end
 
 local RankedCondition = Condition:extends{classname = "RankedCondition"}
@@ -183,6 +183,20 @@ ns.conditions.GarrisonTalent = RankedCondition:extends{classname = "GarrisonTale
 function ns.conditions.GarrisonTalent:Matched()
     local info = C_Garrison.GetTalentInfo(self.id)
     return info and info.researched and (not self.rank or info.talentRank >= self.rank)
+end
+
+ns.conditions.Trait = RankedCondition:extends{classname = "Trait", type = 'trait'}
+function ns.conditions.Trait:init(treeID, nodeID, rank)
+    self.treeID = treeID
+    self.nodeID = nodeID
+    self.rank = rank
+
+    self.id = ("%d.%d"):format(treeID, nodeID) -- for Label
+    self.configID = C_Traits.GetConfigIDByTreeID(treeID)
+end
+function ns.conditions.Trait:Matched()
+    local nodeInfo = configID and C_Traits.GetNodeInfo(configID, nodeID)
+    return nodeInfo and nodeInfo.ID ~= 0 and nodeInfo.ranksPurchased > 0
 end
 
 ns.conditions.Item = Condition:extends{classname = "Item", type = 'item'}
