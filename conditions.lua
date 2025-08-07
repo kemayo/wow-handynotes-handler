@@ -179,19 +179,7 @@ function ns.conditions.MajorFaction:Matched()
     end
 end
 
-ns.conditions.GarrisonTalent = Condition:extends{classname = "GarrisonTalent", type = 'garrisontalent'}
-function ns.conditions.GarrisonTalent:init(id, rank)
-    self.id = id
-    self.rank = rank
-end
-function ns.conditions.GarrisonTalent:Label()
-    local info = C_Garrison.GetTalentInfo(self.id)
-    local name = info and info.name and ("{garrisontalent:%d}"):format(self.id) or UNKNOWN
-    if self.rank then
-        return AZERITE_ESSENCE_TOOLTIP_NAME_RANK:format(name, self.rank)
-    end
-    return name
-end
+ns.conditions.GarrisonTalent = RankedCondition:extends{classname = "GarrisonTalent", type = 'garrisontalent'}
 function ns.conditions.GarrisonTalent:Matched()
     local info = C_Garrison.GetTalentInfo(self.id)
     return info and info.researched and (not self.rank or info.talentRank >= self.rank)
