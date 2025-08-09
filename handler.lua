@@ -107,7 +107,9 @@ do
         end
         upgrade.quest = item.quest
         upgrade.questComplete = item.questComplete
+        upgrade.warband = item.warband
         upgrade.spell = item.spell
+        upgrade.note = item.note
         if item.class then
             table.insert(available, ns.conditions.Class(item.class))
         end
