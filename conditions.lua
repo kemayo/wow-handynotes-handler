@@ -15,13 +15,17 @@ condition:Label() -> string
 ]]
 
 local Condition = ns.Class({classname = "Condition"})
-function Condition:init(id) self.id = id end
+function Condition:init(id, ...)
+    self.id = id
+    self.cachekey = self:Key(id, ...)
+end
 function Condition:Label() return ('{%s:%s}'):format(self.type, self.id) end
 function Condition:Matched() return false end
+function Condition:Key(...) return (":"):join(self.classname, tostringall(...)) end
 
 local RankedCondition = Condition:extends{classname = "RankedCondition"}
 function RankedCondition:init(id, rank)
-    self:super("init", id)
+    self:super("init", id, rank)
     self.rank = rank
 end
 function RankedCondition:Label()
@@ -45,7 +49,7 @@ ns.conditions._Negated = Negated
 
 ns.conditions.Achievement = Condition:extends{classname = "Achievement", type="achievement"}
 function ns.conditions.Achievement:init(id, criteria, currentCharacter)
-    self:super("init", id)
+    self:super("init", id, criteria, currentCharacter and 1 or 0)
     self.criteria = criteria
     self.currentCharacter = currentCharacter
     if currentCharacter then
@@ -187,11 +191,11 @@ end
 
 ns.conditions.Trait = RankedCondition:extends{classname = "Trait", type = 'trait'}
 function ns.conditions.Trait:init(treeID, nodeID, rank)
+    self:super("init", ("%d.%d"):format(treeID, nodeID), rank)
     self.treeID = treeID
     self.nodeID = nodeID
     self.rank = rank
 
-    self.id = ("%d.%d"):format(treeID, nodeID) -- for Label
     self.configID = C_Traits.GetConfigIDByTreeID(treeID)
 end
 function ns.conditions.Trait:Matched()
@@ -201,7 +205,7 @@ end
 
 ns.conditions.Item = Condition:extends{classname = "Item", type = 'item'}
 function ns.conditions.Item:init(id, count)
-    self.id = id
+    self:super("init", id, count)
     self.count = count
 end
 function ns.conditions.Item:Label()
@@ -365,7 +369,18 @@ end
 -- Helpers:
 
 do
-    local function check(cond) return cond:Matched() end
+    local cache = setmetatable({}, {__index=function(self, cond)
+        if cond.cachekey then
+            local result = cond:Matched()
+            cache[cond.cachekey] = result
+            return result
+        end
+        -- not cacheable
+        return cond:Matched()
+    end,})
+    ns.run_caches.conditions = cache
+
+    local function check(cond) return cache[cond] end
     ns.conditions.check = function(conditions)
         return conditions and ns.doTest(check, conditions)
     end
