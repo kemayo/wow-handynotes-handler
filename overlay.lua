@@ -405,6 +405,13 @@ function ns.SetupMapOverlay()
             if InterfaceOptionsFrame_Show then
                 InterfaceOptionsFrame_Show()
                 InterfaceOptionsFrame_OpenToCategory('HandyNotes')
+            elseif LE_EXPANSION_LEVEL_CURRENT >= (LE_EXPANSION_MIDNIGHT or math.huge) then
+                -- Midnight changed this to be significantly less useful if you didn't create the original panel, and thus know the ID:
+                for _, category in ipairs(SettingsPanel:GetAllCategories()) do
+                    if category:GetName() == 'HandyNotes' then
+                        Settings.OpenToCategory(category:GetID())
+                    end
+                end
             else
                 Settings.OpenToCategory('HandyNotes')
             end
