@@ -410,6 +410,7 @@ function ns.SetupMapOverlay()
                 for _, category in ipairs(SettingsPanel:GetAllCategories()) do
                     if category:GetName() == 'HandyNotes' then
                         Settings.OpenToCategory(category:GetID())
+                        break
                     end
                 end
             else
