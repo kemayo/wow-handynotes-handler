@@ -218,7 +218,7 @@ function ns.SetupMapOverlay()
         end
     end
     frame.OnMouseDown = function(self, button)
-        if IsAltKeyDown() then
+        if IsAltKeyDown() or IsShiftKeyDown() then
             -- undiscoverable debug helper:
             ns.db.found = not ns.db.found
             return ns.HL:Refresh()
