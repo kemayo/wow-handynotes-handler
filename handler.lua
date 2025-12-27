@@ -1242,7 +1242,10 @@ function HLHandler:OnEnter(uiMapID, coord)
         if point.route and ns.points[uiMapID][point.route] then
             point = ns.points[uiMapID][point.route]
         end
-        ns.RouteWorldMapDataProvider:HighlightRoute(point, uiMapID, coord)
+        if point._uiMapID == uiMapID then
+            -- Highlight the route only if it's on the original mapid for the point
+            ns.RouteWorldMapDataProvider:HighlightRoute(point, uiMapID, coord)
+        end
     end
     if ns.DecorationWorldMapDataProvider then
         ns.DecorationWorldMapDataProvider:OnMouseEnter(point, uiMapID, coord)
