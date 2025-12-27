@@ -104,7 +104,11 @@ do
                     item = description:CreateButton(option.name, executeHandler, option.func)
                 end
                 if option.disabled then
-                    item:SetEnabled(not option.disabled())
+                    if type(option.disabled) == "function" then
+                        item:SetEnabled(not option.disabled())
+                    else
+                        item:SetEnabled(not option.disabled)
+                    end
                 end
                 if option.desc then
                     item:SetTitleAndTextTooltip(nil, option.desc)

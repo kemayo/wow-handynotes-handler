@@ -399,3 +399,24 @@ function ns.rewards.Recipe:Cache()
     self:super("Cache")
     C_Spell.RequestLoadSpellData(self.spellid)
 end
+
+ns.rewards.Decor = ns.rewards.Item:extends{classname="Decor"}
+function ns.rewards.Decor:Obtained(...)
+    if self:super("Obtained", ...) then
+        -- quests, etc
+        return true
+    end
+    if not C_HousingCatalog then return GetItemCount(self.id, true) > 0 end
+    local decorInfo = C_HousingCatalog.GetCatalogEntryInfoByItem(self.id, true)
+    if decorInfo then
+        return (decorInfo.quantity + decorInfo.remainingRedeemable + decorInfo.numPlaced) >= 1
+    end
+end
+function ns.rewards.Decor:Notable(...)
+    -- could only count xp-granting as notable? firstAcquisitionBonus on decorInfo
+    return ns.db.decor_notable and self:super("Notable", ...)
+end
+function ns.rewards.Decor:Cache()
+    self:super("Cache")
+    C_HousingCatalog.GetCatalogEntryInfoByItem(self.id, true)
+end
