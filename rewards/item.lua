@@ -407,6 +407,9 @@ function ns.rewards.Decor:Obtained(...)
         return true
     end
     if not C_HousingCatalog then return GetItemCount(self.id, true) > 0 end
+    -- This only works because of the call in Cache; the alternative would be
+    -- tooltip-scanning, but that's not ideal because there's not a type for
+    -- the quantity line so it'd be falling back on some localized text...
     local decorInfo = C_HousingCatalog.GetCatalogEntryInfoByItem(self.id, true)
     if decorInfo then
         return (decorInfo.quantity + decorInfo.remainingRedeemable + decorInfo.numPlaced) >= 1
@@ -416,7 +419,17 @@ function ns.rewards.Decor:Notable(...)
     -- could only count xp-granting as notable? firstAcquisitionBonus on decorInfo
     return ns.db.decor_notable and self:super("Notable", ...)
 end
-function ns.rewards.Decor:Cache()
-    self:super("Cache")
-    C_HousingCatalog.GetCatalogEntryInfoByItem(self.id, true)
+do
+    local catalogLoaded
+    function ns.rewards.Decor:Cache()
+        self:super("Cache")
+        if not catalogLoaded then
+            -- Everything about decor *but* the quantity you possess is
+            -- available at all times, but this needs to be called to fetch
+            -- quantities:
+            C_HousingCatalog.CreateCatalogSearcher()
+            catalogLoaded = true
+        end
+        C_HousingCatalog.GetCatalogEntryInfoByItem(self.id, true)
+    end
 end
