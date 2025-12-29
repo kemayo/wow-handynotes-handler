@@ -137,8 +137,10 @@ do
                 local appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
                 if sourceID then
                     local info = C_TransmogCollection.GetSourceInfo(sourceID)
-                     -- info.isValidSourceForPlayer also exists, seems to be whether the current character could actually transmog it
-                    return info and (info.playerCanCollect or info.isCollected or info.canDisplayOnPlayer), info and info.useErrorType
+                    if info then
+                        -- info.isValidSourceForPlayer also exists, seems to be whether the current character could actually transmog it
+                        return info.playerCanCollect or info.isCollected or info.canDisplayOnPlayer, info.useErrorType
+                    end
                 end
             end
         end
