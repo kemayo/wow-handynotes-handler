@@ -212,7 +212,7 @@ function ns.RegisterPoints(zone, points, defaults)
             local relatedNode = ns.nodeMaker(setmetatable({
                 label=point.related.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
                 atlas=point.related.atlas or "playerpartyblip", color=point.related.color, scale=point.related.scale,
-                texture=point.related.texture or false, minimap=point.related.minimap,
+                texture=point.related.texture or false, minimap=point.related.minimap, worldmap=point.related.worldmap,
                 note=point.related.note or false,
                 loot=upgradeloot(point.related.loot),
                 active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
