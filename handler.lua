@@ -606,6 +606,10 @@ local function render_string(s, context)
             if name then
                 return name
             end
+        elseif variant == "expansion" then
+            if _G["EXPANSION_NAME"..id] then
+                return _G["EXPANSION_NAME"..id]
+            end
         end
         return fallback ~= "" and fallback or (variant .. ':' .. id)
     end)
