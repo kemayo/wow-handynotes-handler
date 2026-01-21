@@ -1621,9 +1621,10 @@ end
 
 hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
     -- if not self.db.profile.show_on_world then return end
-    if not self.areaPoiID then return end
-    if not ns.POIsToPoints[self.areaPoiID] then return end
-    local point = ns.POIsToPoints[self.areaPoiID]
+    local areaPoiID = self.poiInfo and self.poiInfo.areaPoiID or self.areaPoiID
+    if not areaPoiID then return end
+    if not ns.POIsToPoints[areaPoiID] then return end
+    local point = ns.POIsToPoints[areaPoiID]
     -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
     handle_tooltip(GameTooltip, point, true)
 end)
