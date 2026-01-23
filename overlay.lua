@@ -196,7 +196,7 @@ function ns.SetupMapOverlay()
     frame.Background:SetSize(25, 25)
     frame.Background:SetTexture([[Interface\Minimap\UI-Minimap-Background]])
     frame.Icon = frame:CreateTexture(nil, "ARTWORK")
-    frame.Icon:SetTexture([[Interface\Minimap\Tracking\None]])
+    frame.Icon:SetTexture(ns.overlayTexture or [[Interface\Minimap\Tracking\None]])
     frame.Icon:SetSize(20, 20)
     frame.Icon:SetPoint("TOPLEFT", 6, -6)
     frame.Border = frame:CreateTexture(nil, "OVERLAY", nil, -1)
@@ -205,7 +205,11 @@ function ns.SetupMapOverlay()
     frame.Border:SetPoint("TOPLEFT")
     frame:SetHighlightTexture([[Interface\Minimap\UI-Minimap-ZoomButton-Highlight]], "ADD")
 
-    frame.Icon:SetAtlas("VignetteLootElite")
+    if ns.overlayTexture then
+        frame.Icon:SetTexture(ns.overlayTexture)
+    else
+        frame.Icon:SetAtlas(ns.overlayAtlas or "VignetteLootElite")
+    end
     frame.Icon:SetPoint("TOPLEFT", 6, -5)
     hideTextureWithAtlas("MapCornerShadow-Right", frame:GetRegions())
     frame.Refresh = function(self)
