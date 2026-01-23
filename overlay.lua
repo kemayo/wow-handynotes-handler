@@ -218,7 +218,7 @@ function ns.SetupMapOverlay()
         local parentMapID = info and info.parentMapID or 0
         if ns.db.worldmapoverlay and (
             (ns.points[uiMapID] and not ns.suppressoverlay[uiMapID]) or
-            (ns.points[parentMapID] and not ns.suppressoverlay[parentMapID])
+            (ns.points[parentMapID] and not ns.suppressoverlay[parentMapID] and not ns.suppressoverlayforparents)
         ) then
             self:Show()
         else
