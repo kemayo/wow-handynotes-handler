@@ -1414,7 +1414,9 @@ do
             rootDescription:CreateButton(COMMUNITIES_INVITE_MANAGER_LINK_TO_CHAT, function() sendToChat(uiMapID, coord) end)
         end
         -- Hide menu item
-        rootDescription:CreateButton("Hide this point", function() hideNode(uiMapID, coord) end)
+        if not ns.hiddenConfig.unhide then
+            rootDescription:CreateButton("Hide this point", function() hideNode(uiMapID, coord) end)
+        end
         if point.achievement then
             rootDescription:CreateButton(render_string("Hide {achievement:" .. point.achievement .. "}", point), hideAchievement, point.achievement)
         end
@@ -1427,7 +1429,7 @@ do
             end
             if not ns.hiddenConfig.groupsHidden then
                 rootDescription:CreateButton(
-                    render_string(("Hide %s in all zones"):format(ns.groups[point.group] or point.group), point),
+                    render_string((ns.hiddenConfig.groupsHiddenByZone and "Hide all %s" or "Hide %s in all zones"):format(ns.groups[point.group] or point.group), point),
                     function() hideGroup(uiMapID, coord) end
                 )
             end

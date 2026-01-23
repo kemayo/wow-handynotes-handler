@@ -279,16 +279,25 @@ function ns.SetupMapOverlay()
         if not uiMapID then return false end
         rootDescription:SetTag("MENU_WORLD_MAP_"..myname)
         -- rootDescription:CreateTitle(myfullname)
-        rootDescription:CreateTitle(SHOW)
-        local npcs = createVisibility(rootDescription:CreateCheckbox("NPCs", isChecked, toggleChecked, "show_npcs"))
-        npcs:CreateDivider()
-        OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, npcs)
 
-        local treasure = createVisibility(rootDescription:CreateCheckbox("Treasure", isChecked, toggleChecked, "show_treasure"))
+        if not ns.hiddenConfig.display then
+            rootDescription:QueueTitle(SHOW)
 
-        OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args, rootDescription)
+            if not ns.hiddenConfig.show_npcs then
+                local npcs = createVisibility(rootDescription:CreateCheckbox("NPCs", isChecked, toggleChecked, "show_npcs"))
+                npcs:CreateDivider()
+                OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, npcs)
+            end
 
-        rootDescription:QueueDivider()
+            if not ns.hiddenConfig.show_treasure then
+                local treasure = createVisibility(rootDescription:CreateCheckbox("Treasure", isChecked, toggleChecked, "show_treasure"))
+            end
+
+            OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args, rootDescription)
+
+            rootDescription:QueueDivider()
+        end
+
         rootDescription:QueueTitle("Nearby types")
 
         local showZoneGroups = not (ns.hiddenConfig.groupsHiddenByZone and OptionsDropdown.isHidden(ns.options.args.data, "groupsHidden")) and zoneHasGroups(uiMapID)
@@ -327,8 +336,8 @@ function ns.SetupMapOverlay()
         end
 
         rootDescription:ClearQueuedDescriptions()
-
         rootDescription:QueueDivider()
+
         rootDescription:QueueTitle("All types")
 
         local showAchievements = not OptionsDropdown.isHidden(ns.options.args.data, "achievementsHidden")
@@ -398,8 +407,10 @@ function ns.SetupMapOverlay()
         rootDescription:ClearQueuedDescriptions()
         rootDescription:CreateDivider()
 
-        local notabilitySubmenu = rootDescription:CreateButton("What's notable?")
-        OptionsDropdown.FillFromArgs(ns.options.args.common.args.notable.args, notabilitySubmenu)
+        if not ns.hiddenConfig.notable then
+            local notabilitySubmenu = rootDescription:CreateButton("What's notable?")
+            OptionsDropdown.FillFromArgs(ns.options.args.common.args.notable.args, notabilitySubmenu)
+        end
 
         local settingsSubmenu = rootDescription:CreateButton("More settings")
         settingsSubmenu:CreateTitle(ns.options.args.common.args.found.name)
