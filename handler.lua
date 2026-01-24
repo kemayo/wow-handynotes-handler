@@ -1621,61 +1621,28 @@ function HL:FillCaches()
     end)
 end
 
-if _G.LegendHighlightablePoiPinMixin then
-    -- Midnight
-    EventRegistry:RegisterCallback("TaskPOI.TooltipShown", function(self, pin, questID)
+do
+    local handleWorldMapPin = function(pin)
         if not pin then return end
         local point
         if pin.vignetteID then
             point = ns.VignetteIDsToPoints[pin.vignetteID]
         elseif pin.worldQuest and pin.questID then
             point = ns.WorldQuestsToPoints[pin.questID]
-        elseif pin.poiInfo and pin.poiInfo.areaPoiID then 
+        elseif pin.poiInfo and pin.poiInfo.areaPoiID then
             point = ns.POIsToPoints[pin.poiInfo.areaPoiID]
         end
         if point then
             handle_tooltip(GameTooltip, point, true)
         end
-    end)
+    end
+
+    hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", handleWorldMapPin)
+    hooksecurefunc(VignettePinMixin, "OnMouseEnter", handleWorldMapPin)
+    if _G.TaskPOI_OnEnter then
+        hooksecurefunc("TaskPOI_OnEnter", handleWorldMapPin)
+    end
     EventRegistry:RegisterCallback("MapLegendPinOnLeave", function(self)
         if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
     end)
-else
-    hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
-        -- if not self.db.profile.show_on_world then return end
-        local areaPoiID = self.poiInfo and self.poiInfo.areaPoiID or self.areaPoiID
-        if not areaPoiID then return end
-        if not ns.POIsToPoints[areaPoiID] then return end
-        local point = ns.POIsToPoints[areaPoiID]
-        -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-        handle_tooltip(GameTooltip, point, true)
-    end)
-    hooksecurefunc(AreaPOIPinMixin, "OnMouseLeave", function(self)
-        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
-    end)
-
-    hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
-        local vignetteInfo = self.vignetteInfo
-        if not (vignetteInfo.vignetteID and ns.VignetteIDsToPoints[vignetteInfo.vignetteID]) then return end
-        local point = ns.VignetteIDsToPoints[vignetteInfo.vignetteID]
-        -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-        handle_tooltip(GameTooltip, point, true)
-    end)
-    hooksecurefunc(VignettePinMixin, "OnMouseLeave", function(self)
-        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
-    end)
-
-    if _G.TaskPOI_OnEnter then
-        hooksecurefunc("TaskPOI_OnEnter", function(self)
-            if not self.questID then return end
-            if not ns.WorldQuestsToPoints[self.questID] then return end
-            local point = ns.WorldQuestsToPoints[self.questID]
-            -- if not ns.should_show_point(point._coord, point, point._uiMapID, false) then return end
-            handle_tooltip(GameTooltip, point, false)
-        end)
-        hooksecurefunc("TaskPOI_OnLeave", function(self)
-            -- 10.0.2 doesn't hide this by default any more
-            if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
-        end)
-    end
 end
