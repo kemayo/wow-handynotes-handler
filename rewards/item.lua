@@ -135,17 +135,22 @@ do
                 local canBeChanged, noChangeReason, canBeSource, noSourceReason = C_Transmog.CanTransmogItem(itemID)
                 return canBeSource, noSourceReason
             else
-                -- Midnight
-                local appearanceID, sourceID = C_TransmogCollection.GetItemInfo(itemLink)
-                if sourceID then
-                    local info = C_TransmogCollection.GetSourceInfo(sourceID)
-                    if info then
-                        -- info.isValidSourceForPlayer also exists, seems to be whether the current character could actually transmog it
-                        return info.playerCanCollect or info.isCollected or info.canDisplayOnPlayer, info.useErrorType
-                    end
+                -- Midnight; it *seems* that anything which this function returns
+                -- data for is usable as a transmog source now. Checked on
+                -- Warglaive of Azzinoth (32837) which returns nil.
+                -- 2026/1/23: Apart from Legion artifacts, but they've always been
+                -- weird and might be bugged at the moment anyway.
+                if GetAppearanceAndSource(itemLink) then
+                    return true
+                end
+                -- sometimes this doesn't return info for valid items, but
+                -- anything you have the transmog for *must* be transmoggable...
+                if PlayerHasTransmogByItemInfo(itemLink) then
+                    return true
                 end
             end
         end
+        return nil, 'NO_ITEM'
     end
 
     local canLearnCache = {}
@@ -172,8 +177,7 @@ do
             return false
         end
         if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-            -- Retail made it so everything is learnable, and *Midnight*
-            -- specifically breaks the XCanCollectSource functions...
+            -- Retail made it so everything is learnable
             canLearnCache[itemID] = true
         else
             local hasData, canCollect = C_TransmogCollection.PlayerCanCollectSource(sourceID)
