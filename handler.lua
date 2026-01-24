@@ -1623,7 +1623,7 @@ end
 
 if _G.LegendHighlightablePoiPinMixin then
     -- Midnight
-    EventRegistry:RegisterCallback("MapLegendPinOnEnter", function(self, pin)
+    EventRegistry:RegisterCallback("TaskPOI.TooltipShown", function(self, pin, questID)
         if not pin then return end
         local point
         if pin.vignetteID then
@@ -1636,6 +1636,9 @@ if _G.LegendHighlightablePoiPinMixin then
         if point then
             handle_tooltip(GameTooltip, point, true)
         end
+    end)
+    EventRegistry:RegisterCallback("MapLegendPinOnLeave", function(self)
+        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
     end)
 else
     hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
