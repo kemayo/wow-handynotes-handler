@@ -14,6 +14,8 @@ ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 ns.WARBANDS_AVAILABLE = LE_EXPANSION_LEVEL_CURRENT >= (LE_EXPANSION_WAR_WITHIN or math.huge)
 
+local issecretvalue = _G.issecretvalue or function() return false end
+
 local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
 
 local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
@@ -1146,7 +1148,7 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddDoubleLine("Coord", point._coord)
     end
 
-    if (ns.db.tooltip_item or IsShiftKeyDown()) and (point.loot or point.npc or point.spell) then
+    if (ns.db.tooltip_item or IsShiftKeyDown()) and (point.loot or point.npc or point.spell) and not issecretvalue(tooltip:GetLeft()) then
         local comparison = _G[myname.."ComparisonTooltip"]
         if not comparison then
             comparison = CreateFrame("GameTooltip", myname.."ComparisonTooltip", UIParent, "ShoppingTooltipTemplate")
