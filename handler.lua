@@ -146,17 +146,8 @@ do
         return loot
     end
 end
-function ns.RegisterPoints(zone, points, defaults)
-    if not ns.points[zone] then
-        ns.points[zone] = {}
-    end
-    if defaults then
-        local nodeType = ns.nodeMaker(defaults)
-        for coord, point in pairs(points) do
-            points[coord] = nodeType(point)
-        end
-    end
-    for coord, point in pairs(points) do
+do
+    local function registerPoint(zone, coord, point)
         upgradeloot(point.loot)
         if ns.DEBUG and ns.points[zone][coord] then
             print(myname, "point collision", zone, coord)
@@ -205,12 +196,9 @@ function ns.RegisterPoints(zone, points, defaults)
                     minimap=true, worldmap=nearby.worldmap, scale=0.95,
                     note=nearby.note or false,
                     loot=upgradeloot(nearby.loot), active=nearby.active,
-                    _coord=ncoord, _uiMapID=zone,
+                    related=nearby.related or false, nearby=nearby.nearby or false,
                 }, proxy_meta)
-                if nearby.color then
-                    npoint.texture = ns.atlas_texture(npoint.atlas, nearby.color)
-                end
-                ns.points[zone][ncoord] = npoint
+                registerPoint(zone, ncoord, npoint)
             end
         end
         if point.related then
@@ -221,20 +209,14 @@ function ns.RegisterPoints(zone, points, defaults)
                 note=point.related.note or false,
                 loot=upgradeloot(point.related.loot),
                 active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
+                related=point.related.related or false, nearby=point.related.nearby or false,
                 route=coord,
-                _uiMapID=zone,
             }, proxy_meta))
             for rcoord, related in pairs(point.related) do
-                if type(rcoord) == "number" then
-                    local rpoint = relatedNode(related)
-                    upgradeloot(rpoint.loot)
-                    rpoint._coord = rcoord
-                    if related.color then
-                        rpoint.texture = ns.atlas_texture(rpoint.atlas, related.color)
-                    end
+                if type(rcoord) == "number" then -- defaults are mixed in on this table...
                     if not point.routes then point.routes = {} end
                     table.insert(point.routes, {rcoord, coord, highlightOnly=true})
-                    ns.points[zone][rcoord] = rpoint
+                    registerPoint(zone, rcoord, relatedNode(related))
                 end
             end 
         end
@@ -308,6 +290,20 @@ function ns.RegisterPoints(zone, points, defaults)
                 end
                 ns.points[zone][acoord] = point
             end
+        end
+    end
+    function ns.RegisterPoints(zone, points, defaults)
+        if not ns.points[zone] then
+            ns.points[zone] = {}
+        end
+        if defaults then
+            local nodeType = ns.nodeMaker(defaults)
+            for coord, point in pairs(points) do
+                points[coord] = nodeType(point)
+            end
+        end
+        for coord, point in pairs(points) do
+            registerPoint(zone, coord, point)
         end
     end
 end
