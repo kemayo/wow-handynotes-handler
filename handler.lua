@@ -1570,6 +1570,7 @@ do
         HL:SendMessage("HandyNotes_NotifyUpdate", myname:gsub("HandyNotes_", ""))
     end
     function HL:RefreshOnEvent(event)
+        self:FillCaches()
         bucket:Show()
     end
     function HL:RefreshOnUnitEvent(requiredUnit, event, unit)
@@ -1591,6 +1592,9 @@ do
 end
 
 function HL:FillCaches()
+    if self.cachingStarted then return end
+    if not (ns.points[C_Map.GetBestMapForUnit("player") or -1] or ns.points[WorldMapFrame and WorldMapFrame.mapID or -1]) then return end
+    self.cachingStarted = true
     local CacheWalker = coroutine.wrap(function()
         local count = 0
         for uiMapID, coords in pairs(ns.points) do
