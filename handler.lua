@@ -1256,6 +1256,7 @@ function HLHandler:OnEnter(uiMapID, coord)
         ns.DecorationWorldMapDataProvider:OnMouseEnter(point, uiMapID, coord)
     end
     local tooltip = GameTooltip
+    tooltip:ClearAllPoints()
     if ns.db.tooltip_pointanchor or self:GetParent() == Minimap then
         if self:GetCenter() > UIParent:GetCenter() then -- compare X coordinate
             tooltip:SetOwner(self, "ANCHOR_LEFT")
@@ -1624,8 +1625,17 @@ function HL:FillCaches()
 end
 
 do
+    -- This is a "only do this update once a tick" gate
+    local already
+    local gateFrame = CreateFrame("Frame")
+    gateFrame:SetScript("OnShow", function() already = true end)
+    gateFrame:SetScript("OnHide", function() already = false end)
+    gateFrame:SetScript("OnUpdate", function(self) self:Hide() end)
+
     local handleWorldMapPin = function(pin)
         if not pin then return end
+        if already then return end
+        gateFrame:Show()
         local point
         if pin.vignetteID then
             point = ns.VignetteIDsToPoints[pin.vignetteID]
@@ -1638,13 +1648,26 @@ do
             handle_tooltip(GameTooltip, point, true)
         end
     end
+    local hideComparison = function()
+        -- 10.0.2 doesn't hide this by default any more
+        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
+        gateFrame:Hide()
+    end
 
     hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", handleWorldMapPin)
-    hooksecurefunc(VignettePinMixin, "OnMouseEnter", handleWorldMapPin)
+    hooksecurefunc(AreaPOIPinMixin, "OnMouseLeave", hideComparison)
+    hooksecurefunc(VignettePinBaseMixin or VignettePinMixin, "OnMouseEnter", handleWorldMapPin)
+    hooksecurefunc(VignettePinBaseMixin or VignettePinMixin, "OnMouseLeave", hideComparison)
     if _G.TaskPOI_OnEnter then
         hooksecurefunc("TaskPOI_OnEnter", handleWorldMapPin)
+        hooksecurefunc("TaskPOI_OnLeave", function(self) hideComparison() end)
     end
-    EventRegistry:RegisterCallback("MapLegendPinOnLeave", function(self)
-        if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
+    EventRegistry:RegisterCallback("MapLegendPinOnEnter", function(self, pin)
+        -- This wants to catch pins like the vignettes on the Dragon Isles,
+        -- which appear for events but which aren't a VignettePinMixin.
+        -- Regular VignettePinMixin will also trigger this, depending on
+        -- client branch, but the gate frame will avoid issues.
+        handleWorldMapPin(pin)
     end)
+    EventRegistry:RegisterCallback("MapLegendPinOnLeave", hideComparison)
 end
