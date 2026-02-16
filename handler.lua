@@ -1538,6 +1538,7 @@ function HL:OnInitialize()
         self:RegisterEvent("GARRISON_FOLLOWER_ADDED", "RefreshOnEvent")
         self:RegisterEvent("UNIT_ENTERING_VEHICLE", "RefreshOnUnitEvent", "player")
         self:RegisterEvent("UNIT_EXITED_VEHICLE", "RefreshOnUnitEvent", "player")
+        self:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", "RefreshIfUnrestricted")
     end
     -- This is sometimes spammy, but is the only thing that tends to get us casts:
     self:RegisterEvent("CRITERIA_UPDATE", "RefreshOnEvent")
@@ -1576,6 +1577,16 @@ do
     end
     function HL:RefreshOnUnitEvent(requiredUnit, event, unit)
         if unit == requiredUnit then
+            bucket:Show()
+        end
+    end
+    function HL:RefreshIfUnrestricted(event, restrictionType, restrictionState)
+        if restrictionState == Enum.AddOnRestrictionState.Activating then
+            -- "a restriction is about to become active, but won't be enforced
+            --  until event dispatch has completed" -- so getting valid data
+            --  right away seems good.
+            self:Refresh()
+        elseif restrictionState ~= Enum.AddOnRestrictionState.Inactive then
             bucket:Show()
         end
     end
