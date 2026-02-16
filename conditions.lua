@@ -2,6 +2,9 @@ local myname, ns = ...
 local Class = ns.Class
 
 local GetPlayerAuraBySpellID = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID or _G.GetPlayerAuraBySpellID
+local issecretvalue = _G.issecretvalue or function() return false end
+local issecrettable = _G.issecrettable or function() return false end
+local InChatMessagingLockdown = _G.C_ChatInfo and C_ChatInfo.InChatMessagingLockdown or function() return false end
 
 ns.conditions = {}
 -- _G.COND = ns.conditions
@@ -279,6 +282,8 @@ function ns.conditions.CalendarEvent:Matched()
     end
 end
 function ns.conditions.CalendarEvent:getEvent()
+    -- C_Calendar.GetDayEvent returns secrets when in chat messaging lockdown
+    if InChatMessagingLockdown() then return end
     local offset, day = self:getOffsets()
     for i=1, C_Calendar.GetNumDayEvents(offset, day) do
         local event = C_Calendar.GetDayEvent(offset, day, i)
@@ -306,6 +311,8 @@ end
 
 ns.conditions.CalendarEventStartTexture = ns.conditions.CalendarEvent:extends{classname = "CalendarEventStartTexture", type = 'calendareventtexture'}
 function ns.conditions.CalendarEventStartTexture:getEvent()
+    -- C_Calendar.GetDayEvent returns secrets when in chat messaging lockdown
+    if InChatMessagingLockdown() then return end
     local offset, day = self:getOffsets()
     for i=1, C_Calendar.GetNumDayEvents(offset, day) do
         local event = C_Calendar.GetDayEvent(offset, day, i)
