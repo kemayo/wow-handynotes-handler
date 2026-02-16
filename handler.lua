@@ -1036,7 +1036,7 @@ local function handle_tooltip(tooltip, point, skip_label)
     end
     -- major:
     if not skip_label and point.label ~= false then
-        tooltip:AddLine(work_out_label(point))
+        GameTooltip_SetTitle(tooltip, work_out_label(point))
     end
     if point.OnTooltipShow then
         point:OnTooltipShow(tooltip)
