@@ -15,6 +15,15 @@ ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 ns.WARBANDS_AVAILABLE = LE_EXPANSION_LEVEL_CURRENT >= (LE_EXPANSION_WAR_WITHIN or math.huge)
 
 local issecretvalue = _G.issecretvalue or function() return false end
+local issecretframe = function(frame, aspect)
+    if frame.IsAnchoringSecret then
+        if aspect then
+            return frame:HasSecretAspect(aspect)
+        end
+        return frame:IsAnchoringSecret()
+    end
+    return false
+end
 
 local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
 
@@ -1144,7 +1153,7 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddDoubleLine("Coord", point._coord)
     end
 
-    if (ns.db.tooltip_item or IsShiftKeyDown()) and (point.loot or point.npc or point.spell) and not issecretvalue(tooltip:GetLeft()) then
+    if (ns.db.tooltip_item or IsShiftKeyDown()) and (point.loot or point.npc or point.spell) and not issecretframe(tooltip) then
         local comparison = _G[myname.."ComparisonTooltip"]
         if not comparison then
             comparison = CreateFrame("GameTooltip", myname.."ComparisonTooltip", UIParent, "ShoppingTooltipTemplate")
@@ -1179,8 +1188,8 @@ local function handle_tooltip(tooltip, point, skip_label)
                 end
             end
 
-            comparison:SetOwner(tooltip, "ANCHOR_NONE")
             comparison:ClearAllPoints()
+            comparison:SetOwner(tooltip, "ANCHOR_NONE")
 
             if ( side and side == "left" ) then
                 comparison:SetPoint("TOPRIGHT", tooltip, "TOPLEFT", 0, -10)
