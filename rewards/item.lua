@@ -81,15 +81,16 @@ function ns.rewards.Item:MightDrop()
     return self:super("MightDrop")
 end
 do
-    local function copper_to_pretty_money(c)
+    local function copperToPrettyMoney(c, coins)
+        local G, S, C = GOLD_AMOUNT_SYMBOL, SILVER_AMOUNT_SYMBOL, COPPER_AMOUNT_SYMBOL
         if c >= 10000 then
-            return ("|cffffffff%d|r|cffffd700%s|r|cffffffff%d|r|cffc7c7cf%s|r|cffffffff%d|r|cffeda55f%s|r"):format(
-                BreakUpLargeNumbers(c/10000), GOLD_AMOUNT_SYMBOL, (c/100)%100, SILVER_AMOUNT_SYMBOL, c%100, COPPER_AMOUNT_SYMBOL
+            return ("|cffffffff%d|r|cffffd700%s|r |cffffffff%d|r|cffc7c7cf%s|r |cffffffff%d|r|cffeda55f%s|r"):format(
+                BreakUpLargeNumbers(c/10000), G, (c/100)%100, S, c%100, C
             )
         elseif c >= 100 then
-            return ("|cffffffff%d|r|cffc7c7cf%s|r|cffffffff%d|r|cffeda55f%s|r"):format((c/100)%100, SILVER_AMOUNT_SYMBOL, c%100, COPPER_AMOUNT_SYMBOL)
+            return ("|cffffffff%d|r|cffc7c7cf%s|r |cffffffff%d|r|cffeda55f%s|r"):format((c/100)%100, S, c%100, C)
         else
-            return ("|cffffffff%d|r|cffeda55f%s|r"):format(c%100, COPPER_AMOUNT_SYMBOL)
+            return ("|cffffffff%d|r|cffeda55f%s|r"):format(c%100, C)
         end
     end
     local function cleanTooltipMoney(tooltip, lineData)
@@ -98,10 +99,10 @@ do
             if lineData.maxPrice and lineData.maxPrice >= 1 then
                 GameTooltip_AddColoredLine(tooltip, ("%s:"):format(SELL_PRICE), HIGHLIGHT_FONT_COLOR)
                 local indent = string.rep(" ", 4)
-                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MINIMUM, copper_to_pretty_money(lineData.price)))
-                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MAXIMUM, copper_to_pretty_money(lineData.maxPrice)))
+                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MINIMUM, copperToPrettyMoney(lineData.price)))
+                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MAXIMUM, copperToPrettyMoney(lineData.maxPrice)))
             else
-                GameTooltip_AddHighlightLine(tooltip, string.format("%s: %s", SELL_PRICE, copper_to_pretty_money(lineData.price)))
+                GameTooltip_AddHighlightLine(tooltip, string.format("%s: %s", SELL_PRICE, copperToPrettyMoney(lineData.price)))
             end
             return true
         end
