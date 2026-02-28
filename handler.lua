@@ -495,7 +495,7 @@ local function render_string(s, context)
                 return quick_texture_markup(icon) .. " " .. name
             end
         elseif variant == "quest" or variant == "worldquest" or variant == "questname" then
-            local name = C_QuestLog.GetTitleForQuestID(id)
+            local name = (C_QuestLog.GetTitleForQuestID or C_QuestLog.GetQuestInfo)(id)
             if not (name and name ~= "") then
                 -- we bypass the normal fallback mechanism because we want the quest completion status
                 name = fallback ~= "" and fallback or (variant .. ':' .. id)
@@ -634,7 +634,10 @@ local function cache_string(s, context)
         elseif variant == "spell" then
             C_Spell.RequestLoadSpellData(id)
         elseif variant == "quest" or variant == "worldquest" or variant == "questname" then
-            C_QuestLog.RequestLoadQuestByID(id)
+            if C_QuestLog.RequestLoadQuestByID then
+                -- Not present in classic
+                C_QuestLog.RequestLoadQuestByID(id)
+            end
         elseif variant == "npc" then
             mob_name(id)
         end
