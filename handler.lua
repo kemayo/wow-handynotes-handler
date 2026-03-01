@@ -468,7 +468,7 @@ local function render_string(s, context)
     return s:gsub("{([^:}]+):([^:}]+):?([^}]*)}", function(variant, id, fallback)
         local mainid, subid = id:match("(%d+)%.(%d+)")
         mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
-        id = mainid or tonumber(id)
+        id = mainid or (id:match('^%d+$') and tonumber(id) or id)
         -- TODO: multiple variants?
         local mainvariant, subvariant = variant:match("(%l+)%.(%l+)")
         if subvariant then
@@ -619,6 +619,10 @@ local function render_string(s, context)
         elseif variant == "expansion" then
             if _G["EXPANSION_NAME"..id] then
                 return _G["EXPANSION_NAME"..id]
+            end
+        elseif variant == "gc" and fallback then
+            if _G[strupper(id).."_FONT_COLOR"] then
+                return "|cn" .. strupper(id).."_FONT_COLOR:" .. fallback .. "|r"
             end
         end
         return fallback ~= "" and fallback or (variant .. ':' .. id)
