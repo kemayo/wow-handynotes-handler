@@ -31,6 +31,7 @@ ns.defaults = {
         icon_alpha = 1.0,
         icon_item = false,
         tooltip_charloot = true,
+        tooltip_sharedloot = true,
         tooltip_pointanchor = true,
         tooltip_item = true,
         tooltip_questid = false,
@@ -250,6 +251,12 @@ ns.options = {
                             type = "toggle",
                             name = "Loot for this character only",
                             desc = "Only show loot that should drop for the current character",
+                            order = 12,
+                        },
+                        tooltip_sharedloot = {
+                            type = "toggle",
+                            name = "Shared loot",
+                            desc = "Some rares have a common pool of drops that're shared between them",
                             order = 12,
                         },
                         tooltip_pointanchor = {

@@ -158,6 +158,7 @@ end
 do
     local function registerPoint(zone, coord, point)
         upgradeloot(point.loot)
+        upgradeloot(point.loot_shared)
         if ns.DEBUG and ns.points[zone][coord] then
             print(myname, "point collision", zone, coord)
         end
@@ -946,6 +947,7 @@ local get_point_info = function(point, isMinimap)
             cache_string(point.label, point)
             cache_string(point.note, point)
             cache_loot(point.loot, point)
+            cache_loot(point.loot_shared, point)
         end
         return label, icon, category, point.quest, point.faction, point.scale, point.alpha or 1
     end
@@ -1097,6 +1099,13 @@ local function handle_tooltip(tooltip, point, skip_label)
         end
         if hidden then
             tooltip:AddLine("Items for other characters hidden", 0, 1, 1)
+        end
+    end
+    if ns.db.tooltip_sharedloot and point.loot_shared and #point.loot_shared > 0 then
+        -- This is loot flagged as being from a shared pool
+        tooltip:AddLine("Shared Loot", 1, 1, 1, false)
+        for _, item in ipairs(point.loot_shared) do
+            tooltip_loot(tooltip, item, true)
         end
     end
     if point.covenant then
