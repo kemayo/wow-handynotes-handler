@@ -417,7 +417,7 @@ function ns.rewards.Set:ObtainedTag()
                     numKnown = numKnown + 1
                 end
             end
-            return RED_FONT_COLOR:WrapTextInColorCode(GENERIC_FRACTION_STRING:format(numKnown, #sources))
+            return " "..RED_FONT_COLOR:WrapTextInColorCode(GENERIC_FRACTION_STRING:format(numKnown, #sources))
         end
     end
     return self:super("ObtainedTag")
