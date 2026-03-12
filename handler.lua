@@ -625,6 +625,11 @@ local function render_string(s, context)
             if _G[strupper(id).."_FONT_COLOR"] then
                 return "|cn" .. strupper(id).."_FONT_COLOR:" .. fallback .. "|r"
             end
+        elseif variant == "a" then
+            if id == "*" then
+                id = "PlayerPartyBlip"
+            end
+            return CreateAtlasMarkup(id)
         end
         return fallback ~= "" and fallback or (variant .. ':' .. id)
     end)
