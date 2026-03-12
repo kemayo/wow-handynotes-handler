@@ -606,7 +606,7 @@ local function render_string(s, context)
                 -- there's also info.parentProfessionName for the general case ("Dragon Isles Inscription" vs "Inscription")
                 return info.professionName
             end
-        elseif variant == "zone" then
+        elseif variant == "zone" or variant == "map" then
             local info = C_Map.GetMapInfo(id)
             if info and info.name then
                 return info.name
