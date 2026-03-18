@@ -37,8 +37,10 @@ function DecorationWorldMapDataProvider:RefreshAllData(fromOnShow)
     self:EnsurePools()
 
     for coord, point in pairs(ns.points[uiMapID]) do
-        -- if (point.backdrop or point.glow) and ns.should_show_point(coord, point, uiMapID, false) then
-        if ns.should_show_point(coord, point, uiMapID, false) then
+        if
+            (point.backdrop or point.glow or point.border or point.highlight) and
+            ns.should_show_point(coord, point, uiMapID, false)
+        then
             self:GetMap():AcquirePin(TEMPLATE, point, uiMapID, coord)
         end
     end
