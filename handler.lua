@@ -1282,8 +1282,8 @@ function HLHandler:OnEnter(uiMapID, coord)
             ns.RouteWorldMapDataProvider:HighlightRoute(point, uiMapID, coord)
         end
     end
-    if ns.DecorationWorldMapDataProvider then
-        ns.DecorationWorldMapDataProvider:OnMouseEnter(point, uiMapID, coord)
+    if ns.MapSystem then
+        ns.MapSystem:ProxyEvent("Enter", point, uiMapID, coord)
     end
     local tooltip = GameTooltip
     tooltip:ClearAllPoints()
@@ -1486,8 +1486,8 @@ do
             if ns.RouteWorldMapDataProvider then
                 ns.RouteWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
             end
-            if ns.DecorationWorldMapDataProvider then
-                ns.DecorationWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
+            if ns.MapSystem then
+                ns.MapSystem:ProxyEvent("Click", point, uiMapID, coord)
             end
         end
     end
@@ -1504,8 +1504,8 @@ function HLHandler:OnLeave(uiMapID, coord)
         end
         ns.RouteWorldMapDataProvider:UnhighlightRoute(point, uiMapID, coord)
     end
-    if ns.DecorationWorldMapDataProvider then
-        ns.DecorationWorldMapDataProvider:OnMouseLeave(point, uiMapID, coord)
+    if ns.MapSystem then
+        ns.MapSystem:ProxyEvent("Leave", point, uiMapID, coord)
     end
 end
 
@@ -1580,9 +1580,6 @@ function HL:OnInitialize()
     if ns.RouteWorldMapDataProvider then
         WorldMapFrame:AddDataProvider(ns.RouteWorldMapDataProvider)
     end
-    if ns.DecorationWorldMapDataProvider then
-        WorldMapFrame:AddDataProvider(ns.DecorationWorldMapDataProvider)
-    end
 
     self:FillCaches()
 end
@@ -1627,8 +1624,8 @@ do
         if ns.RouteMiniMapDataProvider then
             ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
         end
-        if ns.DecorationWorldMapDataProvider then
-            ns.DecorationWorldMapDataProvider:RefreshAllData()
+        if ns.MapSystem then
+            ns.MapSystem:UpdateProviders()
         end
     end
 end
