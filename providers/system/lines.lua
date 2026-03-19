@@ -2,7 +2,9 @@ local myname, ns = ...
 
 local lineParent = CreateFrame('Frame', nil, WorldMapFrame:GetCanvas())
 lineParent:SetAllPoints()
-lineParent:SetFrameLevel(2200) -- need to set it high so lines render above the canvas and pois
+lineParent:SetFrameStrata("MEDIUM")
+-- lineParent:SetFrameLevel(2200) -- need to set it high so lines render above the canvas and pois
+lineParent:SetFrameLevel(ns.MapSystem.GetWorldMapFrameLevelByType("PIN_FRAME_LEVEL_AREA_POI") - 2)
 
 local linePool = CreateUnsecuredObjectPool(function()
     local line = lineParent:CreateLine()
