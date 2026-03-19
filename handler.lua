@@ -1273,15 +1273,6 @@ local HLHandler = {}
 
 function HLHandler:OnEnter(uiMapID, coord)
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
-    if ns.RouteWorldMapDataProvider and (point.route or point.routes) then
-        if point.route and ns.points[uiMapID][point.route] then
-            point = ns.points[uiMapID][point.route]
-        end
-        if point._uiMapID == uiMapID then
-            -- Highlight the route only if it's on the original mapid for the point
-            ns.RouteWorldMapDataProvider:HighlightRoute(point, uiMapID, coord)
-        end
-    end
     if ns.MapSystem then
         ns.MapSystem:ProxyEvent("Enter", point, uiMapID, coord)
     end
@@ -1483,9 +1474,6 @@ do
             if point.OnClick then
                 point:OnClick(button, uiMapID, coord)
             end
-            if ns.RouteWorldMapDataProvider then
-                ns.RouteWorldMapDataProvider:OnMouseClick(point, uiMapID, coord)
-            end
             if ns.MapSystem then
                 ns.MapSystem:ProxyEvent("Click", point, uiMapID, coord)
             end
@@ -1498,12 +1486,6 @@ function HLHandler:OnLeave(uiMapID, coord)
     if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
 
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
-    if ns.RouteWorldMapDataProvider and (point.route or point.routes) then
-        if point.route and ns.points[uiMapID][point.route] then
-            point = ns.points[uiMapID][point.route]
-        end
-        ns.RouteWorldMapDataProvider:UnhighlightRoute(point, uiMapID, coord)
-    end
     if ns.MapSystem then
         ns.MapSystem:ProxyEvent("Leave", point, uiMapID, coord)
     end
@@ -1577,10 +1559,6 @@ function HL:OnInitialize()
         ns.SetupMapOverlay()
     end
 
-    if ns.RouteWorldMapDataProvider then
-        WorldMapFrame:AddDataProvider(ns.RouteWorldMapDataProvider)
-    end
-
     self:FillCaches()
 end
 
@@ -1618,9 +1596,6 @@ do
         end
     end
     function HL:RefreshProviders()
-        if ns.RouteWorldMapDataProvider then
-            ns.RouteWorldMapDataProvider:RefreshAllData()
-        end
         if ns.RouteMiniMapDataProvider then
             ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
         end

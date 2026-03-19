@@ -347,8 +347,8 @@ ns.options = {
                         show_routes = {
                             type = "toggle",
                             name = "Show routes",
-                            desc = "Show relevant routes between points ",
-                            disabled = function() return not ns.RouteWorldMapDataProvider end,
+                            desc = "Show relevant routes between points",
+                            disabled = function() return not ns.MapSystem end,
                             order = 37,
                         },
                         transmog_specific = {

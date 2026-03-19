@@ -97,14 +97,14 @@ local function CreateProviderPool(provider)
         pin:SetScript("OnMouseUp", pin.OnMouseUp)
         pin:SetScript("OnMouseDown", pin.OnMouseDown)
 
-        pin.Texture = pin:CreateTexture()
-        pin.Texture:SetAllPoints()
-
-        pin.Highlight = pin:CreateTexture(nil, "HIGHLIGHT")
-        pin.Highlight:SetAllPoints()
-
         if provider.OnPinCreated then
             provider.OnPinCreated(pin)
+        else
+            pin.Texture = pin:CreateTexture()
+            pin.Texture:SetAllPoints()
+
+            pin.Highlight = pin:CreateTexture(nil, "HIGHLIGHT")
+            pin.Highlight:SetAllPoints()
         end
 
         return pin
@@ -131,18 +131,28 @@ function providerMixin:RefreshData()
     end
 
     for _, data in next, self.data do
-        if self.OnPinAcquire then
-            local pin, isNew = self.pool:Acquire()
-            pin.provider = self
+        if self.HandleData then
+            self:HandleData(data)
+        elseif self.OnPinAcquire then
+            local pin = self:AcquirePin()
 
             local mapID, x, y = self.OnPinAcquire(pin, data)
             if mapID and pin:SetPosition(mapID, x, y) then
                 pin:Show()
             else
-                self.pool:Release(pin)
+                self:ReleasePin(pin)
             end
         end
     end
+end
+
+function providerMixin:AcquirePin(mapID, x, y)
+    local pin, isNew = self.pool:Acquire()
+    pin.provider = self
+    return pin, isNew
+end
+function providerMixin:ReleasePin(pin)
+    self.pool:Release(pin)
 end
 
 function providerMixin:GetPinByID(id)
@@ -181,6 +191,7 @@ function ns.MapSystem:ProxyEvent(event, ...)
 end
 
 local function updateProviders()
+    ns.MapSystem:ReleaseLines()
     for _, provider in next, providers do
         if provider.OnRefresh then
             provider:OnRefresh()
