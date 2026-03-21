@@ -61,10 +61,7 @@ end
 
 function provider.OnPinCreated(pin)
     pin:SetScalingLimits(1, 1.0, 1.2)
-
     pin:SetMouseMotionEnabled(false)
-    pin:SetPropagateMouseMotion(true)
-    pin:SetPropagateMouseClicks(true)
 
     pin.glow = pin:CreateTexture(nil, "BACKGROUND")
     pin.glow:SetAllPoints()
@@ -86,6 +83,11 @@ function provider.OnPinAcquire(pin, coord)
     local point = ns.points[mapID] and ns.points[mapID][coord]
     if not point then return end
     pin.point = point
+
+    if not InCombatLockdown() then
+        pin:SetPropagateMouseMotion(true)
+        pin:SetPropagateMouseClicks(true)
+    end
 
     pin:Show()
     pin:SetID(coord)

@@ -126,7 +126,7 @@ end
 
 local providerMixin = {}
 function providerMixin:RefreshData()
-    if #self.data == 0 or InCombatLockdown() then
+    if #self.data == 0 or (self.notInCombat and InCombatLockdown()) then
         return
     end
 
@@ -232,3 +232,8 @@ hooksecurefunc(WorldMapFrame, "OnMapChanged", updateProviders)
 
 -- this hook is needed to correctly set pin position and scale
 hooksecurefunc(WorldMapFrame, "OnCanvasScaleChanged", updatePinSize)
+
+-- catch the map being open while combat-transitions occur
+overlay:SetScript("OnEvent", updateProviders)
+overlay:RegisterEvent("PLAYER_REGEN_ENABLED")
+overlay:RegisterEvent("PLAYER_REGEN_DISABLED")
