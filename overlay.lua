@@ -278,7 +278,7 @@ function ns.SetupMapOverlay()
         local uiMapID = WorldMapFrame.mapID -- self:GetParent():GetMapID()
         if not uiMapID then return false end
         rootDescription:SetTag("MENU_WORLD_MAP_"..myname)
-        -- rootDescription:CreateTitle(myfullname)
+        rootDescription:CreateTitle(myfullname)
 
         if not ns.hiddenConfig.display then
             rootDescription:QueueTitle(SHOW)
