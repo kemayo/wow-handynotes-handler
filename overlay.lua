@@ -240,7 +240,8 @@ function ns.SetupMapOverlay()
     end
     frame.OnMouseEnter = function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip_SetTitle(GameTooltip, myfullname)
+        GameTooltip_SetTitle(GameTooltip, (myfullname:gsub("HandyNotes: ", "")))
+        GameTooltip_AddColoredDoubleLine(GameTooltip, " ", "HandyNotes", NORMAL_FONT_COLOR, LIGHTBLUE_FONT_COLOR)
         GameTooltip_AddNormalLine(GameTooltip, "Adjust display settings")
         GameTooltip:Show()
     end
@@ -278,7 +279,7 @@ function ns.SetupMapOverlay()
         local uiMapID = WorldMapFrame.mapID -- self:GetParent():GetMapID()
         if not uiMapID then return false end
         rootDescription:SetTag("MENU_WORLD_MAP_"..myname)
-        rootDescription:CreateTitle(myfullname)
+        rootDescription:CreateTitle((myfullname:gsub("HandyNotes: ", "")))
 
         if not ns.hiddenConfig.display then
             rootDescription:QueueTitle(SHOW)
