@@ -521,7 +521,9 @@ local function testMaker(test, override)
 end
 
 local itemInBags = testMaker(function(item) return C_Item.GetItemCount(item, true) > 0 end)
-local allQuestsComplete = testMaker(function(quest) return C_QuestLog.IsQuestFlaggedCompleted(quest) end)
+local allQuestsComplete = testMaker(function(quest, isAccount)
+    return C_QuestLog[isAccount and "IsQuestFlaggedCompletedOnAccount" or "IsQuestFlaggedCompleted"](quest)
+end)
 ns.allQuestsComplete = allQuestsComplete
 
 local temp_criteria = {}
@@ -580,7 +582,7 @@ end
 local function isNotable(point, lootable)
     -- A point is notable if it has loot you can use, or is tied to an
     -- achievement you can still earn
-    if lootable and point.quest and allQuestsComplete(point.quest) then
+    if lootable and point.quest and allQuestsComplete(point.quest, point.accountquest) then
         -- asked for only notable points that are currently lootable, which
         -- means questless or quest-incomplete
         return false
@@ -707,7 +709,7 @@ local function PointIsFound(point)
         found = true
     end
     if point.quest then
-        if not allQuestsComplete(point.quest) then
+        if not allQuestsComplete(point.quest, point.accountquest) then
             return false
         end
         found = true
@@ -776,7 +778,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         if
             (ns.db.show_npcs_filter == "lootable" or ns.db.show_npcs_filter == "notable")
             -- rewarding npcs either have no affiliated quest, or their quest is incomplete
-            and point.quest and allQuestsComplete(point.quest) and not ns.db.found
+            and point.quest and allQuestsComplete(point.quest, point.accountquest) and not ns.db.found
         then
             return point.always
         end
@@ -792,7 +794,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         if
             (ns.db.show_treasure_filter == "lootable" or ns.db.show_treasure_filter == "notable")
             -- rewarding treasure either has no affiliated quest, or their quest is incomplete
-            and point.quest and allQuestsComplete(point.quest) and not ns.db.found
+            and point.quest and allQuestsComplete(point.quest, point.accountquest) and not ns.db.found
         then
             return point.always
         end
