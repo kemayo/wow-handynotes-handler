@@ -1,20 +1,11 @@
 --[[
-    Copyright (c) 2023 Krowi
-
-    All Rights Reserved unless otherwise explicitly stated.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+    Copyright (c) 2020 Krowi
+    Licensed under the terms of the LICENSE file in this repository.
 ]]
 
 ---@diagnostic disable: undefined-global
 
-local lib, oldminor = LibStub:NewLibrary('Krowi_WorldMapButtons-1.4', 9);
+local lib, oldminor = LibStub:NewLibrary('Krowi_WorldMapButtons-1.4', 10);
 
 if not lib then
     return;
@@ -67,15 +58,6 @@ local function HookDefaultButtons()
     lib.HookedDefaultButtons = true;
 end
 
-local function PatchWrathClassic()
-    if lib.HasNoOverlay and WorldMapFrame.RefreshOverlayFrames == nil then
-        WorldMapFrame.RefreshOverlayFrames = function()
-        end
-    end
-
-    PatchWrathClassic = function() end;
-end
-
 local function AddButton(button)
     local xOffset, yOffset;
     if lib.IsMainline then
@@ -85,7 +67,7 @@ local function AddButton(button)
     end
     button.relativeFrame = WorldMapFrame:GetCanvasContainer();
     button:SetPoint("TOPRIGHT", button.relativeFrame, lib.IsMainline and -lib.XOffset or -xOffset, lib.IsMainline and yOffset or lib.YOffset);
-    hooksecurefunc(WorldMapFrame, lib.HasNoOverlay and "OnMapChanged" or "RefreshOverlayFrames", function()
+    hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
         button:Refresh();
         lib.SetPoints();
     end);
@@ -103,8 +85,6 @@ function lib:Add(templateName, templateType)
     if not self.HookedDefaultButtons then
         HookDefaultButtons();
     end
-
-    PatchWrathClassic();
 
     local button = CreateFrame(templateType, "Krowi_WorldMapButtons" .. (#self.Buttons + 1), lib.HasNoOverlay and WorldMapFrame.ScrollContainer or WorldMapFrame, templateName);
 
