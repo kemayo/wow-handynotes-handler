@@ -566,7 +566,7 @@ local function render_replacer(variant, id, fallback)
         end
         if name then
             if subid then
-                return TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GetText("FACTION_STANDING_LABEL"..subid, UnitSex("player")) or string(subid))
+                return TEXT_MODE_A_STRING_VALUE_TYPE:format(name, GetText("FACTION_STANDING_LABEL"..subid, UnitSex("player")) or tostring(subid))
             end
             return name
         end
