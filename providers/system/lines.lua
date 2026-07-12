@@ -39,5 +39,5 @@ function ns.MapSystem:ReleaseLines()
 end
 
 function ns.MapSystem:ReleaseLine(line)
-    lineParent:Release(line)
+    linePool:Release(line)
 end
