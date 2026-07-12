@@ -698,7 +698,7 @@ local trimmed_icon = function(texture)
     return icon_cache[texture]
 end
 local atlas_texture = function(atlas, extra, left, right, top, bottom)
-    atlasInfo = C_Texture.GetAtlasInfo(atlas)
+    local atlasInfo = C_Texture.GetAtlasInfo(atlas)
     if not atlasInfo then
         if ns.DEBUG then
             if not ns.DEBUG_missing_atlas_cache then ns.DEBUG_missing_atlas_cache = {} end

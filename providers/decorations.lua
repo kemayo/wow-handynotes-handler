@@ -78,6 +78,7 @@ function provider.OnPinCreated(pin)
     pin.highlight:SetAlpha(0.4)
 end
 
+local default_backdrop
 function provider.OnPinAcquire(pin, coord)
     local mapID = WorldMapFrame:GetMapID()
     local point = ns.points[mapID] and ns.points[mapID][coord]
