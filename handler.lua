@@ -186,7 +186,7 @@ do
             table.insert(route, 1, coord)
             ns.points[zone][route[#route]] = setmetatable({
                 label=route.label or (point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure"),
-                atlas=route.atlas or "poi-door", scale=route.scale or 0.95, texture=false,
+                atlas=route.atlas or "poi-door", scale=route.scale or 0.9, texture=false,
                 minimap=true, worldmap=route.worldmap,
                 note=route.note or false,
                 loot=upgradeloot(route.loot),
@@ -203,7 +203,7 @@ do
                     label=nearby.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
                     atlas=nearby.atlas or "playerpartyblip",
                     texture=nearby.texture or false,
-                    minimap=true, worldmap=nearby.worldmap, scale=0.95,
+                    minimap=true, worldmap=nearby.worldmap, scale=0.9,
                     note=nearby.note or false,
                     loot=upgradeloot(nearby.loot), active=nearby.active,
                     related=nearby.related or false, nearby=nearby.nearby or false,
@@ -815,7 +815,7 @@ local function work_out_texture(point)
     end
     if point.atlas then
         if not icon_cache[point.atlas] then
-            icon_cache[point.atlas] = atlas_texture(point.atlas, point.scale)
+            icon_cache[point.atlas] = atlas_texture(point.atlas)
         end
         return icon_cache[point.atlas]
     end
