@@ -763,9 +763,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
     end
 
     if point.follower then
-        if not ns.db.found and isFound then
-            return false
-        end
+        -- Don't treat as an NPC
     elseif point.npc then
         -- only npcs that are questless or that have an uncompleted quest
         if not ns.db.show_npcs then
