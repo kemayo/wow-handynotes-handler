@@ -198,7 +198,7 @@ do
         end
         if point.nearby then
             local nearby = type(point.nearby) == "table" and point.nearby or {point.nearby}
-            for _, ncoord in ipairs(point.nearby) do
+            for _, ncoord in ipairs(nearby) do
                 local npoint = setmetatable({
                     label=nearby.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
                     atlas=nearby.atlas or "playerpartyblip",
