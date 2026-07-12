@@ -1476,7 +1476,7 @@ do
                 return
             end
             if button == "LeftButton" and IsShiftKeyDown() and _G.MAP_PIN_HYPERLINK then
-                sendToChat(button, uiMapID, coord)
+                sendToChat(uiMapID, coord)
                 return
             end
             if point.OnClick then
