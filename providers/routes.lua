@@ -71,7 +71,7 @@ function provider:HandleData(routedata)
                 line.baseThickness = line:GetThickness()
                 -- line:SetColorTexture(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
                 line:SetVertexColor(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
-                if route.highlightOnly and not highlights[point] then
+                if route.highlightOnly and not highlights[routedata.point] then
                     line:Hide()
                 end
                 pin.line = line
