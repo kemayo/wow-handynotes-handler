@@ -134,23 +134,14 @@ do
         if item.requires then
             if ns.IsObject(item.requires) then
                 table.insert(available, item.requires)
+            elseif item.requires.any and #item.requires > 1 then
+                -- everything in `available` gets ANDed together, so an or-group
+                -- has to go in as one nested condition to keep its meaning
+                table.insert(available, ns.conditions.Any(unpack(item.requires)))
             else
-                -- were any conditions already added from class/covenant/expansion?
-                local combined = #available > 0
-                for i,v in ipairs(item.requires) do
+                -- a plain list, an all-group, or a single member: all just ANDed
+                for _, v in ipairs(item.requires) do
                     table.insert(available, v)
-                end
-                if item.requires.any or item.requires.all then
-                    if combined then
-                        -- conditions can't nest, so "(class) and (a or b)" isn't
-                        -- expressible; fall back to requiring everything
-                        if ns.DEBUG then
-                            print(myname, "loot requires: can't mix any/all with class/covenant/expansion", item[1])
-                        end
-                    else
-                        available.any = item.requires.any
-                        available.all = item.requires.all
-                    end
                 end
             end
         end
