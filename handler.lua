@@ -93,10 +93,72 @@ local function intotable(dest, value_or_table, point)
     end
     dest[value_or_table] = point
 end
+-- These keys all predate ns.conditions, and each grew its own check in
+-- should_show_point. Folding them into requires at registration leaves one
+-- path for "can this be seen" rather than a dozen near-identical ones.
+local foldConditions
+do
+    -- Each takes either a single value or a list, and what a list means isn't
+    -- the same for all of them, so the default is spelled out per key.
+    local function grouped(value, make, defaultAny)
+        if value == nil then return end
+        if type(value) ~= "table" then return make(value) end
+        local made = {}
+        for i, v in ipairs(value) do made[i] = make(v) end
+        if #made < 2 then return made[1] end
+        if value.all or (not defaultAny and not value.any) then
+            return ns.conditions.All(unpack(made))
+        end
+        return ns.conditions.Any(unpack(made))
+    end
+    -- a requires list is ANDed, so an existing or-group has to become a single
+    -- condition before ours can join it
+    local function asOne(value)
+        if not value or ns.IsObject(value) then return value end
+        if #value < 2 then return value[1] end
+        if value.any then return ns.conditions.Any(unpack(value)) end
+        return ns.conditions.All(unpack(value))
+    end
+    function foldConditions(zone, point)
+        local folded
+        local function add(condition)
+            if not condition then return end
+            folded = folded or {}
+            table.insert(folded, condition)
+        end
+        add(grouped(point.requires_item, ns.conditions.Item))
+        add(grouped(point.requires_buff, ns.conditions.AuraActive))
+        add(grouped(point.requires_no_buff, ns.conditions.AuraInactive))
+        add(grouped(point.requires_worldquest, ns.conditions.WorldQuestActive))
+        -- art defaulted to matching any of them, where the rest default to all
+        add(grouped(point.art, function(id) return ns.conditions.MapArt(zone, id) end, true))
+        if point.poi then
+            -- each entry names its own map, so they aren't necessarily this one
+            local made = {}
+            for i, poi in ipairs(point.poi) do
+                made[i] = ns.conditions.AreaPoi(unpack(poi))
+            end
+            add(#made < 2 and made[1] or ns.conditions.Any(unpack(made)))
+        end
+        if point.outdoors_only then add(ns.conditions.Outdoors()) end
+        if point.faction then add(ns.conditions.PlayerFaction(point.faction)) end
+        -- Clearing only reaches keys the point owns: one coming from a
+        -- RegisterPoints defaults table stays visible through the metatable,
+        -- which costs a redundant check but not a wrong answer.
+        point.requires_item, point.requires_buff, point.requires_no_buff = nil, nil, nil
+        point.requires_worldquest, point.art, point.poi = nil, nil, nil
+        point.outdoors_only, point.faction = nil, nil
+        if not folded then return end
+        local existing = asOne(point.requires)
+        if existing then table.insert(folded, 1, existing) end
+        point.requires = #folded < 2 and folded[1] or folded
+    end
+end
 do
     local function registerPoint(zone, coord, point)
         ns.upgradeloot(point.loot)
         ns.upgradeloot(point.loot_shared)
+        foldConditions(zone, point)
         if ns.DEBUG and ns.points[zone][coord] then
             print(myname, "point collision", zone, coord)
         end
