@@ -38,6 +38,14 @@ function Condition:CacheKey()
     end
     return self._cachekey
 end
+-- Identity of what's being watched, for Remember/Recall below; CacheKey is the
+-- identity of the condition doing the watching. Override this when your Matched
+-- reads something another condition also reads, so the two share one memory
+-- instead of each keeping their own and disagreeing about it. A negation is the
+-- case that arises here: it runs its parent's Matched with itself as self, so
+-- without the override AuraActive and AuraInactive would separately remember
+-- whether the same aura was up, and contradict each other once combat hid it.
+function Condition:WatchKey() return self:CacheKey() end
 do
     -- A miss and a cached nil have to be distinguishable
     local NOTHING = {}
@@ -66,6 +74,25 @@ do
     end
 end
 
+do
+    -- Some things can't be read at all some of the time: auras go secret in
+    -- combat, calendar data during chat lockdown. What those conditions
+    -- describe is long-lived -- a zone-wide buff, a running holiday -- so
+    -- answering "no" while we can't look would blink points out at exactly the
+    -- wrong moment. Keep answering with the last value we could actually see.
+    -- Deliberately not in ns.run_caches: this has to outlive the frame. Keyed on
+    -- WatchKey rather than CacheKey, so a condition and its negation share one
+    -- memory instead of contradicting each other while neither can look.
+    local remembered = {}
+    function Condition:Remember(value)
+        remembered[self:WatchKey()] = value
+        return value
+    end
+    function Condition:Recall()
+        return remembered[self:WatchKey()]
+    end
+end
+
 local RankedCondition = Condition:extends{classname = "RankedCondition", KEYFIELDS = {"id", "rank"}}
 function RankedCondition:init(id, rank)
     self:super("init", id)
@@ -83,6 +110,9 @@ end
 local Negated = function(parent)
     local negated = parent:extends{classname = "Not"..parent.classname}
     function negated:Matched() return not self:super("Matched") end
+    -- We run our parent's Matched, so anything it remembers has to land under
+    -- its identity, not ours: strip the prefix added just above.
+    function negated:WatchKey() return (self:CacheKey():gsub("^Not", "", 1)) end
     return negated
 end
 
@@ -146,9 +176,10 @@ ns.conditions.AuraActive = Condition:extends{classname = "AuraActive", type = "s
 function ns.conditions.AuraActive:Matched()
     local aura = GetPlayerAuraBySpellID(self.id)
     if issecretvalue(aura) then
-        return
+        -- reads as secret for the duration of combat
+        return self:Recall()
     end
-    return aura
+    return self:Remember(not not aura)
 end
 
 ns.conditions.AuraInactive = Negated(ns.conditions.AuraActive)
@@ -361,14 +392,15 @@ function ns.conditions.CalendarEvent:Matched()
 end
 function ns.conditions.CalendarEvent:getEvent()
     -- C_Calendar.GetDayEvent returns secrets when in chat messaging lockdown
-    if InChatMessagingLockdown() then return end
+    if InChatMessagingLockdown() then return self:Recall() end
     local offset, day = self:getOffsets()
     for i=1, C_Calendar.GetNumDayEvents(offset, day) do
         local event = C_Calendar.GetDayEvent(offset, day, i)
         if event.eventID == self.id then
-            return event
+            return self:Remember(event)
         end
     end
+    return self:Remember(nil)
 end
 function ns.conditions.CalendarEvent:getOffsets(current)
     -- we could call C_Calendar.SetMonth, but that'd jump the calendar around if it's open... so instead, work out the actual offset
@@ -390,7 +422,7 @@ end
 ns.conditions.CalendarEventStartTexture = ns.conditions.CalendarEvent:extends{classname = "CalendarEventStartTexture", type = 'calendareventtexture'}
 function ns.conditions.CalendarEventStartTexture:getEvent()
     -- C_Calendar.GetDayEvent returns secrets when in chat messaging lockdown
-    if InChatMessagingLockdown() then return end
+    if InChatMessagingLockdown() then return self:Recall() end
     local offset, day = self:getOffsets()
     for i=1, C_Calendar.GetNumDayEvents(offset, day) do
         local event = C_Calendar.GetDayEvent(offset, day, i)
@@ -399,11 +431,12 @@ function ns.conditions.CalendarEventStartTexture:getEvent()
             for ii=1, C_Calendar.GetNumDayEvents(startoffset, startday) do
                 local startEvent = C_Calendar.GetDayEvent(startoffset, startday, ii)
                 if startEvent and startEvent.iconTexture == self.id then
-                    return event
+                    return self:Remember(event)
                 end
             end
         end
     end
+    return self:Remember(nil)
 end
 
 ns.conditions.DayOfWeek = Condition:extends{classname = "DayOfWeek", type = "weekday",
