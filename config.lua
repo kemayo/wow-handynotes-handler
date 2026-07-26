@@ -1,7 +1,5 @@
 local myname, ns = ...
 
-local GetPlayerAuraBySpellID = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID or _G.GetPlayerAuraBySpellID
-
 ns.defaults = {
     profile = {
         default_icon = "VignetteLoot",
@@ -616,6 +614,13 @@ local achievementHidden = function(achievement)
 end
 
 
+-- One condition per spell, built on demand: these get asked about once per
+-- point per draw, and the condition is what knows to hold its answer through
+-- combat, when the aura itself reads as secret.
+local mapSpellAura = setmetatable({}, {__index = function(self, spellid)
+    self[spellid] = ns.conditions.AuraActive(spellid)
+    return self[spellid]
+end})
 local function showOnMapType(point, uiMapID, isMinimap)
     -- nil means to respect the preferences, but points can override
     if isMinimap then
@@ -627,10 +632,9 @@ local function showOnMapType(point, uiMapID, isMinimap)
             end
             return ns.conditions.check(point.minimap)
         end
-        if ns.map_spellids[uiMapID] then
-            if ns.map_spellids[uiMapID] == true or GetPlayerAuraBySpellID(ns.map_spellids[uiMapID]) then
-                return false
-            end
+        local spellid = ns.map_spellids[uiMapID]
+        if spellid and (spellid == true or mapSpellAura[spellid]:Test()) then
+            return false
         end
         return ns.db.show_on_minimap
     end
