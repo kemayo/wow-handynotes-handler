@@ -4,6 +4,7 @@
 <Script file="lib\Krowi_WorldMapButtons-1.4.lua"/>
 
 <Script file="class.lua"/>
+<Script file="formatting.lua"/>
 <Script file="handler.lua"/>
 <Script file="conditions.lua"/>
 <Script file="config.lua"/>
