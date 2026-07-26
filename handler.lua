@@ -330,6 +330,7 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
         point.always = true
         point.label = false
         point.loot = upgradeloot(point.loot)
+        point.loot_shared = upgradeloot(point.loot_shared)
 
         intotable(ns.POIsToPoints, point.areaPoi, point)
         intotable(ns.VignetteIDsToPoints, point.vignette, point)
