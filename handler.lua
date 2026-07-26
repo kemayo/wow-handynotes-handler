@@ -100,16 +100,21 @@ local foldConditions
 do
     -- Each takes either a single value or a list, and what a list means isn't
     -- the same for all of them, so the default is spelled out per key.
-    local function grouped(value, make, defaultAny)
+    local function grouped(value, make, defaultAny, negated)
         if value == nil then return end
         if type(value) ~= "table" then return make(value) end
         local made = {}
         for i, v in ipairs(value) do made[i] = make(v) end
         if #made < 2 then return made[1] end
-        if value.all or (not defaultAny and not value.any) then
-            return ns.conditions.All(unpack(made))
+        local any = value.any or (defaultAny and not value.all)
+        if negated then
+            -- the key asked about having these, and we're asking about not
+            -- having them, so de Morgan flips the grouping: hide if any of them
+            -- is up means show only once all of them are down
+            any = not any
         end
-        return ns.conditions.Any(unpack(made))
+        if any then return ns.conditions.Any(unpack(made)) end
+        return ns.conditions.All(unpack(made))
     end
     -- a requires list is ANDed, so an existing or-group has to become a single
     -- condition before ours can join it
@@ -139,7 +144,7 @@ do
         end
         hide(grouped(point.requires_item, ns.conditions.Item))
         hide(grouped(point.requires_buff, ns.conditions.AuraActive))
-        hide(grouped(point.requires_no_buff, ns.conditions.AuraInactive))
+        hide(grouped(point.requires_no_buff, ns.conditions.AuraInactive, false, true))
         hide(grouped(point.requires_worldquest, ns.conditions.WorldQuestActive))
         -- art defaulted to matching any of them, where the rest default to all
         hide(grouped(point.art, function(id) return ns.conditions.MapArt(zone, id) end, true))
