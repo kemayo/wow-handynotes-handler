@@ -119,39 +119,52 @@ do
         if value.any then return ns.conditions.Any(unpack(value)) end
         return ns.conditions.All(unpack(value))
     end
+    local function combine(existing, folded)
+        if not folded then return existing end
+        existing = asOne(existing)
+        if existing then table.insert(folded, 1, existing) end
+        return #folded < 2 and folded[1] or folded
+    end
     function foldConditions(zone, point)
-        local folded
-        local function add(condition)
+        local hides, upcoming
+        local function hide(condition)
             if not condition then return end
-            folded = folded or {}
-            table.insert(folded, condition)
+            hides = hides or {}
+            table.insert(hides, condition)
         end
-        add(grouped(point.requires_item, ns.conditions.Item))
-        add(grouped(point.requires_buff, ns.conditions.AuraActive))
-        add(grouped(point.requires_no_buff, ns.conditions.AuraInactive))
-        add(grouped(point.requires_worldquest, ns.conditions.WorldQuestActive))
+        local function soon(condition)
+            if not condition then return end
+            upcoming = upcoming or {}
+            table.insert(upcoming, condition)
+        end
+        hide(grouped(point.requires_item, ns.conditions.Item))
+        hide(grouped(point.requires_buff, ns.conditions.AuraActive))
+        hide(grouped(point.requires_no_buff, ns.conditions.AuraInactive))
+        hide(grouped(point.requires_worldquest, ns.conditions.WorldQuestActive))
         -- art defaulted to matching any of them, where the rest default to all
-        add(grouped(point.art, function(id) return ns.conditions.MapArt(zone, id) end, true))
+        hide(grouped(point.art, function(id) return ns.conditions.MapArt(zone, id) end, true))
         if point.poi then
             -- each entry names its own map, so they aren't necessarily this one
             local made = {}
             for i, poi in ipairs(point.poi) do
                 made[i] = ns.conditions.AreaPoi(unpack(poi))
             end
-            add(#made < 2 and made[1] or ns.conditions.Any(unpack(made)))
+            hide(#made < 2 and made[1] or ns.conditions.Any(unpack(made)))
         end
-        if point.outdoors_only then add(ns.conditions.Outdoors()) end
-        if point.faction then add(ns.conditions.PlayerFaction(point.faction)) end
+        if point.outdoors_only then hide(ns.conditions.Outdoors()) end
+        if point.faction then hide(ns.conditions.PlayerFaction(point.faction)) end
+        -- These two describe something you'll get to rather than something
+        -- you're missing, so they mark a point upcoming instead of hiding it.
+        if point.level then soon(ns.conditions.Level(point.level)) end
+        if point.covenant then soon(ns.conditions.Covenant(point.covenant)) end
         -- Clearing only reaches keys the point owns: one coming from a
         -- RegisterPoints defaults table stays visible through the metatable,
         -- which costs a redundant check but not a wrong answer.
         point.requires_item, point.requires_buff, point.requires_no_buff = nil, nil, nil
         point.requires_worldquest, point.art, point.poi = nil, nil, nil
-        point.outdoors_only, point.faction = nil, nil
-        if not folded then return end
-        local existing = asOne(point.requires)
-        if existing then table.insert(folded, 1, existing) end
-        point.requires = #folded < 2 and folded[1] or folded
+        point.outdoors_only, point.faction, point.level, point.covenant = nil, nil, nil, nil
+        point.requires = combine(point.requires, hides)
+        point.hide_before = combine(point.hide_before, upcoming)
     end
 end
 do
@@ -657,13 +670,7 @@ ns.point_active = function(point)
     return ns.conditions.check(point.active)
 end
 ns.point_upcoming = function(point)
-    if point.level and UnitLevel("player") < point.level then
-        return true
-    end
     if point.hide_before and not ns.conditions.check(point.hide_before) then
-        return true
-    end
-    if point.covenant and point.covenant ~= C_Covenants.GetActiveCovenantID() then
         return true
     end
     return false
@@ -873,15 +880,6 @@ local function handle_tooltip(tooltip, point, skip_label)
         for _, item in ipairs(point.loot_shared) do
             tooltip_loot(tooltip, item, true)
         end
-    end
-    if point.covenant then
-        local data = C_Covenants.GetCovenantData(point.covenant)
-        local active = point.covenant == C_Covenants.GetActiveCovenantID()
-        local cname = COVENANT_COLORS[point.covenant]:WrapTextInColorCode(data and data.name or ns.covenants[point.covenant])
-        tooltip:AddLine(ITEM_REQ_SKILL:format(cname), (active and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB())
-    end
-    if point.level and point.level > UnitLevel("player") then
-        tooltip:AddLine(ITEM_MIN_LEVEL:format(point.level), RED_FONT_COLOR:GetRGB())
     end
     if point.hide_before then
         local summary = ns.conditions.summarize(point.hide_before)
