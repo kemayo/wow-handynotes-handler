@@ -615,40 +615,6 @@ local achievementHidden = function(achievement)
     return ns.db.achievementsHidden[achievement]
 end
 
-local checkPois
-do
-    local poi_expirations = {}
-    local poi_zone_expirations = {}
-    local pois_byzone = {}
-    local function refreshPois(zone)
-        local now = time()
-        if not poi_zone_expirations[zone] or now > poi_zone_expirations[zone] then
-            pois_byzone[zone] = wipe(pois_byzone[zone] or {})
-            for _, poi in ipairs(C_AreaPoiInfo.GetAreaPOIForMap(zone) or {}) do
-                pois_byzone[zone][poi] = true
-                poi_expirations[poi] = now + (C_AreaPoiInfo.GetAreaPOISecondsLeft(poi) or 60)
-            end
-            poi_zone_expirations[zone] = now + 1
-        end
-    end
-    function checkPois(pois)
-        for _, data in ipairs(pois) do
-            local zone, poi = unpack(data)
-            local now = time()
-            -- the expiry is keyed by poi alone, so it can already be fresh from
-            -- another zone's refresh; this zone still needs fetching
-            if not pois_byzone[zone] or now > (poi_expirations[poi] or 0) then
-                refreshPois(zone)
-                poi_expirations[poi] = poi_expirations[poi] or (now + 60)
-            end
-            if pois_byzone[zone][poi] then
-                return true
-            end
-        end
-    end
-end
-
-local checkArt = testMaker(function(artid, uiMapID) return artid == C_Map.GetMapArtID(uiMapID) end, doTestDefaultAny)
 
 local function showOnMapType(point, uiMapID, isMinimap)
     -- nil means to respect the preferences, but points can override
@@ -751,19 +717,6 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
             return show
         end
     end
-    if point.outdoors_only and IsIndoors() then
-        return false
-    end
-    if point.art and not checkArt(point.art, currentZone) then
-        return false
-    end
-    if point.poi and not checkPois(point.poi) then
-        return false
-    end
-    if point.faction and point.faction ~= ns.playerFaction then
-        return false
-    end
-
     if point.follower then
         -- Don't treat as an NPC
     elseif point.npc then
@@ -805,18 +758,6 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         if isFindable and isFound then
             return false
         end
-    end
-    if point.requires_buff and not doTest(GetPlayerAuraBySpellID, point.requires_buff) then
-        return false
-    end
-    if point.requires_no_buff and doTest(GetPlayerAuraBySpellID, point.requires_no_buff) then
-        return false
-    end
-    if point.requires_item and not itemInBags(point.requires_item) then
-        return false
-    end
-    if point.requires_worldquest and not (C_TaskQuest.IsActive(point.requires_worldquest) or C_QuestLog.IsQuestFlaggedCompleted(point.requires_worldquest)) then
-        return false
     end
     if point.requires and not ns.conditions.check(point.requires) then
         return false
