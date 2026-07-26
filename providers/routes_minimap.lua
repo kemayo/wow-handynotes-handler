@@ -5,10 +5,20 @@ local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
 local HBD = LibStub("HereBeDragons-2.0")
 local HBDPins = LibStub("HereBeDragons-Pins-2.0")
 
+local function OnPinReleased(pinPool, pin)
+    (_G.FramePool_HideAndClearAnchors or _G.Pool_HideAndClearAnchors)(pinPool, pin)
+    if pin.OnReleased then
+        -- pins only get the mixin when they're first acquired
+        pin:OnReleased()
+    end
+
+    pin.provider = nil
+end
+
 local dataProvider = {
     facing = GetPlayerFacing(),
     pins = {},
-    pinPool = CreateFramePool("FRAME", Minimap),
+    pinPool = CreateFramePool("FRAME", Minimap, nil, OnPinReleased),
 }
 ns.RouteMiniMapDataProvider = dataProvider
 
@@ -49,12 +59,6 @@ function dataProvider:RefreshAllRotations()
     end
 end
 
-local function OnPinReleased(pinPool, pin)
-    (_G.FramePool_HideAndClearAnchors or _G.Pool_HideAndClearAnchors)(pinPool, pin)
-    pin:OnReleased()
-
-    pin.provider = nil
-end
 function dataProvider:AcquirePin(...)
     local pin, newPin = self.pinPool:Acquire()
 
