@@ -884,34 +884,34 @@ local function handle_tooltip(tooltip, point, skip_label)
         tooltip:AddLine(ITEM_MIN_LEVEL:format(point.level), RED_FONT_COLOR:GetRGB())
     end
     if point.hide_before then
+        local summary = ns.conditions.summarize(point.hide_before)
         local isHidden = not ns.conditions.check(point.hide_before)
         if isHidden then
             tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, RED_FONT_COLOR:GetRGB())
         end
-        local r, g, b = (isHidden and RED_FONT_COLOR or GREEN_FONT_COLOR):GetRGB()
-        tooltip:AddLine(
-            ns.render_string(ns.conditions.summarize(point.hide_before), point),
-            r, g, b, true
-        )
+        if summary then
+            local r, g, b = (isHidden and RED_FONT_COLOR or GREEN_FONT_COLOR):GetRGB()
+            tooltip:AddLine(ns.render_string(summary, point), r, g, b, true)
+        end
     end
     if point.requires then
+        local summary = ns.conditions.summarize(point.requires)
         local isHidden = not ns.conditions.check(point.requires)
         if isHidden then
             tooltip:AddLine(COMMUNITY_TYPE_UNAVAILABLE, RED_FONT_COLOR:GetRGB())
         end
-        local r, g, b = (isHidden and RED_FONT_COLOR or GREEN_FONT_COLOR):GetRGB()
-        tooltip:AddLine(
-            ns.render_string(ns.conditions.summarize(point.requires), point),
-            r, g, b, true
-        )
+        if summary then
+            local r, g, b = (isHidden and RED_FONT_COLOR or GREEN_FONT_COLOR):GetRGB()
+            tooltip:AddLine(ns.render_string(summary, point), r, g, b, true)
+        end
     end
     if point.active then
-        local isActive = ns.point_active(point)
-        local r, g, b = (isActive and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
-        tooltip:AddLine(
-            ns.render_string(point.active.note or ns.conditions.summarize(point.active), point),
-            r, g, b, true
-        )
+        local summary = point.active.note or ns.conditions.summarize(point.active)
+        if summary then
+            local isActive = ns.point_active(point)
+            local r, g, b = (isActive and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
+            tooltip:AddLine(ns.render_string(summary, point), r, g, b, true)
+        end
     end
 
     if point.group then
