@@ -223,6 +223,8 @@ do
         return canLearnCache[itemID]
     end
 
+    -- Distinct from `false`, which means "knowable, but you don't know it":
+    local NOT_KNOWABLE = {}
     local hasAppearanceCache = {}
     ns.run_caches.appearances = {}
     function ns.rewards.Item.HasAppearance(itemLinkOrID, specific)
@@ -231,11 +233,13 @@ do
         if ns.run_caches.appearances[itemID] ~= nil then
             return ns.run_caches.appearances[itemID]
         end
-        if hasAppearanceCache[itemID] ~= nil then
-            -- We cache unchanging things: true or false-because-not-knowable
+        local cached = hasAppearanceCache[itemID]
+        if cached ~= nil then
+            -- We cache unchanging things: true, or not-knowable-at-all
             -- *Technically* this could persist a false-positive if you obtain something and then trade/refund it
-            ns.run_caches.appearances[itemID] = hasAppearanceCache[itemID]
-            return hasAppearanceCache[itemID]
+            if cached == NOT_KNOWABLE then return end
+            ns.run_caches.appearances[itemID] = cached
+            return cached
         end
         if PlayerHasTransmogByItemInfo(itemLinkOrID) then
             -- short-circuit further checks because this specific item is known
@@ -245,7 +249,7 @@ do
         local appearanceID, sourceID = GetAppearanceAndSource(itemLinkOrID)
         if not appearanceID then
             -- This just isn't knowable according to the API
-            hasAppearanceCache[itemID] = false
+            hasAppearanceCache[itemID] = NOT_KNOWABLE
             return
         end
         local fromCurrentItem = C_TransmogCollection.PlayerHasTransmogItemModifiedAppearance(sourceID)
