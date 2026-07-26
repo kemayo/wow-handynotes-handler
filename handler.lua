@@ -239,7 +239,9 @@ do
             for rcoord, related in pairs(point.related) do
                 if type(rcoord) == "number" then -- defaults are mixed in on this table...
                     if not point.routes then point.routes = {} end
-                    table.insert(point.routes, {rcoord, coord, highlightOnly=true})
+                    -- _related marks this as a generated cluster route, so the
+                    -- provider can drop it when that related point is filtered out
+                    table.insert(point.routes, {rcoord, coord, highlightOnly=true, _related=rcoord})
                     registerPoint(zone, rcoord, relatedNode(related))
                 end
             end 

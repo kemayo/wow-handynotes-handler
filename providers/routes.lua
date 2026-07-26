@@ -17,6 +17,17 @@ local function GetMainPoint(point, mapID)
     return point
 end
 
+-- A `related` cluster registers one route per related point, back to the main
+-- one, each tagged with _related. Don't draw one whose related point is
+-- currently filtered out. Routes without the tag -- paths, and any route
+-- written by hand in the data -- are always drawn, since a hidden endpoint
+-- there doesn't imply the route is unwanted.
+local function routeShown(route, mapID)
+    if not route._related then return true end
+    local rpoint = ns.points[mapID][route._related]
+    return not rpoint or ns.should_show_point(route._related, rpoint, mapID, false)
+end
+
 function provider:OnRefresh()
     table.wipe(self.data)
 
@@ -35,15 +46,17 @@ function provider:OnRefresh()
         if point and not already[point] and point.routes and ns.should_show_point(coord, point, mapID, false) then
             already[point] = true
             for i, route in ipairs(point.routes) do
-                if not routecache[route] then
-                    routecache[route] = {
-                        route = route,
-                        point = point,
-                        coord = coord,
-                        mapID = mapID,
-                    }
+                if routeShown(route, mapID) then
+                    if not routecache[route] then
+                        routecache[route] = {
+                            route = route,
+                            point = point,
+                            coord = coord,
+                            mapID = mapID,
+                        }
+                    end
+                    table.insert(self.data, routecache[route])
                 end
-                table.insert(self.data, routecache[route])
             end
         end
     end
