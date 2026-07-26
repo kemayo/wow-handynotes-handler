@@ -43,7 +43,9 @@ function provider:OnRefresh()
 
     for coord, point in pairs(ns.points[mapID]) do
         point = GetMainPoint(point, mapID)
-        if point and not already[point] and point.routes and ns.should_show_point(coord, point, mapID, false) then
+        -- coord may belong to a related point that resolved to this main one,
+        -- so test the main point against its own coord, not the one we entered on
+        if point and not already[point] and point.routes and ns.should_show_point(point._coord, point, mapID, false) then
             already[point] = true
             for i, route in ipairs(point.routes) do
                 if routeShown(route, mapID) then
@@ -51,7 +53,7 @@ function provider:OnRefresh()
                         routecache[route] = {
                             route = route,
                             point = point,
-                            coord = coord,
+                            coord = point._coord,
                             mapID = mapID,
                         }
                     end
