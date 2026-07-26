@@ -196,7 +196,9 @@ do
             proxy_meta = {__index=point}
         end
         if point.path then
-            local route = type(point.path) == "table" and point.path or {point.path}
+            -- copy rather than prepending into the data table itself, which
+            -- would accumulate coords if the same path is reused
+            local route = type(point.path) == "table" and CopyTable(point.path, true) or {point.path}
             table.insert(route, 1, coord)
             ns.points[zone][route[#route]] = setmetatable({
                 label=route.label or (point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure"),
@@ -221,6 +223,7 @@ do
                     note=nearby.note or false,
                     loot=upgradeloot(nearby.loot), active=nearby.active,
                     related=nearby.related or false, nearby=nearby.nearby or false,
+                    path=nearby.path or false,
                 }, proxy_meta)
                 registerPoint(zone, ncoord, npoint)
             end
@@ -234,6 +237,7 @@ do
                 loot=upgradeloot(point.related.loot),
                 active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
                 related=point.related.related or false, nearby=point.related.nearby or false,
+                path=point.related.path or false,
                 route=coord,
             }, proxy_meta))
             for rcoord, related in pairs(point.related) do
