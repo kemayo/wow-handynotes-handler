@@ -13,16 +13,60 @@ ns.conditions = {}
 API:
 condition = ns.Condition.GarrisonTalent(1912, 4)
 
-condition:Matched() -> bool
+condition:Test() -> bool -- what you want; caches for the current frame
+condition:Matched() -> bool -- the implementation, which subclasses override
 condition:Label() -> string
 ]]
 
-local Condition = ns.Class({classname = "Condition"})
+-- KEYFIELDS names whatever makes two of a condition different from each other;
+-- subclasses that carry more than an id redeclare it.
+local Condition = ns.Class({classname = "Condition", CACHEABLE = true, KEYFIELDS = {"id"}})
 function Condition:init(id) self.id = id end
 function Condition:Label() return ('{%s:%s}'):format(self.type, self.id) end
 function Condition:Matched() return false end
+-- Identity for the cache below: two conditions sharing a key are
+-- interchangeable, so only the first of them has to ask the game. Built from
+-- the stored fields rather than the init arguments, because some of those get
+-- translated on the way in, and kept because Test() asks for it constantly.
+function Condition:CacheKey()
+    if not self._cachekey then
+        local parts = {self.classname}
+        for i, field in ipairs(self.KEYFIELDS) do
+            parts[i + 1] = tostring(self[field])
+        end
+        self._cachekey = table.concat(parts, ":")
+    end
+    return self._cachekey
+end
+do
+    -- A miss and a cached nil have to be distinguishable
+    local NOTHING = {}
+    local cache = {}
+    ns.run_caches.conditions = cache
+    -- Wiping every frame means a result can't outlive the draw that asked for
+    -- it, and wiping early would only ever cost a re-check, never correctness.
+    local clearer = CreateFrame("Frame")
+    clearer:Hide()
+    clearer:SetScript("OnUpdate", function(self)
+        table.wipe(cache)
+        self:Hide()
+    end)
+    function Condition:Test()
+        if not self.CACHEABLE then return self:Matched() end
+        local key = self:CacheKey()
+        local cached = cache[key]
+        if cached ~= nil then
+            if cached == NOTHING then return end
+            return cached
+        end
+        local result = self:Matched()
+        cache[key] = result == nil and NOTHING or result
+        clearer:Show()
+        return result
+    end
+end
 
-local RankedCondition = Condition:extends{classname = "RankedCondition"}
+local RankedCondition = Condition:extends{classname = "RankedCondition", KEYFIELDS = {"id", "rank"}}
 function RankedCondition:init(id, rank)
     self:super("init", id)
     self.rank = rank
@@ -49,7 +93,7 @@ ns.conditions._Negated = Negated
 -- Groups don't otherwise nest: doTest calls :Matched() on each member, so a
 -- {any=true, ...} can't itself be a member of another group. These wrap one up
 -- as a condition in its own right, which can.
-ns.conditions.All = Condition:extends{classname = "All", JOINER = ", "}
+ns.conditions.All = Condition:extends{classname = "All", JOINER = ", ", CACHEABLE = false}
 function ns.conditions.All:init(...)
     self.conditions = {...}
 end
@@ -66,13 +110,13 @@ function ns.conditions.All:Label()
     return ("(%s)"):format(string.join(self.JOINER, unpack(labels)))
 end
 
-ns.conditions.Any = ns.conditions.All:extends{classname = "Any", JOINER = " / "}
+ns.conditions.Any = ns.conditions.All:extends{classname = "Any", JOINER = " / ", CACHEABLE = false}
 function ns.conditions.Any:init(...)
     self:super("init", ...)
     self.conditions.any = true
 end
 
-ns.conditions.Achievement = Condition:extends{classname = "Achievement", type="achievement"}
+ns.conditions.Achievement = Condition:extends{classname = "Achievement", type="achievement", KEYFIELDS = {"id", "criteria", "currentCharacter"}}
 function ns.conditions.Achievement:init(id, criteria, currentCharacter)
     self:super("init", id)
     self.criteria = criteria
@@ -236,7 +280,7 @@ function ns.conditions.Trait:Matched()
     return nodeInfo and nodeInfo.ID ~= 0 and nodeInfo.ranksPurchased > 0
 end
 
-ns.conditions.Item = Condition:extends{classname = "Item", type = 'item'}
+ns.conditions.Item = Condition:extends{classname = "Item", type = 'item', KEYFIELDS = {"id", "count"}}
 function ns.conditions.Item:init(id, count)
     self.id = id
     self.count = count
@@ -288,11 +332,11 @@ function ns.conditions.Vignette:Label()
     return Condition.Label(self)
 end
 
-ns.conditions.Level = Condition:extends{classname = "Level", type = 'level'}
+ns.conditions.Level = Condition:extends{classname = "Level", type = 'level', CACHEABLE = false}
 function ns.conditions.Level:Label() return UNIT_LEVEL_TEMPLATE:format(self.id) end
 function ns.conditions.Level:Matched() return UnitLevel('player') >= self.id end
 
-ns.conditions.Class = Condition:extends{classname = "Class", type = 'class'}
+ns.conditions.Class = Condition:extends{classname = "Class", type = 'class', CACHEABLE = false}
 function ns.conditions.Class:Label()
     local className = ((UnitSex("player") == 2) and LOCALIZED_CLASS_NAMES_MALE or LOCALIZED_CLASS_NAMES_FEMALE)[self.id] or self.id
     if RAID_CLASS_COLORS[self.id] then
@@ -403,7 +447,7 @@ do
     end
 end
 
-ns.conditions.Expansion = Condition:extends{classname = "Expansion", type = "expansion"}
+ns.conditions.Expansion = Condition:extends{classname = "Expansion", type = "expansion", CACHEABLE = false}
 function ns.conditions.Expansion:Matched()
     return self.id <= LE_EXPANSION_LEVEL_CURRENT
 end
@@ -411,7 +455,7 @@ end
 -- Helpers:
 
 do
-    local function check(cond) return cond:Matched() end
+    local function check(cond) return cond:Test() end
     ns.conditions.check = function(conditions)
         return conditions and ns.doTest(check, conditions)
     end
