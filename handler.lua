@@ -136,8 +136,22 @@ do
             if ns.IsObject(item.requires) then
                 table.insert(available, item.requires)
             else
+                -- were any conditions already added from class/covenant/expansion?
+                local combined = #available > 0
                 for i,v in ipairs(item.requires) do
                     table.insert(available, v)
+                end
+                if item.requires.any or item.requires.all then
+                    if combined then
+                        -- conditions can't nest, so "(class) and (a or b)" isn't
+                        -- expressible; fall back to requiring everything
+                        if ns.DEBUG then
+                            print(myname, "loot requires: can't mix any/all with class/covenant/expansion", item[1])
+                        end
+                    else
+                        available.any = item.requires.any
+                        available.all = item.requires.all
+                    end
                 end
             end
         end
