@@ -93,76 +93,10 @@ local function intotable(dest, value_or_table, point)
     end
     dest[value_or_table] = point
 end
-local upgradeloot
-do
-    local available = {}
-    local function upgradelootitem(item)
-        if ns.IsObject(item) then
-            return item
-        end
-        if type(item) == "number" then
-            return ns.rewards.Item(item)
-        end
-        local upgrade
-        if item.toy then
-            upgrade = ns.rewards.Toy(item[1])
-        elseif item.mount then
-            upgrade = ns.rewards.Mount(item[1], type(item.mount) == "number" and item.mount)
-        elseif item.pet then
-            upgrade = ns.rewards.Pet(item[1], type(item.pet) == "number" and item.pet)
-        elseif item.set then
-            upgrade = ns.rewards.Set(item[1], item.set)
-        elseif item.decor then
-            upgrade = ns.rewards.Decor(item[1])
-        else
-            upgrade = ns.rewards.Item(item[1])
-        end
-        upgrade.quest = item.quest
-        upgrade.questComplete = item.questComplete
-        upgrade.warband = item.warband
-        upgrade.spell = item.spell
-        upgrade.note = item.note
-        if item.class then
-            table.insert(available, ns.conditions.Class(item.class))
-        end
-        if item.covenant then
-            table.insert(available, ns.conditions.Covenant(item.covenant))
-        end
-        if item.expansion then
-            table.insert(available, ns.conditions.Expansion(item.expansion))
-        end
-        if item.requires then
-            if ns.IsObject(item.requires) then
-                table.insert(available, item.requires)
-            elseif item.requires.any and #item.requires > 1 then
-                -- everything in `available` gets ANDed together, so an or-group
-                -- has to go in as one nested condition to keep its meaning
-                table.insert(available, ns.conditions.Any(unpack(item.requires)))
-            else
-                -- a plain list, an all-group, or a single member: all just ANDed
-                for _, v in ipairs(item.requires) do
-                    table.insert(available, v)
-                end
-            end
-        end
-        if #available > 0 then
-            upgrade.requires = available
-            available = {}
-        end
-        return upgrade
-    end
-    function upgradeloot(loot)
-        if not loot then return loot end
-        for i, item in ipairs(loot) do
-            loot[i] = upgradelootitem(item)
-        end
-        return loot
-    end
-end
 do
     local function registerPoint(zone, coord, point)
-        upgradeloot(point.loot)
-        upgradeloot(point.loot_shared)
+        ns.upgradeloot(point.loot)
+        ns.upgradeloot(point.loot_shared)
         if ns.DEBUG and ns.points[zone][coord] then
             print(myname, "point collision", zone, coord)
         end
@@ -195,7 +129,7 @@ do
                 atlas=route.atlas or "poi-door", scale=route.scale or 0.9, texture=false,
                 minimap=true, worldmap=route.worldmap,
                 note=route.note or false,
-                loot=upgradeloot(route.loot),
+                loot=ns.upgradeloot(route.loot),
                 routes={route},
                 _coord=route[#route], _uiMapID=zone,
             }, proxy_meta)
@@ -211,7 +145,7 @@ do
                     texture=nearby.texture or false,
                     minimap=true, worldmap=nearby.worldmap, scale=0.9,
                     note=nearby.note or false,
-                    loot=upgradeloot(nearby.loot), active=nearby.active,
+                    loot=ns.upgradeloot(nearby.loot), active=nearby.active,
                     related=nearby.related or false, nearby=nearby.nearby or false,
                     path=nearby.path or false,
                 }, proxy_meta)
@@ -224,7 +158,7 @@ do
                 atlas=point.related.atlas or "playerpartyblip", color=point.related.color, scale=point.related.scale,
                 texture=point.related.texture or false, minimap=point.related.minimap, worldmap=point.related.worldmap,
                 note=point.related.note or false,
-                loot=upgradeloot(point.related.loot),
+                loot=ns.upgradeloot(point.related.loot),
                 active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
                 related=point.related.related or false, nearby=point.related.nearby or false,
                 path=point.related.path or false,
@@ -339,8 +273,8 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
         point.vignette = vignetteID
         point.always = true
         point.label = false
-        point.loot = upgradeloot(point.loot)
-        point.loot_shared = upgradeloot(point.loot_shared)
+        point.loot = ns.upgradeloot(point.loot)
+        point.loot_shared = ns.upgradeloot(point.loot_shared)
 
         intotable(ns.POIsToPoints, point.areaPoi, point)
         intotable(ns.VignetteIDsToPoints, point.vignette, point)

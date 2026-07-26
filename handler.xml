@@ -12,6 +12,7 @@
 
 <Script file="rewards\base.lua"/>
 <Script file="rewards\item.lua"/>
+<Script file="rewards\upgradeloot.lua"/>
 
 <Script file="providers\system\pins.lua"/>
 <Script file="providers\system\lines.lua"/>
