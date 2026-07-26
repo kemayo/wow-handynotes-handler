@@ -401,7 +401,7 @@ function ns.SetupMapOverlay()
             end
             local groups = allGroups()
             for _, group in iterKeysByValue(groups) do
-                groupSubmenu:CreateCheckbox(ns.render_string(ns.groups[group] or group), isGroupChecked, toggleGroupChecked, group)
+                groupSubmenu:CreateCheckbox(ns.render_string(ns.groups[group] or group), isGroupChecked, toggleGroupChecked, group):SetTooltip(groupTooltip)
             end
         end
 
