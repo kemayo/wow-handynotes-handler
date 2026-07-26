@@ -635,7 +635,9 @@ do
         for _, data in ipairs(pois) do
             local zone, poi = unpack(data)
             local now = time()
-            if now > (poi_expirations[poi] or 0) then
+            -- the expiry is keyed by poi alone, so it can already be fresh from
+            -- another zone's refresh; this zone still needs fetching
+            if not pois_byzone[zone] or now > (poi_expirations[poi] or 0) then
                 refreshPois(zone)
                 poi_expirations[poi] = poi_expirations[poi] or (now + 60)
             end
