@@ -99,8 +99,8 @@ do
             if lineData.maxPrice and lineData.maxPrice >= 1 then
                 GameTooltip_AddColoredLine(tooltip, ("%s:"):format(SELL_PRICE), HIGHLIGHT_FONT_COLOR)
                 local indent = string.rep(" ", 4)
-                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MINIMUM, copperToPrettyMoney(lineData.price)))
-                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s", MAXIMUM, copperToPrettyMoney(lineData.maxPrice)))
+                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s: %s", indent, MINIMUM, copperToPrettyMoney(lineData.price)))
+                GameTooltip_AddHighlightLine(tooltip, string.format("%s%s: %s", indent, MAXIMUM, copperToPrettyMoney(lineData.maxPrice)))
             else
                 GameTooltip_AddHighlightLine(tooltip, string.format("%s: %s", SELL_PRICE, copperToPrettyMoney(lineData.price)))
             end
