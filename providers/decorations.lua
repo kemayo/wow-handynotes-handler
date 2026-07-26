@@ -170,7 +170,7 @@ provider.Proxy = {
         pin.highlight:SetShown(highlights[point._main])
 
         if point.route and ns.points[mapID] and ns.points[mapID][point.route] then
-            highlights[ns.points[mapID][point.route]] = highlights[point]
+            highlights[ns.points[mapID][point.route]] = highlights[point._main]
             local routePin = pin.provider:GetPinByID(point.route)
             if routePin then
                 routePin.highlight:SetShown(highlights[point._main])
