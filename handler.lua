@@ -440,44 +440,7 @@ function ns.GetCriteria(achievement, criteriaid)
     return criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible
 end
 
-local mob_name
-if _G.C_TooltipInfo then
-    local name_cache = {}
-    mob_name = function(id)
-        if not name_cache[id] then
-            local info = C_TooltipInfo.GetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
-            if info and info.lines and info.lines[1] then
-                if info.lines[1].type == Enum.TooltipDataType.Unit then
-                    name_cache[id] = info.lines[1].leftText
-                end
-            end
-        end
-        return name_cache[id]
-    end
-else
-    -- pre-10.0.2
-    local cache_tooltip = _G["HNTreasuresCacheScanningTooltip"]
-    if not cache_tooltip then
-        cache_tooltip = CreateFrame("GameTooltip", "HNTreasuresCacheScanningTooltip")
-        cache_tooltip:AddFontStrings(
-            cache_tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
-            cache_tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
-        )
-    end
-    local name_cache = {}
-    mob_name = function(id)
-        if not name_cache[id] then
-            -- this doesn't work with just clearlines and the setowner outside of this, and I'm not sure why
-            cache_tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-            cache_tooltip:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
-            if cache_tooltip:IsShown() then
-                name_cache[id] = HNTreasuresCacheScanningTooltipTextLeft1:GetText()
-            end
-        end
-        return name_cache[id]
-    end
-end
-ns.mob_name = mob_name
+local mob_name = ns.mob_name
 local render_string, render_string_list, cache_string = ns.render_string, ns.render_string_list, ns.cache_string
 local function cache_loot(loot)
     if not loot then return end

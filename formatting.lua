@@ -6,6 +6,55 @@ local myname, ns = ...
 
 local issecretvalue = _G.issecretvalue or function() return false end
 
+-- Looking a creature's name up from its id. The guards matter: before the data
+-- has loaded this answers UNKNOWNOBJECT, and caching that would stick for the
+-- rest of the session with no retry.
+local name_from_creature_id
+if _G.C_TooltipInfo then
+    name_from_creature_id = function(id)
+        local info = C_TooltipInfo.GetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
+        if info and info.lines and info.lines[1] and info.lines[1].type == Enum.TooltipDataLineType.UnitName then
+            local name = info.lines[1].leftText
+            if name and name ~= UNKNOWNOBJECT and not issecretvalue(name) then
+                return name
+            end
+        end
+    end
+else
+    -- pre-10.0.2
+    local tooltipName = myname .. "CacheScanningTooltip"
+    local cache_tooltip, leftText = _G[tooltipName], _G[tooltipName .. "TextLeft1"]
+    if not cache_tooltip then
+        cache_tooltip = CreateFrame("GameTooltip", tooltipName)
+        leftText = cache_tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText")
+        cache_tooltip:AddFontStrings(leftText, cache_tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText"))
+    end
+    name_from_creature_id = function(id)
+        -- this doesn't work with just clearlines and the setowner outside of this, and I'm not sure why
+        cache_tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+        cache_tooltip:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(id))
+        if cache_tooltip:IsShown() then
+            local name = leftText:GetText()
+            if name and name ~= UNKNOWNOBJECT and not issecretvalue(name) then
+                return name
+            end
+        end
+    end
+end
+ns.name_from_creature_id = name_from_creature_id
+
+do
+    local name_cache = {}
+    -- Hosts with their own mob database (SilverDragon) replace this with a
+    -- wrapper that falls back to it; everything here goes through ns.mob_name.
+    ns.mob_name = function(id)
+        if not name_cache[id] then
+            name_cache[id] = name_from_creature_id(id)
+        end
+        return name_cache[id]
+    end
+end
+
 local function quick_texture_markup(icon)
     -- needs less than CreateTextureMarkup
     return icon and ('|T' .. icon .. ':0:0:1:-1|t') or ''
