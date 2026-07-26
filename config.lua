@@ -624,7 +624,7 @@ do
         local now = time()
         if not poi_zone_expirations[zone] or now > poi_zone_expirations[zone] then
             pois_byzone[zone] = wipe(pois_byzone[zone] or {})
-            for _, poi in ipairs(C_AreaPoiInfo.GetAreaPOIForMap(zone)) do
+            for _, poi in ipairs(C_AreaPoiInfo.GetAreaPOIForMap(zone) or {}) do
                 pois_byzone[zone][poi] = true
                 poi_expirations[poi] = now + (C_AreaPoiInfo.GetAreaPOISecondsLeft(poi) or 60)
             end
