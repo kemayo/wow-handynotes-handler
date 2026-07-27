@@ -24,10 +24,6 @@ local issecretframe = function(frame, aspect)
     return false
 end
 
-local ATLAS_CHECK, ATLAS_CROSS = "common-icon-checkmark", "common-icon-redx"
-
-local COSMETIC_COLOR = CreateColor(1, 0.5, 1)
-
 ns.run_caches = {}
 
 ---------------------------------------------------------
@@ -252,7 +248,7 @@ do
                     table.insert(point.routes, {rcoord, coord, highlightOnly=true, _related=rcoord})
                     registerPoint(zone, rcoord, relatedNode(related))
                 end
-            end 
+            end
         end
         -- and then variations on "also register this elsewhere":
         if point.translate or point.parent or point.levels then
@@ -662,7 +658,7 @@ local function work_out_texture(point)
     if not default_textures[ns.db.default_icon] then
         default_textures[ns.db.default_icon] = atlas_texture(ns.db.default_icon, 1.5)
     end
-    return default_textures[ns.db.default_icon] or default_textures["VignetteLoot"]
+    return default_textures[ns.db.default_icon]
 end
 ns.work_out_texture = work_out_texture
 ns.point_active = function(point)
@@ -715,19 +711,13 @@ local get_point_info = function(point, isMinimap)
         elseif ns.point_upcoming(point) then
             icon = get_upcoming_texture_variant(icon)
         end
-        local category = "treasure"
-        if point.npc then
-            category = "npc"
-        elseif point.junk then
-            category = "junk"
-        end
         if not isMinimap then
             cache_string(point.label, point)
             cache_string(point.note, point)
-            cache_loot(point.loot, point)
-            cache_loot(point.loot_shared, point)
+            cache_loot(point.loot)
+            cache_loot(point.loot_shared)
         end
-        return label, icon, category, point.quest, point.faction, point.scale, point.alpha or 1
+        return label, icon, point.scale, point.alpha or 1
     end
 end
 local get_point_info_by_coord = function(uiMapID, coord)
@@ -1000,7 +990,7 @@ local handle_tooltip_by_coord = function(tooltip, uiMapID, coord)
 end
 
 do
-    local currentZone, currentPoint
+    local currentPoint
     local function is_valid_related_point(basePoint, point)
         if not (basePoint and point) then return false end
         if basePoint.group and basePoint.group == point.group then return true end
@@ -1263,7 +1253,7 @@ do
         local state, value = next(t, prestate)
         while state do -- Have we reached the end of this zone?
             if value and ns.should_show_point(state, value, currentZone, isMinimap) then
-                local label, icon, _, _, _, scale, alpha = get_point_info(value, isMinimap)
+                local _, icon, scale, alpha = get_point_info(value, isMinimap)
                 scale = (scale or 1) * (icon and icon.scale or 1) * ns.db.icon_scale
                 return state, nil, icon, scale, ns.db.icon_alpha * alpha
             end
