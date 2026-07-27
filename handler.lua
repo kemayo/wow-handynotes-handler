@@ -511,6 +511,7 @@ local function work_out_label(point)
         if info then
             return info.name
         end
+        fallback = 'currency:'..point.currency
     end
     return fallback or UNKNOWN
 end

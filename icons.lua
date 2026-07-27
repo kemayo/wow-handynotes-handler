@@ -106,10 +106,16 @@ local function work_out_texture(point)
     if point.atlas then
         return atlas_icons[point.atlas]
     end
-    if ns.db.icon_item or point.icon then
-        if point.icon then
-            return trimmed_icons[point.icon]
-        end
+    if point.icon then
+        return trimmed_icons[point.icon]
+    end
+    -- Art belonging to the thing itself rather than a marker standing in for
+    -- it. A currency is a kind of loot -- newer data says so outright, putting
+    -- an ns.rewards.Currency in the loot list instead of using the key below --
+    -- so it goes with loot, and the achievement is what's left when neither is
+    -- known. The label ladder deliberately runs the other way: an achievement
+    -- names a point better than its currency does.
+    if ns.db.icon_item then
         if point.loot and #point.loot > 0 then
             local texture = point.loot[1]:Icon()
             if texture then
