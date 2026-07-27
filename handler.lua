@@ -1200,9 +1200,12 @@ function HL:FillCaches()
                         item:Cache()
                     end
                     count = count + 1
-                end
-                if count % 10 == 0 then
-                    coroutine.yield(count, false)
+                    -- only the caching is worth spreading out; this test used to
+                    -- sit outside the check above, where a point with no loot
+                    -- could spend an interval too
+                    if count % 10 == 0 then
+                        coroutine.yield(count, false)
+                    end
                 end
             end
         end
