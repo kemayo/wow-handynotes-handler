@@ -443,6 +443,9 @@ end
 
 local mob_name = ns.mob_name
 local render_string, render_string_list, cache_string = ns.render_string, ns.render_string_list, ns.cache_string
+local work_out_texture = ns.work_out_texture
+local get_inactive_texture_variant = ns.get_inactive_texture_variant
+local get_upcoming_texture_variant = ns.get_upcoming_texture_variant
 local function cache_loot(loot)
     if not loot then return end
     for _, item in ipairs(loot) do
@@ -450,66 +453,6 @@ local function cache_loot(loot)
     end
 end
 
-local npc_texture, follower_texture, currency_texture, junk_texture, notable_npc_texture, lessnotable_npc_texture
-local icon_cache = {}
-local trimmed_icon = function(texture)
-    if not icon_cache[texture] then
-        icon_cache[texture] = {
-            icon = texture,
-            tCoordLeft = 0.1,
-            tCoordRight = 0.9,
-            tCoordTop = 0.1,
-            tCoordBottom = 0.9,
-        }
-    end
-    return icon_cache[texture]
-end
-local atlas_texture = function(atlas, extra, left, right, top, bottom)
-    local atlasInfo = C_Texture.GetAtlasInfo(atlas)
-    if not atlasInfo then
-        if ns.DEBUG then
-            if not ns.DEBUG_missing_atlas_cache then ns.DEBUG_missing_atlas_cache = {} end
-            if not ns.DEBUG_missing_atlas_cache[atlas] then
-                print(("%s: missing atlas %s"):format(myname, atlas))
-                ns.DEBUG_missing_atlas_cache[atlas] = true
-            end
-        end
-        atlasInfo = C_Texture.GetAtlasInfo("QuestObjective") or C_Texture.GetAtlasInfo("VignetteLoot")
-    end
-    if type(extra) == "number" then
-        extra = {scale=extra}
-    end
-    if left and not right then
-        -- this is the "trim every side by this" path
-        right = 1 - left
-        top = left
-        bottom = 1 - left
-    end
-    if left then
-        -- An atlas is already cropped into a texture, so we need to treat something else as our 1
-        local horizontal = atlasInfo.rightTexCoord - atlasInfo.leftTexCoord
-        local vertical = atlasInfo.bottomTexCoord - atlasInfo.topTexCoord
-        atlasInfo.rightTexCoord = atlasInfo.leftTexCoord + (right * horizontal)
-        atlasInfo.leftTexCoord = atlasInfo.leftTexCoord + (left * horizontal)
-        atlasInfo.bottomTexCoord = atlasInfo.topTexCoord + (bottom * vertical)
-        atlasInfo.topTexCoord = atlasInfo.topTexCoord + (top * vertical)
-    end
-    return ns.merge({
-        icon = atlasInfo.file,
-        tCoordLeft = atlasInfo.leftTexCoord, tCoordRight = atlasInfo.rightTexCoord, tCoordTop = atlasInfo.topTexCoord, tCoordBottom = atlasInfo.bottomTexCoord,
-    }, extra)
-end
-ns.atlas_texture = atlas_texture
-local default_textures = {
-    --[[
-    note to self:
-    atlas_texture("delves-scenario-treasure-unavailable", nil, 0, 0.9, 0.1, 1)
-    atlas_texture("delves-scenario-treasure-available", nil, 0, 0.9, 0.05, 0.95)
-    --]]
-    VignetteLoot = atlas_texture("VignetteLoot", 1.1),
-    VignetteLootElite = atlas_texture("VignetteLootElite", 1.2),
-    Garr_TreasureIcon = atlas_texture("Garr_TreasureIcon", 2.2),
-}
 local function work_out_label(point)
     local fallback
     if point.label then
@@ -576,91 +519,6 @@ local function work_out_label(point)
     end
     return fallback or UNKNOWN
 end
-local function work_out_texture(point)
-    if point.texture then
-        return point.texture
-    end
-    if point.atlas then
-        if not icon_cache[point.atlas] then
-            icon_cache[point.atlas] = atlas_texture(point.atlas)
-        end
-        return icon_cache[point.atlas]
-    end
-    if ns.db.icon_item or point.icon then
-        if point.icon then
-            return trimmed_icon(point.icon)
-        end
-        if point.loot and #point.loot > 0 then
-            local texture = point.loot[1]:Icon()
-            if texture then
-                return trimmed_icon(texture)
-            end
-        end
-        if point.currency then
-            if ns.currencies[point.currency] then
-                local texture = ns.currencies[point.currency].texture
-                if texture then
-                    return trimmed_icon(texture)
-                end
-            else
-                local info = C_CurrencyInfo.GetCurrencyInfo(point.currency)
-                if info then
-                    return trimmed_icon(info.iconFileID)
-                end
-            end
-        end
-        if point.achievement then
-            local texture = select(10, GetAchievementInfo(point.achievement))
-            if texture then
-                return trimmed_icon(texture)
-            end
-        end
-    end
-    if point.follower then
-        if not follower_texture then
-            follower_texture = atlas_texture("GreenCross", 1.5)
-        end
-        return follower_texture
-    end
-    if point.npc then
-        if not npc_texture then
-            if ns.CLASSIC then
-                lessnotable_npc_texture = atlas_texture("DungeonSkull", {r=1, g=0.3, b=1, scale=1.1})
-                notable_npc_texture = atlas_texture("DungeonSkull", {r=0.5, g=1, b=1, scale=1.1})
-            else
-                lessnotable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
-                notable_npc_texture = atlas_texture("nazjatar-nagaevent", {r=0.5, g=1, b=1}, 0.2)
-            end
-            npc_texture = atlas_texture("DungeonSkull", 1)
-        end
-        if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point, true) then
-            if (not point.loot) or ns.hasNotableLoot(point.loot, true) then
-                -- still notable without transmog
-                return notable_npc_texture
-            end
-            return lessnotable_npc_texture
-        else
-            return npc_texture
-        end
-    end
-    if point.currency then
-        if not currency_texture then
-            currency_texture = atlas_texture("Auctioneer", 1.3)
-        end
-        return currency_texture
-    end
-    if point.junk then
-        if not junk_texture then
-            junk_texture = atlas_texture("VignetteLoot", 1)
-        end
-        return junk_texture
-    end
-    if not default_textures[ns.db.default_icon] then
-        default_textures[ns.db.default_icon] = atlas_texture(ns.db.default_icon, 1.5)
-    end
-    return default_textures[ns.db.default_icon]
-end
-ns.work_out_texture = work_out_texture
 ns.point_active = function(point)
     if point.IsActive and not point:IsActive() then
         return false
@@ -675,32 +533,6 @@ ns.point_upcoming = function(point)
         return true
     end
     return false
-end
-local inactive_cache = {}
-local function get_inactive_texture_variant(icon)
-    if not inactive_cache[icon] then
-        inactive_cache[icon] = CopyTable(icon)
-        if inactive_cache[icon].r then
-            inactive_cache[icon].a = 0.5
-        else
-            inactive_cache[icon].r = 0.5
-            inactive_cache[icon].g = 0.5
-            inactive_cache[icon].b = 0.5
-            inactive_cache[icon].a = 1
-        end
-    end
-    return inactive_cache[icon]
-end
-local upcoming_cache = {}
-local function get_upcoming_texture_variant(icon)
-    if not upcoming_cache[icon] then
-        upcoming_cache[icon] = CopyTable(icon)
-        upcoming_cache[icon].r = 1
-        upcoming_cache[icon].g = 0
-        upcoming_cache[icon].b = 0
-        upcoming_cache[icon].a = 0.7
-    end
-    return upcoming_cache[icon]
 end
 local get_point_info = function(point, isMinimap)
     if point then
