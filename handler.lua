@@ -765,6 +765,9 @@ local function handle_tooltip(tooltip, point, skip_label)
             comparison:SetClampedToScreen(true)
         end
 
+        -- What follows is a trimmed GameTooltip_AnchorComparisonTooltips, which
+        -- classic still uses; retail does the same arithmetic in
+        -- TooltipComparisonManager:AnchorShoppingTooltips.
         do
             local side
             local leftPos = tooltip:GetLeft() or 0
@@ -780,6 +783,15 @@ local function handle_tooltip(tooltip, point, skip_label)
             -- see if we should slide the tooltip
             if tooltip:GetAnchorType() and tooltip:GetAnchorType() ~= "ANCHOR_PRESERVE" then
                 local totalWidth = 0
+                -- TODO: reserve the comparison's width here. Blizzard is handed
+                -- primaryItemShown by ShoppingTooltip1:SetCompareItem; ours is
+                -- always shown, so what's missing is the width, and it isn't
+                -- known yet because the thing isn't filled in until below.
+                -- Classic populates, anchors, then populates again because
+                -- SetOwner cleared it; retail shows before measuring. Either way
+                -- the measuring wants AppearanceTooltip's guards: IsRectValid
+                -- before touching geometry, issecretvalue on GetLeft/GetRight/
+                -- GetWidth rather than trusting `or 0`.
                 if ( primaryItemShown  ) then
                     totalWidth = totalWidth + comparison:GetWidth()
                 end
