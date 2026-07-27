@@ -5,21 +5,15 @@ local myname, ns = ...
 -- scale -- and those tables are shared between every point that asks for the
 -- same one, so nothing may modify one after it has been handed out.
 
-local npc_texture, follower_texture, currency_texture, junk_texture, notable_npc_texture, lessnotable_npc_texture
-local trimmed_cache = {}
-local atlas_cache = {}
-local trimmed_icon = function(texture)
-    if not trimmed_cache[texture] then
-        trimmed_cache[texture] = {
-            icon = texture,
-            tCoordLeft = 0.1,
-            tCoordRight = 0.9,
-            tCoordTop = 0.1,
-            tCoordBottom = 0.9,
-        }
-    end
-    return trimmed_cache[texture]
+-- Because they're shared they're all built the first time something asks, so
+-- each set of them below is a table you index rather than a function you call.
+local function lazily(build)
+    return setmetatable({}, {__index = function(self, key)
+        self[key] = build(key)
+        return self[key]
+    end})
 end
+
 local atlas_texture = function(atlas, extra, left, right, top, bottom)
     local atlasInfo = C_Texture.GetAtlasInfo(atlas)
     if not atlasInfo then
@@ -57,6 +51,20 @@ local atlas_texture = function(atlas, extra, left, right, top, bottom)
 end
 ns.atlas_texture = atlas_texture
 
+local atlas_icons = lazily(atlas_texture)
+
+-- An item or achievement's own icon, trimmed in to lose the border it's drawn
+-- with.
+local trimmed_icons = lazily(function(texture)
+    return {
+        icon = texture,
+        tCoordLeft = 0.1,
+        tCoordRight = 0.9,
+        tCoordTop = 0.1,
+        tCoordBottom = 0.9,
+    }
+end)
+
 -- Whichever atlas the player picked for their default icon. The three offered
 -- in the config each want their own scale; anything else gets a generic one.
 --[[
@@ -69,119 +77,105 @@ local default_scales = {
     VignetteLootElite = 1.2,
     Garr_TreasureIcon = 2.2,
 }
-local default_textures = setmetatable({}, {__index = function(self, atlas)
-    self[atlas] = atlas_texture(atlas, default_scales[atlas] or 1.5)
-    return self[atlas]
-end})
+local default_icons = lazily(function(atlas)
+    return atlas_texture(atlas, default_scales[atlas] or 1.5)
+end)
+
+-- Icons that depend on nothing but what sort of point it is. They can't be
+-- built up front because ns.CLASSIC isn't known until handler.lua has loaded.
+local role_builders = {
+    follower = function() return atlas_texture("GreenCross", 1.5) end,
+    npc = function() return atlas_texture("DungeonSkull", 1) end,
+    currency = function() return atlas_texture("Auctioneer", 1.3) end,
+    junk = function() return atlas_texture("VignetteLoot", 1) end,
+    npc_notable = function()
+        if ns.CLASSIC then return atlas_texture("DungeonSkull", {r=0.5, g=1, b=1, scale=1.1}) end
+        return atlas_texture("nazjatar-nagaevent", {r=0.5, g=1, b=1}, 0.2)
+    end,
+    npc_lessnotable = function()
+        if ns.CLASSIC then return atlas_texture("DungeonSkull", {r=1, g=0.3, b=1, scale=1.1}) end
+        return atlas_texture("nazjatar-nagaevent", 1, 0.2)
+    end,
+}
+local role_icons = lazily(function(role) return role_builders[role]() end)
 
 local function work_out_texture(point)
     if point.texture then
         return point.texture
     end
     if point.atlas then
-        if not atlas_cache[point.atlas] then
-            atlas_cache[point.atlas] = atlas_texture(point.atlas)
-        end
-        return atlas_cache[point.atlas]
+        return atlas_icons[point.atlas]
     end
     if ns.db.icon_item or point.icon then
         if point.icon then
-            return trimmed_icon(point.icon)
+            return trimmed_icons[point.icon]
         end
         if point.loot and #point.loot > 0 then
             local texture = point.loot[1]:Icon()
             if texture then
-                return trimmed_icon(texture)
+                return trimmed_icons[texture]
             end
         end
         if point.currency then
             if ns.currencies[point.currency] then
                 local texture = ns.currencies[point.currency].texture
                 if texture then
-                    return trimmed_icon(texture)
+                    return trimmed_icons[texture]
                 end
             else
                 local info = C_CurrencyInfo.GetCurrencyInfo(point.currency)
                 if info then
-                    return trimmed_icon(info.iconFileID)
+                    return trimmed_icons[info.iconFileID]
                 end
             end
         end
         if point.achievement then
             local texture = select(10, GetAchievementInfo(point.achievement))
             if texture then
-                return trimmed_icon(texture)
+                return trimmed_icons[texture]
             end
         end
     end
     if point.follower then
-        if not follower_texture then
-            follower_texture = atlas_texture("GreenCross", 1.5)
-        end
-        return follower_texture
+        return role_icons.follower
     end
     if point.npc then
-        if not npc_texture then
-            if ns.CLASSIC then
-                lessnotable_npc_texture = atlas_texture("DungeonSkull", {r=1, g=0.3, b=1, scale=1.1})
-                notable_npc_texture = atlas_texture("DungeonSkull", {r=0.5, g=1, b=1, scale=1.1})
-            else
-                lessnotable_npc_texture = atlas_texture("nazjatar-nagaevent", 1, 0.2)
-                notable_npc_texture = atlas_texture("nazjatar-nagaevent", {r=0.5, g=1, b=1}, 0.2)
-            end
-            npc_texture = atlas_texture("DungeonSkull", 1)
-        end
         if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point, true) then
             if (not point.loot) or ns.hasNotableLoot(point.loot, true) then
                 -- still notable without transmog
-                return notable_npc_texture
+                return role_icons.npc_notable
             end
-            return lessnotable_npc_texture
-        else
-            return npc_texture
+            return role_icons.npc_lessnotable
         end
+        return role_icons.npc
     end
     if point.currency then
-        if not currency_texture then
-            currency_texture = atlas_texture("Auctioneer", 1.3)
-        end
-        return currency_texture
+        return role_icons.currency
     end
     if point.junk then
-        if not junk_texture then
-            junk_texture = atlas_texture("VignetteLoot", 1)
-        end
-        return junk_texture
+        return role_icons.junk
     end
-    return default_textures[ns.db.default_icon]
+    return default_icons[ns.db.default_icon]
 end
 ns.work_out_texture = work_out_texture
 
-local inactive_cache = {}
-local function get_inactive_texture_variant(icon)
-    if not inactive_cache[icon] then
-        inactive_cache[icon] = CopyTable(icon)
-        if inactive_cache[icon].r then
-            inactive_cache[icon].a = 0.5
-        else
-            inactive_cache[icon].r = 0.5
-            inactive_cache[icon].g = 0.5
-            inactive_cache[icon].b = 0.5
-            inactive_cache[icon].a = 1
-        end
+-- A point you can't reach yet, or will be able to soon: the icon it would have
+-- had, recoloured. Keyed on that icon, so they follow whatever it turned out
+-- to be.
+local inactive_icons = lazily(function(icon)
+    local variant = CopyTable(icon)
+    if variant.r then
+        -- it's already coloured to mean something, so only fade it
+        variant.a = 0.5
+    else
+        variant.r, variant.g, variant.b, variant.a = 0.5, 0.5, 0.5, 1
     end
-    return inactive_cache[icon]
-end
-local upcoming_cache = {}
-local function get_upcoming_texture_variant(icon)
-    if not upcoming_cache[icon] then
-        upcoming_cache[icon] = CopyTable(icon)
-        upcoming_cache[icon].r = 1
-        upcoming_cache[icon].g = 0
-        upcoming_cache[icon].b = 0
-        upcoming_cache[icon].a = 0.7
-    end
-    return upcoming_cache[icon]
-end
-ns.get_inactive_texture_variant = get_inactive_texture_variant
-ns.get_upcoming_texture_variant = get_upcoming_texture_variant
+    return variant
+end)
+local upcoming_icons = lazily(function(icon)
+    local variant = CopyTable(icon)
+    variant.r, variant.g, variant.b, variant.a = 1, 0, 0, 0.7
+    return variant
+end)
+function ns.get_inactive_texture_variant(icon) return inactive_icons[icon] end
+function ns.get_upcoming_texture_variant(icon) return upcoming_icons[icon] end
