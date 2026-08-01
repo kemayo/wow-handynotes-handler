@@ -1,6 +1,8 @@
 local myname, ns = ...
 local _, myfullname = C_AddOns.GetAddOnInfo(myname)
 
+local Krowi = LibStub("Krowi_WorldMapButtons-1.4")
+
 ns.suppressoverlay = {}
 
 local function isChecked(key) return ns.db[key] end
@@ -177,18 +179,7 @@ do
     end
 end
 function ns.SetupMapOverlay()
-    local frame
-    local Krowi = LibStub("Krowi_WorldMapButtons-1.4", true)
-    if Krowi then
-        frame = Krowi:Add(nil, "DropdownButton")
-    else
-        -- (this is a close translation of WorldMapTrackingOptionsButtonTemplate)
-        frame = CreateFrame("DropdownButton", WorldMapFrame, WorldMapFrame:GetCanvasContainer())
-        frame:SetPoint("TOPRIGHT", -68, -2)
-        hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
-            frame:Refresh()
-        end)
-    end
+    local frame = Krowi:Add(nil, "DropdownButton")
     frame:SetFrameStrata(ns.CLASSIC and "TOOLTIP" or "HIGH")
     frame:SetSize(32, 32)
     frame.Background = frame:CreateTexture(nil, "BACKGROUND")
