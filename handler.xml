@@ -8,6 +8,7 @@
 <Script file="icons.lua"/>
 <Script file="handler.lua"/>
 <Script file="conditions.lua"/>
+<Script file="notable.lua"/>
 <Script file="config.lua"/>
 <Script file="overlay.lua"/>
 
