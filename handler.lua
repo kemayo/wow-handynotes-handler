@@ -780,8 +780,14 @@ local function handle_tooltip(tooltip, point, skip_label)
                 side = "right"
             end
 
-            -- see if we should slide the tooltip
-            if tooltip:GetAnchorType() and tooltip:GetAnchorType() ~= "ANCHOR_PRESERVE" then
+            -- Sliding re-anchors the tooltip, which re-lays out its children --
+            -- including the widget container, whose Layout() compares its own
+            -- anchor count, and that reads secret. Blizzard can make that
+            -- comparison; ours carries addon taint into it, and the error only
+            -- surfaces later when they tear the widget set down. So leave a
+            -- tooltip that's carrying widgets where it is.
+            local hasWidgets = tooltip.widgetContainer and tooltip.widgetContainer.widgetSetID
+            if not hasWidgets and tooltip:GetAnchorType() and tooltip:GetAnchorType() ~= "ANCHOR_PRESERVE" then
                 local totalWidth = 0
                 -- TODO: reserve the comparison's width here. Blizzard is handed
                 -- primaryItemShown by ShoppingTooltip1:SetCompareItem; ours is
