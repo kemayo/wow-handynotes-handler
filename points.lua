@@ -34,26 +34,10 @@ ns.groups = ns.groups or {}
 
 ns.hiddenConfig = ns.hiddenConfig or {}
 
-ns.points = {
-    --[[ structure:
-    [uiMapID] = { -- "_terrain1" etc will be stripped from attempts to fetch this
-        [coord] = {
-            label=[string], -- label: text that'll be the label, optional
-            loot={[id]}, -- itemids
-            quest=[id], -- will be checked, for whether character already has it
-            currency=[id], -- currencyid
-            achievement=[id], -- will be shown in the tooltip
-            criteria=[id], -- modifies achievement
-            junk=[bool], -- doesn't count for any achievement
-            npc=[id], -- related npc id, used to display names in tooltip
-            note=[string], -- some text which might be helpful
-            hide_before=[id], -- hide if quest not completed
-            requires_buff=[id], -- hide if player does not have buff, mostly useful for buff-based zone phasing
-            requires_no_buff=[id] -- hide if player has buff, mostly useful for buff-based zone phasing
-        },
-    },
-    --]]
-}
+-- [uiMapID][coord] = point. What a point can hold is registerPoint below and
+-- the keys foldConditions folds; there was a list here, but it documented keys
+-- that get deleted at registration and missed most of the ones in use.
+ns.points = {}
 ns.POIsToPoints = {}
 ns.VignetteIDsToPoints = {}
 ns.WorldQuestsToPoints = {}
@@ -336,14 +320,6 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
     end
 end
 
-ns.merge = function(t1, t2)
-    if not t2 then return t1 end
-    for k, v in pairs(t2) do
-        t1[k] = v
-    end
-    return t1
-end
-
 ns.nodeMaker = function(defaults)
     local meta = {__index = defaults}
     return function(details)
@@ -365,30 +341,3 @@ ns.path = ns.nodeMaker{
     minimap = true,
     scale = 0.95,
 }
-
-ns.lootitem = function(item)
-    return ns.IsObject(item) and item.id
-end
-
-local playerClassLocal, playerClass = UnitClass("player")
-ns.playerClass = playerClass
-ns.playerClassLocal = playerClassLocal
-ns.playerClassColor = RAID_CLASS_COLORS[playerClass]
-ns.playerName = UnitName("player")
-ns.playerFaction = UnitFactionGroup("player")
-ns.playerClassMask = ({
-    -- this is 2^(classID - 1)
-    WARRIOR = 0x1,
-    PALADIN = 0x2,
-    HUNTER = 0x4,
-    ROGUE = 0x8,
-    PRIEST = 0x10,
-    DEATHKNIGHT = 0x20,
-    SHAMAN = 0x40,
-    MAGE = 0x80,
-    WARLOCK = 0x100,
-    MONK = 0x200,
-    DRUID = 0x400,
-    DEMONHUNTER = 0x800,
-    EVOKER = 0x1000,
-})[playerClass] or 0
