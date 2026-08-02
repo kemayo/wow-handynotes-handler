@@ -8,6 +8,7 @@
 <Script file="icons.lua"/>
 <Script file="points.lua"/>
 <Script file="handler.lua"/>
+<Script file="tooltip.lua"/>
 <Script file="conditions.lua"/>
 <Script file="notable.lua"/>
 <Script file="config.lua"/>
