@@ -11,6 +11,7 @@
 <Script file="tooltip.lua"/>
 <Script file="conditions.lua"/>
 <Script file="notable.lua"/>
+<Script file="visibility.lua"/>
 <Script file="config.lua"/>
 <Script file="overlay.lua"/>
 
