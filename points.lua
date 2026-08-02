@@ -140,6 +140,35 @@ do
     end
 end
 do
+    -- path, nearby and related all hang an extra point off this one, and only
+    -- really differ in what it looks like. The spec table carries the shared
+    -- options in its hash part; anything it doesn't set falls through
+    -- proxy_meta to the parent, so the defaults here are only for the keys
+    -- where the parent's value would be the wrong answer.
+    local inherited = {
+        "label", "atlas", "color", "scale", "minimap", "worldmap",
+        "active", "requires", "hide_before",
+    }
+    local function satellite(spec, proxy_meta, defaults)
+        local made = {}
+        for _, key in ipairs(inherited) do
+            local value = spec[key]
+            if value == nil then value = defaults[key] end
+            made[key] = value
+        end
+        -- ...and these are the ones inheriting is always wrong for. The
+        -- parent's note describes the treasure rather than the way to it, its
+        -- texture belongs to its own atlas, and its satellites have been
+        -- registered already -- picking them up again would recurse.
+        made.note = spec.note or false
+        made.texture = spec.texture or false
+        made.path, made.nearby, made.related = spec.path or false, spec.nearby or false, spec.related or false
+        made.loot = ns.upgradeloot(spec.loot)
+        if made.atlas and made.color then
+            made.texture = ns.atlas_texture(made.atlas, made.color)
+        end
+        return setmetatable(made, proxy_meta)
+    end
     local function registerPoint(zone, coord, point)
         indexPoint(point)
         foldConditions(zone, point)
@@ -167,46 +196,34 @@ do
             -- would accumulate coords if the same path is reused
             local route = type(point.path) == "table" and CopyTable(point.path, true) or {point.path}
             table.insert(route, 1, coord)
-            ns.points[zone][route[#route]] = setmetatable({
-                label=route.label or (point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure"),
-                atlas=route.atlas or "poi-door", scale=route.scale or 0.9, texture=false,
-                minimap=true, worldmap=route.worldmap,
-                note=route.note or false,
-                loot=ns.upgradeloot(route.loot),
-                routes={route},
-                _coord=route[#route], _uiMapID=zone,
-            }, proxy_meta)
+            local pathPoint = satellite(route, proxy_meta, {
+                label = point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure",
+                atlas = "poi-door", scale = 0.9, minimap = true,
+            })
+            pathPoint.routes = {route}
+            pathPoint._coord, pathPoint._uiMapID = route[#route], zone
+            -- deliberately not registerPoint: that would give it its own _main,
+            -- where inheriting the parent's is what groups the two for highlighting
+            ns.points[zone][route[#route]] = pathPoint
             -- highlight
             point.route = point.route or route[#route]
         end
         if point.nearby then
             local nearby = type(point.nearby) == "table" and point.nearby or {point.nearby}
             for _, ncoord in ipairs(nearby) do
-                local npoint = setmetatable({
-                    label=nearby.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
-                    atlas=nearby.atlas or "playerpartyblip",
-                    texture=nearby.texture or false,
-                    minimap=true, worldmap=nearby.worldmap, scale=0.9,
-                    note=nearby.note or false,
-                    loot=ns.upgradeloot(nearby.loot), active=nearby.active,
-                    related=nearby.related or false, nearby=nearby.nearby or false,
-                    path=nearby.path or false,
-                }, proxy_meta)
-                registerPoint(zone, ncoord, npoint)
+                registerPoint(zone, ncoord, satellite(nearby, proxy_meta, {
+                    label = point.npc and "Related to nearby NPC" or "Related to nearby treasure",
+                    atlas = "playerpartyblip", scale = 0.9, minimap = true,
+                }))
             end
         end
         if point.related then
-            local relatedNode = ns.nodeMaker(setmetatable({
-                label=point.related.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
-                atlas=point.related.atlas or "playerpartyblip", color=point.related.color, scale=point.related.scale,
-                texture=point.related.texture or false, minimap=point.related.minimap, worldmap=point.related.worldmap,
-                note=point.related.note or false,
-                loot=ns.upgradeloot(point.related.loot),
-                active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
-                related=point.related.related or false, nearby=point.related.nearby or false,
-                path=point.related.path or false,
-                route=coord,
-            }, proxy_meta))
+            local shared = satellite(point.related, proxy_meta, {
+                label = point.npc and "Related to nearby NPC" or "Related to nearby treasure",
+                atlas = "playerpartyblip",
+            })
+            shared.route = coord
+            local relatedNode = ns.nodeMaker(shared)
             for rcoord, related in pairs(point.related) do
                 if type(rcoord) == "number" then -- defaults are mixed in on this table...
                     if not point.routes then point.routes = {} end
