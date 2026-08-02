@@ -12,7 +12,6 @@ ns.DEBUG = C_AddOns.GetAddOnMetadata(myname, "Version") == '@'..'project-version
 
 ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
-ns.WARBANDS_AVAILABLE = LE_EXPANSION_LEVEL_CURRENT >= (LE_EXPANSION_WAR_WITHIN or math.huge)
 
 ns.run_caches = {}
 
