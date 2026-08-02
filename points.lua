@@ -179,11 +179,6 @@ do
         point._coord = coord
         point._uiMapID = zone
         point._main = point
-        if point.route and type(point.route) == "table" then
-            -- avoiding a data migration
-            point.routes = {point.route}
-            point.route = nil
-        end
         if point.atlas and point.color then
             point.texture = ns.atlas_texture(point.atlas, point.color)
         end
