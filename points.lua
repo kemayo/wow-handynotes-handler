@@ -1,0 +1,394 @@
+local myname, ns = ...
+
+local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
+local HBD = LibStub("HereBeDragons-2.0")
+
+-- The point data model, and the registration calls the zone files make into it.
+-- Nothing here draws anything or knows that HandyNotes exists: handler.lua is
+-- what turns these into pins and tooltips.
+
+-- flags for whether to show minimap icons in some zones, if Blizzard ever does the treasure-map thing again
+ns.map_spellids = ns.map_spellids or {
+    -- zone = spellid
+}
+
+ns.currencies = ns.currencies or {
+    ANIMA = {
+        name = '|cffff8000' .. POWER_TYPE_ANIMA .. '|r',
+        texture = select(10, GetAchievementInfo(14339)),
+    },
+    ARTIFACT = {
+        name = '|cffff8000' .. ARTIFACT_POWER .. '|r',
+        texture = select(10, GetAchievementInfo(11144)),
+    }
+}
+-- for fallbacks
+ns.covenants = ns.covenants or {
+    [Enum.CovenantType.Kyrian] = "Kyrian",
+    [Enum.CovenantType.Necrolord] = "Necrolords",
+    [Enum.CovenantType.NightFae] = "NightFae",
+    [Enum.CovenantType.Venthyr] = "Venthyr",
+}
+
+ns.groups = ns.groups or {}
+
+ns.hiddenConfig = ns.hiddenConfig or {}
+
+ns.points = {
+    --[[ structure:
+    [uiMapID] = { -- "_terrain1" etc will be stripped from attempts to fetch this
+        [coord] = {
+            label=[string], -- label: text that'll be the label, optional
+            loot={[id]}, -- itemids
+            quest=[id], -- will be checked, for whether character already has it
+            currency=[id], -- currencyid
+            achievement=[id], -- will be shown in the tooltip
+            criteria=[id], -- modifies achievement
+            junk=[bool], -- doesn't count for any achievement
+            npc=[id], -- related npc id, used to display names in tooltip
+            note=[string], -- some text which might be helpful
+            hide_before=[id], -- hide if quest not completed
+            requires_buff=[id], -- hide if player does not have buff, mostly useful for buff-based zone phasing
+            requires_no_buff=[id] -- hide if player has buff, mostly useful for buff-based zone phasing
+        },
+    },
+    --]]
+}
+ns.POIsToPoints = {}
+ns.VignetteIDsToPoints = {}
+ns.WorldQuestsToPoints = {}
+local function intotable(dest, value_or_table, point)
+    if not value_or_table then return end
+    if type(value_or_table) == "table" then
+        for _, value in ipairs(value_or_table) do
+            dest[value] = point
+        end
+        return
+    end
+    dest[value_or_table] = point
+end
+-- These keys all predate ns.conditions, and each grew its own check in
+-- should_show_point. Folding them into requires at registration leaves one
+-- path for "can this be seen" rather than a dozen near-identical ones.
+local foldConditions
+do
+    -- Each takes either a single value or a list, and what a list means isn't
+    -- the same for all of them, so the default is spelled out per key.
+    local function grouped(value, make, defaultAny, negated)
+        if value == nil then return end
+        if type(value) ~= "table" then return make(value) end
+        local made = {}
+        for i, v in ipairs(value) do made[i] = make(v) end
+        if #made < 2 then return made[1] end
+        local any = value.any or (defaultAny and not value.all)
+        if negated then
+            -- the key asked about having these, and we're asking about not
+            -- having them, so de Morgan flips the grouping: hide if any of them
+            -- is up means show only once all of them are down
+            any = not any
+        end
+        if any then return ns.conditions.Any(unpack(made)) end
+        return ns.conditions.All(unpack(made))
+    end
+    -- a requires list is ANDed, so an existing or-group has to become a single
+    -- condition before ours can join it
+    local function asOne(value)
+        if not value or ns.IsObject(value) then return value end
+        if #value < 2 then return value[1] end
+        if value.any then return ns.conditions.Any(unpack(value)) end
+        return ns.conditions.All(unpack(value))
+    end
+    local function combine(existing, folded)
+        if not folded then return existing end
+        existing = asOne(existing)
+        if existing then table.insert(folded, 1, existing) end
+        return #folded < 2 and folded[1] or folded
+    end
+    function foldConditions(zone, point)
+        local hides, upcoming
+        local function hide(condition)
+            if not condition then return end
+            hides = hides or {}
+            table.insert(hides, condition)
+        end
+        local function soon(condition)
+            if not condition then return end
+            upcoming = upcoming or {}
+            table.insert(upcoming, condition)
+        end
+        hide(grouped(point.requires_item, ns.conditions.Item))
+        hide(grouped(point.requires_buff, ns.conditions.AuraActive))
+        hide(grouped(point.requires_no_buff, ns.conditions.AuraInactive, false, true))
+        hide(grouped(point.requires_worldquest, ns.conditions.WorldQuestActive))
+        -- art defaulted to matching any of them, where the rest default to all
+        hide(grouped(point.art, function(id) return ns.conditions.MapArt(zone, id) end, true))
+        if point.poi then
+            -- each entry names its own map, so they aren't necessarily this one
+            local made = {}
+            for i, poi in ipairs(point.poi) do
+                made[i] = ns.conditions.AreaPoi(unpack(poi))
+            end
+            hide(#made < 2 and made[1] or ns.conditions.Any(unpack(made)))
+        end
+        if point.outdoors_only then hide(ns.conditions.Outdoors()) end
+        if point.faction then hide(ns.conditions.PlayerFaction(point.faction)) end
+        -- These two describe something you'll get to rather than something
+        -- you're missing, so they mark a point upcoming instead of hiding it.
+        if point.level then soon(ns.conditions.Level(point.level)) end
+        if point.covenant then soon(ns.conditions.Covenant(point.covenant)) end
+        -- Clearing only reaches keys the point owns: one coming from a
+        -- RegisterPoints defaults table stays visible through the metatable,
+        -- which costs a redundant check but not a wrong answer.
+        point.requires_item, point.requires_buff, point.requires_no_buff = nil, nil, nil
+        point.requires_worldquest, point.art, point.poi = nil, nil, nil
+        point.outdoors_only, point.faction, point.level, point.covenant = nil, nil, nil, nil
+        point.requires = combine(point.requires, hides)
+        point.hide_before = combine(point.hide_before, upcoming)
+    end
+end
+do
+    local function registerPoint(zone, coord, point)
+        ns.upgradeloot(point.loot)
+        ns.upgradeloot(point.loot_shared)
+        foldConditions(zone, point)
+        if ns.DEBUG and ns.points[zone][coord] then
+            print(myname, "point collision", zone, coord)
+        end
+        ns.points[zone][coord] = point
+        point._coord = coord
+        point._uiMapID = zone
+        point._main = point
+        intotable(ns.POIsToPoints, point.areaPoi, point)
+        intotable(ns.VignetteIDsToPoints, point.vignette, point)
+        intotable(ns.WorldQuestsToPoints, point.worldquest, point)
+        if point.route and type(point.route) == "table" then
+            -- avoiding a data migration
+            point.routes = {point.route}
+            point.route = nil
+        end
+        if point.atlas and point.color then
+            point.texture = ns.atlas_texture(point.atlas, point.color)
+        end
+        local proxy_meta
+        if point.path or point.nearby or point.related then
+            proxy_meta = {__index=point}
+        end
+        if point.path then
+            -- copy rather than prepending into the data table itself, which
+            -- would accumulate coords if the same path is reused
+            local route = type(point.path) == "table" and CopyTable(point.path, true) or {point.path}
+            table.insert(route, 1, coord)
+            ns.points[zone][route[#route]] = setmetatable({
+                label=route.label or (point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure"),
+                atlas=route.atlas or "poi-door", scale=route.scale or 0.9, texture=false,
+                minimap=true, worldmap=route.worldmap,
+                note=route.note or false,
+                loot=ns.upgradeloot(route.loot),
+                routes={route},
+                _coord=route[#route], _uiMapID=zone,
+            }, proxy_meta)
+            -- highlight
+            point.route = point.route or route[#route]
+        end
+        if point.nearby then
+            local nearby = type(point.nearby) == "table" and point.nearby or {point.nearby}
+            for _, ncoord in ipairs(nearby) do
+                local npoint = setmetatable({
+                    label=nearby.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
+                    atlas=nearby.atlas or "playerpartyblip",
+                    texture=nearby.texture or false,
+                    minimap=true, worldmap=nearby.worldmap, scale=0.9,
+                    note=nearby.note or false,
+                    loot=ns.upgradeloot(nearby.loot), active=nearby.active,
+                    related=nearby.related or false, nearby=nearby.nearby or false,
+                    path=nearby.path or false,
+                }, proxy_meta)
+                registerPoint(zone, ncoord, npoint)
+            end
+        end
+        if point.related then
+            local relatedNode = ns.nodeMaker(setmetatable({
+                label=point.related.label or (point.npc and "Related to nearby NPC" or "Related to nearby treasure"),
+                atlas=point.related.atlas or "playerpartyblip", color=point.related.color, scale=point.related.scale,
+                texture=point.related.texture or false, minimap=point.related.minimap, worldmap=point.related.worldmap,
+                note=point.related.note or false,
+                loot=ns.upgradeloot(point.related.loot),
+                active=point.related.active, requires=point.related.requires, hide_before=point.related.hide_before,
+                related=point.related.related or false, nearby=point.related.nearby or false,
+                path=point.related.path or false,
+                route=coord,
+            }, proxy_meta))
+            for rcoord, related in pairs(point.related) do
+                if type(rcoord) == "number" then -- defaults are mixed in on this table...
+                    if not point.routes then point.routes = {} end
+                    -- _related marks this as a generated cluster route, so the
+                    -- provider can drop it when that related point is filtered out
+                    table.insert(point.routes, {rcoord, coord, highlightOnly=true, _related=rcoord})
+                    registerPoint(zone, rcoord, relatedNode(related))
+                end
+            end
+        end
+        -- and then variations on "also register this elsewhere":
+        if point.translate or point.parent or point.levels then
+            local translateTo = {}
+            if point.translate then
+                for tzone in pairs(point.translate) do
+                    if tzone ~= zone then
+                        translateTo[tzone] = true
+                    end
+                end
+            end
+            if point.parent then
+                local mapinfo = C_Map.GetMapInfo(zone)
+                if mapinfo and mapinfo.parentMapID and mapinfo.parentMapID ~= 0 then
+                    local pzone = mapinfo.parentMapID
+                    translateTo[pzone] = true
+                end
+            end
+            if point.levels then
+                -- Show on other levels of the same zone
+                local groupID = C_Map.GetMapGroupID(zone)
+                if groupID then
+                    local members = C_Map.GetMapGroupMembersInfo(groupID)
+                    if members then
+                        for _, member in pairs(members) do
+                            if member.mapID ~= zone then
+                                translateTo[member.mapID] = true
+                            end
+                        end
+                    end
+                end
+            end
+            local x, y = HandyNotes:getXY(coord)
+            for tzone in pairs(translateTo) do
+                local tx, ty = HBD:TranslateZoneCoordinates(x, y, zone, tzone)
+                if not tx then
+                    -- try a fallback
+                    local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(zone, tzone)
+                    if minX and minX ~= 0 then
+                        tx = Lerp(minX, maxX, x)
+                        ty = Lerp(minY, maxY, y)
+                    end
+                    if ns.DEBUG then
+                        print(myname, "fell back", zone, coord, tzone, tx, ty)
+                    end
+                end
+                if tx and ty then
+                    if not ns.points[tzone] then
+                        ns.points[tzone] = {}
+                    end
+                    local tcoord = HandyNotes:getCoord(tx, ty)
+                    if ns.DEBUG and ns.points[tzone][tcoord] then
+                        print(myname, "translate point collision", zone, coord, "to", tzone, tcoord)
+                    end
+                    ns.points[tzone][tcoord] = point
+                elseif ns.DEBUG then
+                    print(myname, "translation failed", x, y, zone, tzone)
+                end
+            end
+        end
+        if point.additional then
+            -- Extra coordinates to register. This is equivalent to just
+            -- registering the same table multiple times on the input, and
+            -- should only be used for simple cases -- related points are
+            -- going to fall apart here.
+            for _,acoord in pairs(point.additional) do
+                if ns.DEBUG and ns.points[zone][acoord] then
+                    print(myname, "point collision", zone, acoord)
+                end
+                ns.points[zone][acoord] = point
+            end
+        end
+    end
+    function ns.RegisterPoints(zone, points, defaults)
+        if not ns.points[zone] then
+            ns.points[zone] = {}
+        end
+        if defaults then
+            local nodeType = ns.nodeMaker(defaults)
+            for coord, point in pairs(points) do
+                points[coord] = nodeType(point)
+            end
+        end
+        for coord, point in pairs(points) do
+            registerPoint(zone, coord, point)
+        end
+    end
+end
+function ns.RegisterVignettes(zone, vignettes, defaults)
+    if defaults then
+        defaults = ns.nodeMaker(defaults)
+    end
+    for vignetteID, point in pairs(vignettes) do
+        point = defaults and defaults(point) or point
+
+        point._coord = point._coord or 0
+        point._uiMapID = zone
+        point.vignette = vignetteID
+        point.always = true
+        point.label = false
+        point.loot = ns.upgradeloot(point.loot)
+        point.loot_shared = ns.upgradeloot(point.loot_shared)
+
+        intotable(ns.POIsToPoints, point.areaPoi, point)
+        intotable(ns.VignetteIDsToPoints, point.vignette, point)
+        intotable(ns.WorldQuestsToPoints, point.worldquest, point)
+    end
+end
+
+ns.merge = function(t1, t2)
+    if not t2 then return t1 end
+    for k, v in pairs(t2) do
+        t1[k] = v
+    end
+    return t1
+end
+
+ns.nodeMaker = function(defaults)
+    local meta = {__index = defaults}
+    return function(details)
+        details = details or {}
+        if details.note and defaults.note then
+            details.note = details.note .. "\n" .. defaults.note
+        end
+        local meta2 = getmetatable(details)
+        if meta2 and meta2.__index then
+            return setmetatable(details, {__index = ns.merge(CopyTable(defaults, true), meta2.__index)})
+        end
+        return setmetatable(details, meta)
+    end
+end
+
+ns.path = ns.nodeMaker{
+    label = "Path to treasure",
+    atlas = "poi-door", -- 'PortalPurple' / 'PortalRed'?
+    minimap = true,
+    scale = 0.95,
+}
+
+ns.lootitem = function(item)
+    return ns.IsObject(item) and item.id
+end
+
+local playerClassLocal, playerClass = UnitClass("player")
+ns.playerClass = playerClass
+ns.playerClassLocal = playerClassLocal
+ns.playerClassColor = RAID_CLASS_COLORS[playerClass]
+ns.playerName = UnitName("player")
+ns.playerFaction = UnitFactionGroup("player")
+ns.playerClassMask = ({
+    -- this is 2^(classID - 1)
+    WARRIOR = 0x1,
+    PALADIN = 0x2,
+    HUNTER = 0x4,
+    ROGUE = 0x8,
+    PRIEST = 0x10,
+    DEATHKNIGHT = 0x20,
+    SHAMAN = 0x40,
+    MAGE = 0x80,
+    WARLOCK = 0x100,
+    MONK = 0x200,
+    DRUID = 0x400,
+    DEMONHUNTER = 0x800,
+    EVOKER = 0x1000,
+})[playerClass] or 0
