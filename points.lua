@@ -139,6 +139,14 @@ do
         point.hide_before = combine(point.hide_before, upcoming)
     end
 end
+-- What a path point looks like, whether it came from a path= key on another
+-- point or from a zone file building one itself with ns.path.
+local pathDefaults = {
+    label = "Path to treasure",
+    atlas = "poi-door", -- 'PortalPurple' / 'PortalRed'?
+    minimap = true,
+    scale = 0.9,
+}
 do
     -- path, nearby and related all hang an extra point off this one, and only
     -- really differ in what it looks like. The spec table carries the shared
@@ -191,10 +199,9 @@ do
             -- would accumulate coords if the same path is reused
             local route = type(point.path) == "table" and CopyTable(point.path, true) or {point.path}
             table.insert(route, 1, coord)
-            local pathPoint = satellite(route, proxy_meta, {
-                label = point.npc and ("Path to {npc:%s}"):format(point.npc) or "Path to treasure",
-                atlas = "poi-door", scale = 0.9, minimap = true,
-            })
+            local pathPoint = satellite(route, proxy_meta, setmetatable({
+                label = point.npc and ("Path to {npc:%s}"):format(point.npc) or nil,
+            }, {__index = pathDefaults}))
             pathPoint.routes = {route}
             pathPoint._coord, pathPoint._uiMapID = route[#route], zone
             -- deliberately not registerPoint: that would give it its own _main,
@@ -348,9 +355,4 @@ ns.nodeMaker = function(defaults)
     end
 end
 
-ns.path = ns.nodeMaker{
-    label = "Path to treasure",
-    atlas = "poi-door", -- 'PortalPurple' / 'PortalRed'?
-    minimap = true,
-    scale = 0.95,
-}
+ns.path = ns.nodeMaker(pathDefaults)
