@@ -51,6 +51,15 @@ local function intotable(dest, value_or_table, point)
     end
     dest[value_or_table] = point
 end
+-- The two things every point gets regardless of how it was registered: its
+-- loot turned into reward objects, and an entry in each id lookup it names.
+local function indexPoint(point)
+    point.loot = ns.upgradeloot(point.loot)
+    point.loot_shared = ns.upgradeloot(point.loot_shared)
+    intotable(ns.POIsToPoints, point.areaPoi, point)
+    intotable(ns.VignetteIDsToPoints, point.vignette, point)
+    intotable(ns.WorldQuestsToPoints, point.worldquest, point)
+end
 -- These keys all predate ns.conditions, and each grew its own check in
 -- should_show_point. Folding them into requires at registration leaves one
 -- path for "can this be seen" rather than a dozen near-identical ones.
@@ -132,8 +141,7 @@ do
 end
 do
     local function registerPoint(zone, coord, point)
-        ns.upgradeloot(point.loot)
-        ns.upgradeloot(point.loot_shared)
+        indexPoint(point)
         foldConditions(zone, point)
         if ns.DEBUG and ns.points[zone][coord] then
             print(myname, "point collision", zone, coord)
@@ -142,9 +150,6 @@ do
         point._coord = coord
         point._uiMapID = zone
         point._main = point
-        intotable(ns.POIsToPoints, point.areaPoi, point)
-        intotable(ns.VignetteIDsToPoints, point.vignette, point)
-        intotable(ns.WorldQuestsToPoints, point.worldquest, point)
         if point.route and type(point.route) == "table" then
             -- avoiding a data migration
             point.routes = {point.route}
@@ -311,12 +316,8 @@ function ns.RegisterVignettes(zone, vignettes, defaults)
         point.vignette = vignetteID
         point.always = true
         point.label = false
-        point.loot = ns.upgradeloot(point.loot)
-        point.loot_shared = ns.upgradeloot(point.loot_shared)
 
-        intotable(ns.POIsToPoints, point.areaPoi, point)
-        intotable(ns.VignetteIDsToPoints, point.vignette, point)
-        intotable(ns.WorldQuestsToPoints, point.worldquest, point)
+        indexPoint(point)
     end
 end
 
