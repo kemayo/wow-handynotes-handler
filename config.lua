@@ -24,6 +24,10 @@ ns.defaults = {
         quest_notable = true,
         decor_notable = true,
         transmog_specific = true, -- consider whether you know the appearance from *this* item specifically
+        -- Reward:Notable() reads this: on, loot that can't drop for you isn't a
+        -- reason to want a point. True keeps it doing what it always has; the
+        -- plugins have no option for it yet, unlike SilverDragon
+        charloot = true,
         -- icon stuff
         icon_scale = 1.0,
         icon_alpha = 1.0,
