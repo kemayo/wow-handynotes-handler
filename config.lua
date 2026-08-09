@@ -285,7 +285,7 @@ ns.options = {
                         achievement_notable = {
                             type = "toggle",
                             name = TRANSMOG_SOURCE_5,
-                            desc = "Count unlearned achievement-progress as notable",
+                            desc = "Count unearned achievement-progress as notable",
                             order = 10,
                         },
                         mount_notable = {
