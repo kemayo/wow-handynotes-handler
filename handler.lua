@@ -243,7 +243,10 @@ function HLHandler:OnEnter(uiMapID, coord)
 end
 
 local function showAchievement(achievement)
-    if OpenAchievementFrameToAchievement then
+    if ShowAchievementFrameForAchievement then
+        ShowAchievementFrameForAchievement(achievement)
+    elseif OpenAchievementFrameToAchievement then
+        -- 12.1 renamed it; the old name stays while some regions are on 12.0
         OpenAchievementFrameToAchievement(achievement)
     else
         -- probably classic
