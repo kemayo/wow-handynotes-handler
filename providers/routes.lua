@@ -9,6 +9,7 @@ local highlights = {}
 local routecache = {}
 local already = {}
 
+-- Points in a cluster carry a route back to the main point they highlight as.
 local function GetMainPoint(point, mapID)
     if point.route and ns.points[mapID][point.route] then
         point = ns.points[mapID][point.route]
@@ -41,23 +42,26 @@ function provider:OnRefresh()
     if not mapID then return end
     if not ns.points[mapID] then return end
 
-    for coord, point in pairs(ns.points[mapID]) do
-        point = GetMainPoint(point, mapID)
-        -- coord may belong to a related point that resolved to this main one,
-        -- so test the main point against its own coord, not the one we entered on
-        if point and not already[point] and point.routes and ns.should_show_point(point._coord, point, mapID, false) then
+    -- A path on a related point holds its own routes, so the point holding them
+    -- is not always the main one. Visibility is that point's own; only the
+    -- highlighting belongs to the main point.
+    for _, point in pairs(ns.points[mapID]) do
+        if point.routes and not already[point] and ns.should_show_point(point._coord, point, mapID, false) then
             already[point] = true
-            for i, route in ipairs(point.routes) do
-                if routeShown(route, mapID) then
-                    if not routecache[route] then
-                        routecache[route] = {
-                            route = route,
-                            point = point,
-                            coord = point._coord,
-                            mapID = mapID,
-                        }
+            local main = GetMainPoint(point, mapID)
+            if main then
+                for _, route in ipairs(point.routes) do
+                    if routeShown(route, mapID) then
+                        if not routecache[route] then
+                            routecache[route] = {
+                                route = route,
+                                point = main,
+                                coord = point._coord,
+                                mapID = mapID,
+                            }
+                        end
+                        table.insert(self.data, routecache[route])
                     end
-                    table.insert(self.data, routecache[route])
                 end
             end
         end
