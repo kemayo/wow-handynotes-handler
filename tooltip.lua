@@ -155,21 +155,21 @@ local function handle_tooltip(tooltip, point, skip_label)
     if point.note then
         tooltip:AddLine(render_string(point.note, point), 1, 1, 1, true)
     end
+    local hidden
     if point.loot then
-        local hidden
         for _, item in ipairs(point.loot) do
             hidden = tooltip_loot(tooltip, item, point.showallloot) or hidden
-        end
-        if hidden then
-            tooltip:AddLine("Items for other characters hidden", 0, 1, 1)
         end
     end
     if ns.db.tooltip_sharedloot and point.loot_shared and #point.loot_shared > 0 then
         -- This is loot flagged as being from a shared pool
         tooltip:AddLine("Shared Loot", 1, 1, 1, false)
         for _, item in ipairs(point.loot_shared) do
-            tooltip_loot(tooltip, item, true)
+            hidden = tooltip_loot(tooltip, item, point.showallloot) or hidden
         end
+    end
+    if hidden then
+        tooltip:AddLine("Items for other characters hidden", 0, 1, 1)
     end
     if point.hide_before then
         local summary = ns.conditions.summarize(point.hide_before)
