@@ -290,7 +290,7 @@ ns.options = {
                         },
                         mount_notable = {
                             type = "toggle",
-                            name = MOUNT,
+                            name = PERKS_VENDOR_CATEGORY_MOUNT or MOUNTS, -- MOUNT is the wrong form when translated
                             desc = "Count unlearned mounts as notable loot",
                             order = 10,
                         },
