@@ -91,7 +91,7 @@ end
 
 local function CreateProviderPool(provider)
     return CreateObjectPool(function()
-        local pin = Mixin(CreateFrame("Frame", nil, overlay), pinMixin)
+        local pin = Mixin(CreateFrame("Frame", nil, overlay, provider.template), pinMixin)
         pin:SetScript("OnEnter", pin.OnEnter)
         pin:SetScript("OnLeave", pin.OnLeave)
         pin:SetScript("OnMouseUp", pin.OnMouseUp)
@@ -173,6 +173,8 @@ function ns.MapSystem:AddProvider(mixin)
         providers[mixin] = CreateFromMixins(providerMixin, mixin)
         providers[mixin].pool = CreateProviderPool(providers[mixin])
     end
+    -- the mixin isn't the provider, so hand back the thing with the pool on it
+    return providers[mixin]
 end
 
 function ns.MapSystem:RemoveProvider(mixin)
@@ -190,29 +192,6 @@ function ns.MapSystem:ProxyEvent(event, ...)
     end
 end
 
-local function updateProviders()
-    ns.MapSystem:ReleaseLines()
-    for _, provider in next, providers do
-        if provider.OnRefresh then
-            provider:OnRefresh()
-        end
-        provider.pool:ReleaseAll()
-        provider:RefreshData()
-    end
-end
-function ns.MapSystem:UpdateProviders()
-    updateProviders()
-end
-
-WorldMapFrame:HookScript("OnHide", function()
-    for _, provider in next, providers do
-        provider.pool:ReleaseAll()
-        if provider.OnMapHide then
-            provider:OnMapHide()
-        end
-    end
-end)
-
 local function updatePinSize()
     for _, provider in next, providers do
         for pin in provider.pool:EnumerateActive() do
@@ -224,6 +203,32 @@ local function updatePinSize()
             pin:SetPoint("CENTER", overlay, "TOPLEFT", posX, -posY)
         end
     end
+end
+
+local function updateProviders()
+    ns.MapSystem:ReleaseLines()
+    for _, provider in next, providers do
+        if provider.OnRefresh then provider:OnRefresh() end
+        provider.pool:ReleaseAll()
+        provider:RefreshData()
+        if provider.AfterRefresh then provider:AfterRefresh() end
+    end
+    -- a refresh takes fresh pins out of the pool with their anchors cleared, and
+    -- nothing else places them until the canvas next changes scale
+    updatePinSize()
+end
+
+WorldMapFrame:HookScript("OnHide", function()
+    for _, provider in next, providers do
+        provider.pool:ReleaseAll()
+        if provider.OnMapHide then
+            provider:OnMapHide()
+        end
+    end
+end)
+
+function ns.MapSystem:UpdateProviders()
+    updateProviders()
 end
 
 -- these two hook are sufficient for acquire/release logic
