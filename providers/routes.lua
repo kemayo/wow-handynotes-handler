@@ -76,10 +76,22 @@ function provider.OnPinReset(pin)
     pin.routedata = nil
 end
 
+function provider:ConnectPins(pin1, pin2, routedata)
+    local route = routedata.route
+    local line = ns.MapSystem:AttachLine(pin1, pin2)
+    line.baseThickness = line:GetThickness()
+    -- line:SetColorTexture(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
+    line:SetVertexColor(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
+    if route.highlightOnly and not highlights[routedata.point] then
+        line:Hide()
+    end
+    return line
+end
+
 function provider:HandleData(routedata)
     local route = routedata.route
     local mapID = routedata.mapID
-    local prevPin
+    local prevPin, firstPin
     for _, coord in ipairs(route) do
         local pin, isNew = self:AcquirePin()
         pin:SetID(coord)
@@ -88,17 +100,14 @@ function provider:HandleData(routedata)
             pin.routedata = routedata
             pin:Show()
             if prevPin then
-                local line = ns.MapSystem:AttachLine(prevPin, pin)
-                line.baseThickness = line:GetThickness()
-                -- line:SetColorTexture(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
-                line:SetVertexColor(route.r or 1, route.g or 1, route.b or 1, route.a or 0.6)
-                if route.highlightOnly and not highlights[routedata.point] then
-                    line:Hide()
-                end
-                pin.line = line
+                pin.line = self:ConnectPins(prevPin, pin, routedata)
             end
             prevPin = pin
+            firstPin = firstPin or pin
         end
+    end
+    if route.loop and firstPin and prevPin ~= firstPin then
+        firstPin.line = self:ConnectPins(prevPin, firstPin, routedata)
     end
 end
 
