@@ -48,8 +48,6 @@ function provider:OnRefresh()
         return
     end
 
-    if not WorldMapFrame:IsVisible() then return end
-
     local mapID = WorldMapFrame:GetMapID()
     if not mapID then return end
     if not ns.points[mapID] then return end
