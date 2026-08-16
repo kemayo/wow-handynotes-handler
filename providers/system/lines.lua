@@ -13,7 +13,7 @@ local linePool = CreateUnsecuredObjectPool(function()
     return line
 end, function(_, line)
     line:SetScale(1)
-    line:SetThickness(1)
+    line:SetThickness(2)
     line:SetVertexColor(1, 1, 1, 1)
     line:Hide()
 end)
