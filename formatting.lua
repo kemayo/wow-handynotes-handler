@@ -65,6 +65,7 @@ ns.quick_texture_markup = quick_texture_markup
 local completeColor = CreateColor(0, 1, 0, 1)
 local incompleteColor = CreateColor(1, 0, 0, 1)
 local function render_replacer(variant, id, fallback)
+    local baseVariant, baseID = variant, id
     local mainid, subid = id:match("(%d+)%.(%d+)")
     mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
     id = mainid or (id:match('^%d+$') and tonumber(id) or id)
@@ -251,7 +252,7 @@ local function render_replacer(variant, id, fallback)
         end
         return CreateAtlasMarkup(id)
     end
-    return fallback ~= "" and fallback or (variant .. ':' .. id)
+    return fallback ~= "" and fallback or (baseVariant .. ':' .. baseID)
 end
 local function safe_render_replacer(...)
     local replacement = render_replacer(...)
