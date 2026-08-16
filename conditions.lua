@@ -317,7 +317,7 @@ end
 function ns.conditions.Trait:Matched()
     local configID = C_Traits.GetConfigIDByTreeID(self.treeID)
     local nodeInfo = configID and C_Traits.GetNodeInfo(configID, self.nodeID)
-    return nodeInfo and nodeInfo.ID ~= 0 and nodeInfo.ranksPurchased > 0
+    return nodeInfo and nodeInfo.ID ~= 0 and nodeInfo.ranksPurchased >= (self.rank or 1)
 end
 
 ns.conditions.Item = Condition:extends{classname = "Item", type = 'item', KEYFIELDS = {"id", "count"}}
