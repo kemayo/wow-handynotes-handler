@@ -106,6 +106,28 @@ local function render_replacer(variant, id, fallback)
     elseif variant == "questid" then
         if subvariant == "plain" then return id end
         return CreateAtlasMarkup("questnormal") .. (C_QuestLog.IsQuestFlaggedCompleted(id) and completeColor or incompleteColor):WrapTextInColorCode(id)
+    elseif variant == "questline" or variant == "questlinebyquest" then
+        local questLine
+        if variant == "questlinebyquest" then
+            questLine = C_QuestLine.GetQuestLineInfo(id, subid)
+            -- questlinebyquest:questID[.uiMapID]
+        else
+            -- questline:uiMapID.questLineID
+            local questLines = C_QuestLine.GetAvailableQuestLines(id)
+            if not questLines then return end
+            for _, line in ipairs(questLines) do
+                if line.questLineID == subid then
+                    questLine = line
+                    break
+                end
+            end
+        end
+        if questLine then
+            if subvariant == "plain" then return questLine.questLineName end
+            local completed = questLine.isAccountCompleted and not questLine.inProgress
+            return CreateAtlasMarkup("questlog-storylineicon") .. " " ..
+                (completed and completeColor or incompleteColor):WrapTextInColorCode(questLine.questLineName)
+        end
     elseif variant == "achievement" or variant == "achievementname" then
         if mainid and subid then
             local criteria, _, completed, _, _, completedBy = ns.GetCriteria(mainid, subid)
