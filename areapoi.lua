@@ -5,6 +5,11 @@ local myname, ns = ...
 -- on it, the POI says how long it has left, and the event scheduler says when a
 -- future one begins. This asks all three as one question.
 --
+-- Everything taking `pois` accepts one id or a list of them, because a point can
+-- name several: the POI that appears on the map while the event runs is often
+-- not the POI the scheduler knows it by. They answer at different times, so the
+-- list is ranked and only the most informative one is reported.
+--
 --[[
 API:
 status = ns.areaPoi.GetStatus(areaPoiID[, uiMapID]) -- nil if nothing is known
@@ -12,10 +17,11 @@ status = ns.areaPoi.GetStatus(areaPoiID[, uiMapID]) -- nil if nothing is known
     status.secondsLeft  -- number?, how much longer it runs
     status.secondsUntil -- number?, how long until the next one starts
 
-ns.areaPoi.IsActive(areaPoiID[, uiMapID])   -> bool
-ns.areaPoi.IsImminent(areaPoiID[, uiMapID]) -> bool -- starts within SOON
+ns.areaPoi.GetBestStatus(pois[, uiMapID])   -> status?
+ns.areaPoi.IsActive(pois[, uiMapID])        -> bool
+ns.areaPoi.IsImminent(pois[, uiMapID])      -> bool -- starts within SOON
 ns.areaPoi.GetName(areaPoiID[, uiMapID])    -> string?
-ns.areaPoi.Describe(areaPoiID[, uiMapID][, fallbackName]) -> string, colour
+ns.areaPoi.Describe(pois[, uiMapID][, fallbackName]) -> string, colour
 ns.areaPoi.RegisterCallback(func)           -- called when one of the above changes
 ]]
 
@@ -260,13 +266,38 @@ function areaPoi.GetStatus(areaPoiID, uiMapID)
     return status
 end
 
-function areaPoi.IsActive(areaPoiID, uiMapID)
-    local status = areaPoi.GetStatus(areaPoiID, uiMapID)
+-- Running beats upcoming, and a countdown beats no countdown. Where both count,
+-- the nearer deadline wins: the ids for one event measure slightly different
+-- things, so this has to order them the same way whichever comes first.
+local function betterThan(status, best)
+    if status.active ~= best.active then return status.active end
+    if not status.active then return status.secondsUntil < best.secondsUntil end
+    if not best.secondsLeft then return status.secondsLeft ~= nil end
+    if not status.secondsLeft then return false end
+    return status.secondsLeft < best.secondsLeft
+end
+
+-- Safe to hold the winner: GetStatus refills one table per POI, and the ids
+-- after it in the list have tables of their own.
+function areaPoi.GetBestStatus(pois, uiMapID)
+    if type(pois) ~= "table" then return areaPoi.GetStatus(pois, uiMapID) end
+    local best
+    for _, areaPoiID in ipairs(pois) do
+        local status = areaPoi.GetStatus(areaPoiID, uiMapID)
+        if status and (not best or betterThan(status, best)) then
+            best = status
+        end
+    end
+    return best
+end
+
+function areaPoi.IsActive(pois, uiMapID)
+    local status = areaPoi.GetBestStatus(pois, uiMapID)
     return (status and status.active) or false
 end
 
-function areaPoi.IsImminent(areaPoiID, uiMapID)
-    local status = areaPoi.GetStatus(areaPoiID, uiMapID)
+function areaPoi.IsImminent(pois, uiMapID)
+    local status = areaPoi.GetBestStatus(pois, uiMapID)
     return (status and status.secondsUntil and status.secondsUntil <= areaPoi.SOON) or false
 end
 
@@ -290,14 +321,14 @@ end
 -- event scheduler says. A POI usually names itself before it starts, but
 -- Blizzard guards against it not doing so, so a caller with a name of its own
 -- can offer one.
-function areaPoi.Describe(areaPoiID, uiMapID, fallbackName)
-    local status = areaPoi.GetStatus(areaPoiID, uiMapID)
+function areaPoi.Describe(pois, uiMapID, fallbackName)
+    local status = areaPoi.GetBestStatus(pois, uiMapID)
     if not status then return end
     if status.active and status.secondsLeft then
         return TIME_LEFT:format(SecondsToTime(status.secondsLeft)), GREEN_FONT_COLOR
     end
     -- the two remaining lines are sentences about the POI, so they need its name
-    local name = areaPoi.GetName(areaPoiID, uiMapID) or fallbackName
+    local name = areaPoi.GetName(status.areaPoiID, status.uiMapID) or fallbackName
     if not name then return end
     if status.active then
         return HAS_STARTED:format(name), GREEN_FONT_COLOR
