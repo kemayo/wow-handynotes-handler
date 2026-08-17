@@ -202,6 +202,20 @@ local function handle_tooltip(tooltip, point, skip_label)
         end
     end
 
+    if point.areaPoi then
+        -- Informational only: unlike the poi condition this hides nothing, it
+        -- says where the event behind the point is in its cycle. The key takes
+        -- the same single-or-list shape the id indexes do.
+        local pois = type(point.areaPoi) == "table" and point.areaPoi or {point.areaPoi}
+        for _, areaPoiID in ipairs(pois) do
+            local line, color = ns.areaPoi.Describe(areaPoiID, point._uiMapID, work_out_label(point))
+            if line then
+                local r, g, b = color:GetRGB()
+                tooltip:AddLine(line, r, g, b, true)
+            end
+        end
+    end
+
     if point.group then
         tooltip:AddDoubleLine(GROUP, (render_string(ns.groups[point.group] or point.group, point)))
     end

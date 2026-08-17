@@ -33,6 +33,33 @@ local function ApplyHandyNotesTextureSpec(texture, iconpath)
     end
 end
 
+-- Advertising the event behind a point that names an areaPoi: green while it
+-- runs, gold while it is close enough to set off for. Anything further out gets
+-- nothing, so the map does not light up with things you cannot act on. A point
+-- naming several takes the most interesting of them.
+--
+-- The atlas comes from the shortlist below, and is one Blizzard's own code still
+-- uses: SetAtlas fails silently on a name that has gone, which would stop the
+-- decoration without saying so.
+local EVENT_GLOW_ATLAS = "groupfinder-eye-backglow"
+local function event_glow_color(point)
+    if not point.areaPoi then return end
+    local pois = type(point.areaPoi) == "table" and point.areaPoi or {point.areaPoi}
+    local imminent
+    for _, areaPoiID in ipairs(pois) do
+        local status = ns.areaPoi.GetStatus(areaPoiID, point._uiMapID)
+        if status then
+            if status.active then
+                return GREEN_FONT_COLOR
+            end
+            if status.secondsUntil and status.secondsUntil <= ns.areaPoi.SOON then
+                imminent = true
+            end
+        end
+    end
+    return imminent and NORMAL_FONT_COLOR or nil
+end
+
 local highlights = {}
 local hovered
 
@@ -65,6 +92,11 @@ function provider.OnPinCreated(pin)
 
     pin.glow = pin:CreateTexture(nil, "BACKGROUND")
     pin.glow:SetAllPoints()
+
+    -- Separate from the glow above, which belongs to hovering: with one texture
+    -- between them, mousing off a pin would clear what it was advertising.
+    pin.eventGlow = pin:CreateTexture(nil, "BACKGROUND")
+    pin.eventGlow:SetAllPoints()
 
     pin.backdrop = pin:CreateTexture(nil, "BACKGROUND")
     pin.backdrop:SetPoint("CENTER")
@@ -108,6 +140,7 @@ function provider.OnPinAcquire(pin, coord)
     -- UI-QuestPoi-OuterGlow
     -- UI-QuestPoi-QuestNumber
     -- Waypoint-MapPin-Highlight
+    -- common-roundhighlight
     if not default_backdrop then
         default_backdrop = ns.atlas_texture("worldquest-questmarker-epic")
     end
@@ -132,6 +165,12 @@ function provider.OnPinAcquire(pin, coord)
     if hovered and (point == hovered or point._main == hovered._main) then
         pin.glow:Show()
     end
+    local eventColor = event_glow_color(point)
+    if eventColor then
+        pin.eventGlow:SetAtlas(EVENT_GLOW_ATLAS)
+        pin.eventGlow:SetVertexColor(eventColor:GetRGB())
+        pin.eventGlow:Show()
+    end
 
     return mapID, HandyNotes:getXY(coord)
 end
@@ -141,6 +180,7 @@ function provider.OnPinReset(pin)
     -- The pin itself will have been hidden already by the base pool releaser.
     if pin.glow then
         pin.glow:Hide()
+        pin.eventGlow:Hide()
         pin.backdrop:Hide()
         pin.border:Hide()
         pin.highlight:Hide()

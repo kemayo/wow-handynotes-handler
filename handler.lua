@@ -504,6 +504,13 @@ function HL:OnInitialize()
     -- This is sometimes spammy, but is the only thing that tends to get us casts:
     self:RegisterEvent("CRITERIA_UPDATE", "RefreshOnEvent")
 
+    -- ns.areaPoi watches the POI and scheduler events itself. This covers what
+    -- they don't: an event ending, or coming close enough to point out, which
+    -- happen with nothing but the passage of time.
+    ns.areaPoi.RegisterCallback(function()
+        self:RefreshOnEvent()
+    end)
+
     if ns.SetupMapOverlay then
         ns.SetupMapOverlay()
     end

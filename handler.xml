@@ -9,6 +9,7 @@
 <Script file="points.lua"/>
 <Script file="handler.lua"/>
 <Script file="tooltip.lua"/>
+<Script file="areapoi.lua"/>
 <Script file="conditions.lua"/>
 <Script file="notable.lua"/>
 <Script file="visibility.lua"/>
