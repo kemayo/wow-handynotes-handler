@@ -13,6 +13,7 @@ ns.defaults = {
         -- show_treasure_emphasizeNotable = true,
         show_routes = true,
         upcoming = true,
+        areapoi_soon = 10, -- minutes; how early ns.areaPoi.Soon() calls a point imminent
         found = false,
         alts_achievements_count = false,
         -- notability!
@@ -345,6 +346,13 @@ ns.options = {
                             name = "Show inaccessible",
                             desc = "Show waypoints for items you can't get yet (max level, gated quests, etc); they'll be tinted red to indicate this",
                             order = 25,
+                        },
+                        areapoi_soon = {
+                            type = "range",
+                            name = "Event notice period",
+                            desc = "How many minutes before a timed event starts to mark its point as imminent, on the map and in its tooltip",
+                            min = 1, max = 60, step = 1,
+                            order = 27,
                         },
                         show_routes = {
                             type = "toggle",

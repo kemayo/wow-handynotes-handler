@@ -47,7 +47,7 @@ local function event_glow_color(point)
     local status = ns.areaPoi.GetBestStatus(point.areaPoi, point._uiMapID)
     if not status then return end
     if status.active then return GREEN_FONT_COLOR end
-    if status.secondsUntil <= ns.areaPoi.SOON then return NORMAL_FONT_COLOR end
+    if status.secondsUntil <= ns.areaPoi.Soon() then return NORMAL_FONT_COLOR end
 end
 
 local highlights = {}
