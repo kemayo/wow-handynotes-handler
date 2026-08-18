@@ -8,6 +8,11 @@ local myname, ns = ...
 local render_string, render_string_list = ns.render_string, ns.render_string_list
 local work_out_label = ns.work_out_label
 
+-- Keeps the areaPoi line ticking while a tooltip is left open, instead of it
+-- staying frozen at whatever the countdown read the moment the tooltip built.
+-- Forward-declared so handle_tooltip, defined further down, can reach them.
+local startLiveAreaPoi, stopLiveAreaPoi
+
 local issecretframe = function(frame, aspect)
     if frame.IsAnchoringSecret then
         if aspect then
@@ -109,7 +114,54 @@ ns.tooltipHelpers = {
     criteria = tooltip_criteria,
 }
 
+do
+    -- 1s: fine enough to match SecondsToTime's own granularity below a minute,
+    -- and cheap enough to run for as long as a tooltip happens to be open.
+    local elapsed = 0
+    local live
+    local ticker = CreateFrame("Frame")
+    ticker:Hide()
+    ticker:SetScript("OnUpdate", function(self, delta)
+        elapsed = elapsed + delta
+        if elapsed < 1 then return end
+        elapsed = 0
+        local line, color = ns.areaPoi.Describe(live.pois, live.uiMapID, live.fallbackName)
+        if not line then
+            -- nothing left to say; leave the last line showing rather than
+            -- rebuild the tooltip to remove it
+            self:Hide()
+            return
+        end
+        live.fontString:SetText(line)
+        live.fontString:SetTextColor(color:GetRGB())
+    end)
+    -- Every handle_tooltip call stops this first regardless of what it's
+    -- building, so a tooltip without an areaPoi line can't be left ticking
+    -- against a FontString that isn't there any more.
+    GameTooltip:HookScript("OnHide", function() stopLiveAreaPoi() end)
+    function stopLiveAreaPoi()
+        live = nil
+        elapsed = 0
+        ticker:Hide()
+    end
+    -- Grabs the FontString AddLine just wrote, so later ticks can rewrite it
+    -- directly instead of touching the rest of the tooltip.
+    function startLiveAreaPoi(tooltip, pois, uiMapID, fallbackName)
+        local name = tooltip:GetName()
+        if not name then return end
+        live = {
+            fontString = _G[name .. "TextLeft" .. tooltip:NumLines()],
+            pois = pois,
+            uiMapID = uiMapID,
+            fallbackName = fallbackName,
+        }
+        elapsed = 0
+        ticker:Show()
+    end
+end
+
 local function handle_tooltip(tooltip, point, skip_label)
+    stopLiveAreaPoi()
     if not point then
         tooltip:SetText(UNKNOWN)
         tooltip:Show()
@@ -210,6 +262,7 @@ local function handle_tooltip(tooltip, point, skip_label)
         if line then
             local r, g, b = color:GetRGB()
             tooltip:AddLine(line, r, g, b, true)
+            startLiveAreaPoi(tooltip, point.areaPoi, point._uiMapID, work_out_label(point))
         end
     end
 
