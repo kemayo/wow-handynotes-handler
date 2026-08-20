@@ -46,7 +46,8 @@ local function event_glow_color(point)
     if not point.areaPoi then return end
     local status = ns.areaPoi.GetBestStatus(point.areaPoi, point._uiMapID)
     if not status then return end
-    if status.active then return GREEN_FONT_COLOR end
+    -- .active alone doesn't mean it's a tracked event; see ns.areaPoi's .timed
+    if status.active then return status.timed and GREEN_FONT_COLOR or nil end
     if status.secondsUntil <= ns.areaPoi.Soon() then return NORMAL_FONT_COLOR end
 end
 
