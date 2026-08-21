@@ -102,6 +102,9 @@ function provider:HandleData(routedata)
             end
             prevPin = pin
             firstPin = firstPin or pin
+        else
+            -- match the generic pin path's release-on-failure
+            self:ReleasePin(pin)
         end
     end
     if route.loop and firstPin and prevPin ~= firstPin then
