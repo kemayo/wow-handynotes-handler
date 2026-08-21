@@ -530,7 +530,7 @@ do
         end
     end)
     function HL:Refresh()
-        HL:SendMessage("HandyNotes_NotifyUpdate", myname:gsub("HandyNotes_", ""))
+        HL:SendMessage("HandyNotes_NotifyUpdate", (myname:gsub("HandyNotes_", "")))
     end
     function HL:RefreshOnEvent(event)
         self:FillCaches()
