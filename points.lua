@@ -168,6 +168,10 @@ do
         -- parent's note describes the treasure rather than the way to it, its
         -- texture belongs to its own atlas, and its satellites have been
         -- registered already -- picking them up again would recurse.
+        -- id lookups have to belong to whichever point actually names the id:
+        -- these get indexed by ns.RegisterPoints, and a satellite inheriting one
+        -- through the metatable would win the lookup over the point that owns it.
+        made.vignette, made.areaPoi, made.worldquest = spec.vignette or false, spec.areaPoi or false, spec.worldquest or false
         made.note = spec.note or false
         made.texture = spec.texture or false
         made.path, made.nearby, made.related = spec.path or false, spec.nearby or false, spec.related or false
