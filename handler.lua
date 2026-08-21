@@ -219,7 +219,7 @@ local HLHandler = {}
 
 function HLHandler:OnEnter(uiMapID, coord)
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
-    if ns.MapSystem then
+    if point and ns.MapSystem then
         ns.MapSystem:ProxyEvent("Enter", point, uiMapID, coord)
     end
     local tooltip = GameTooltip
@@ -435,7 +435,7 @@ function HLHandler:OnLeave(uiMapID, coord)
     if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
 
     local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
-    if ns.MapSystem then
+    if point and ns.MapSystem then
         ns.MapSystem:ProxyEvent("Leave", point, uiMapID, coord)
     end
 end
