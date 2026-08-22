@@ -1,4 +1,5 @@
 local myname, ns = ...
+local _, myfullname = C_AddOns.GetAddOnInfo(myname)
 
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
 local HBD = LibStub("HereBeDragons-2.0")
@@ -360,3 +361,33 @@ ns.nodeMaker = function(defaults)
 end
 
 ns.path = ns.nodeMaker(pathDefaults)
+
+-- This is essentially a version of MapLinkPinMixin; it should be
+-- called like ns.mapLink{link=1234}
+ns.mapLink = ns.nodeMaker{
+    label = function(point) return ("{zone:%d}"):format(point.link) end,
+    atlas = "CaveUnderground-Down", -- `-Up`
+    scale = 2.5,
+    OnTooltipShow = function(point, tooltip)
+        GameTooltip_AddColoredLine(tooltip, MAP_LINK_POI_TOOLTIP_INSTRUCTION_LINE, GREEN_FONT_COLOR, true)
+        tooltip:AddDoubleLine(" ", myfullname:gsub("HandyNotes: ", ""), 0, 1, 1, 0, 1, 1)
+    end,
+    OnRightClick = function(point, button, uiMapID, coord)
+        if not point.link then return end
+        -- escape the current click-hander because Blizzard data providers get in the way
+        C_Timer.After(0, function()
+            -- Classic *has* OpenWorldMap, but it's broken because it doesn't have this:
+            if WorldMapFrame.HandleUserActionOpenSelf then
+                OpenWorldMap(point.link)
+            else
+                -- Classic
+                if not WorldMapFrame:IsVisible() then
+                    ToggleWorldMap()
+                end
+                WorldMapFrame:SetMapID(point.link)
+            end
+        end)
+        return true
+    end,
+    group="maplinks",
+}

@@ -362,6 +362,11 @@ do
         local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
         if point then
             if button == "RightButton" then
+                if point.OnRightClick then
+                    if point:OnRightClick(button, uiMapID, coord) then
+                        return
+                    end
+                end
                 MenuUtil.CreateContextMenu(nil, generateMenu, uiMapID, coord, point)
                 return
             end
