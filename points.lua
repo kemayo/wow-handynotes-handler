@@ -24,14 +24,17 @@ ns.currencies = ns.currencies or {
     }
 }
 -- for fallbacks
-ns.covenants = ns.covenants or {
+ns.covenants = ns.merge({
     [Enum.CovenantType.Kyrian] = "Kyrian",
     [Enum.CovenantType.Necrolord] = "Necrolords",
     [Enum.CovenantType.NightFae] = "NightFae",
     [Enum.CovenantType.Venthyr] = "Venthyr",
-}
+}, ns.covenants)
 
-ns.groups = ns.groups or {}
+ns.groups = ns.merge(ns.groups or {}, {
+    maplinks = QUEST_HUB_TOOLTIP_TRAVEL_HEADER or TUTORIAL_TITLE35 or "Travel",
+    junk = BAG_FILTER_JUNK or "Junk",
+})
 
 ns.hiddenConfig = ns.hiddenConfig or {}
 
