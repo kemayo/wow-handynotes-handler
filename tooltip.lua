@@ -393,7 +393,19 @@ do
             point = ns.POIsToPoints[pin.poiInfo.areaPoiID]
         end
         if point then
-            handle_tooltip(GameTooltip, point, true)
+            local hasWidgets = GameTooltip.widgetContainer and GameTooltip.widgetContainer.widgetSetID
+            if hasWidgets then
+                -- More attempts to avoid taint when dealing with widget
+                -- tooltips. This time, just delay so the Blizzard tooltip
+                -- can lay itself out without maybe dealing with our lines
+                C_Timer.After(0, function()
+                    if GameTooltip:IsShown() then
+                        handle_tooltip(GameTooltip, point, true)
+                    end
+                end)
+            else
+                handle_tooltip(GameTooltip, point, true)
+            end
         end
     end
     local hideComparison = function()
