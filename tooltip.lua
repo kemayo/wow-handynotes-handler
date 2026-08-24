@@ -393,17 +393,11 @@ do
             point = ns.POIsToPoints[pin.poiInfo.areaPoiID]
         end
         if point then
-            local hasWidgets = GameTooltip.widgetContainer and GameTooltip.widgetContainer.widgetSetID
-            if hasWidgets then
-                -- More attempts to avoid taint when dealing with widget
-                -- tooltips. This time, just delay so the Blizzard tooltip
-                -- can lay itself out without maybe dealing with our lines
-                C_Timer.After(0, function()
-                    if GameTooltip:IsShown() then
-                        handle_tooltip(GameTooltip, point, true)
-                    end
-                end)
-            else
+            -- Don't touch a tooltip Blizzard has already put extra
+            -- (non-text) content into -- even deferred a tick, it taints
+            -- the widget's cached data.
+            local hasExtraContent = GameTooltip.insertedFrames and #GameTooltip.insertedFrames > 0
+            if not hasExtraContent then
                 handle_tooltip(GameTooltip, point, true)
             end
         end
