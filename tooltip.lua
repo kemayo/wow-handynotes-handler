@@ -380,6 +380,17 @@ do
     gateFrame:SetScript("OnHide", function() already = false end)
     gateFrame:SetScript("OnUpdate", function(self) self:Hide() end)
 
+    local function getSubordinateTooltip()
+        local subordinate = _G[myname.."SubordinateTooltip"]
+        if not subordinate then
+            subordinate = CreateFrame("GameTooltip", myname.."SubordinateTooltip", UIParent, "GameTooltipTemplate")
+            if _G.GameTooltipDataMixin then Mixin(subordinate, GameTooltipDataMixin) end
+            subordinate:SetFrameStrata("TOOLTIP")
+            subordinate:SetClampedToScreen(true)
+        end
+        return subordinate
+    end
+
     local handleWorldMapPin = function(pin)
         if not pin then return end
         if already then return end
@@ -395,9 +406,18 @@ do
         if point then
             -- Don't touch a tooltip Blizzard has already put extra
             -- (non-text) content into -- even deferred a tick, it taints
-            -- the widget's cached data.
+            -- the widget's cached data. Hang our own tooltip off the bottom
+            -- instead, same as the item-comparison one does off the side.
             local hasExtraContent = GameTooltip.insertedFrames and #GameTooltip.insertedFrames > 0
-            if not hasExtraContent then
+            if hasExtraContent then
+                local subordinate = getSubordinateTooltip()
+                subordinate:SetOwner(GameTooltip, "ANCHOR_NONE")
+                subordinate:ClearAllPoints()
+                subordinate:SetPoint("TOPLEFT", GameTooltip, "BOTTOMLEFT", 0, -10)
+                handle_tooltip(subordinate, point, true)
+            else
+                local subordinate = _G[myname.."SubordinateTooltip"]
+                if subordinate then subordinate:Hide() end
                 handle_tooltip(GameTooltip, point, true)
             end
         end
@@ -405,6 +425,7 @@ do
     local hideComparison = function()
         -- 10.0.2 doesn't hide this by default any more
         if _G[myname.."ComparisonTooltip"] then _G[myname.."ComparisonTooltip"]:Hide() end
+        if _G[myname.."SubordinateTooltip"] then _G[myname.."SubordinateTooltip"]:Hide() end
         gateFrame:Hide()
     end
 
