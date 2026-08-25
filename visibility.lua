@@ -26,6 +26,9 @@ local function isNotable(point, lootable)
     if point.loot and hasNotableLoot(point.loot) then
         return true
     end
+    if ns.db.notable_shared and point.loot_shared and hasNotableLoot(point.loot_shared) then
+        return true
+    end
     if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
         return true
     end

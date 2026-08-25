@@ -151,6 +151,9 @@ local function work_out_texture(point)
                 -- still notable without transmog
                 return role_icons.npc_notable
             end
+            if ns.db.notable_shared and point.loot_shared and ns.hasNotableLoot(point.loot_shared, true) then
+                return role_icons.npc_notable
+            end
             return role_icons.npc_lessnotable
         end
         return role_icons.npc
