@@ -174,17 +174,6 @@ local function handle_tooltip(tooltip, point, skip_label)
     if point.OnTooltipShow then
         point:OnTooltipShow(tooltip)
     end
-    if point.follower then
-        local follower = C_Garrison.GetFollowerInfo(point.follower)
-        if follower then
-            local quality = BAG_ITEM_QUALITY_COLORS[follower.quality]
-            tooltip:AddDoubleLine(REWARD_FOLLOWER, follower.name,
-                0, 1, 0,
-                quality.r, quality.g, quality.b
-            )
-            tooltip:AddDoubleLine(follower.className, UNIT_LEVEL_TEMPLATE:format(follower.level))
-        end
-    end
     if point.currency then
         local name
         if ns.currencies[point.currency] then
@@ -350,14 +339,17 @@ local function handle_tooltip(tooltip, point, skip_label)
             end
         end
 
+        local shown = true
         if point.loot and #point.loot > 0 then
-            point.loot[1]:SetTooltip(comparison)
+            shown = point.loot[1]:SetTooltip(comparison) ~= false
         elseif point.npc then
             comparison:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(point.npc))
         elseif point.spell then
             comparison:SetSpellByID(point.spell)
         end
-        comparison:Show()
+        if shown then
+            comparison:Show()
+        end
     end
 
     tooltip:Show()

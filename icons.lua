@@ -84,7 +84,6 @@ end)
 -- Icons that depend on nothing but what sort of point it is. They can't be
 -- built up front because ns.CLASSIC isn't known until handler.lua has loaded.
 local role_builders = {
-    follower = function() return atlas_texture("GreenCross", 1.5) end,
     npc = function() return atlas_texture("DungeonSkull", 1) end,
     currency = function() return atlas_texture("Auctioneer", 1.3) end,
     junk = function() return atlas_texture("VignetteLoot", 1) end,
@@ -141,9 +140,6 @@ local function work_out_texture(point)
                 return trimmed_icons[texture]
             end
         end
-    end
-    if point.follower then
-        return role_icons.follower
     end
     if point.npc then
         if ns.db.show_npcs_emphasizeNotable and ns.PointIsNotable(point, true) then

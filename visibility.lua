@@ -29,9 +29,6 @@ local function isNotable(point, lootable)
     if ns.db.notable_shared and point.loot_shared and hasNotableLoot(point.loot_shared) then
         return true
     end
-    if point.follower and not C_Garrison.IsFollowerCollected(point.follower) then
-        return true
-    end
 end
 ns.PointIsNotable = isNotable
 
@@ -112,12 +109,6 @@ local function PointIsFound(point)
         end
         found = true
     end
-    if point.follower then
-        if not C_Garrison.IsFollowerCollected(point.follower) then
-            return false
-        end
-        found = true
-    end
     if point.quest then
         if not allQuestsComplete(point.quest, point.accountquest) then
             return false
@@ -159,9 +150,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
             return show
         end
     end
-    if point.follower then
-        -- Don't treat as an NPC
-    elseif point.npc then
+    if point.npc then
         -- only npcs that are questless or that have an uncompleted quest
         if not ns.db.show_npcs then
             return false
@@ -178,7 +167,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
             return point.always
         end
     elseif point.loot or point.currency then
-        -- Not an NPC, not a follower, must be treasure if it has some sort of loot
+        -- Not an NPC, must be treasure if it has some sort of loot
         if not ns.db.show_treasure then
             return false
         end
