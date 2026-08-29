@@ -166,7 +166,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
         then
             return point.always
         end
-    elseif point.loot or point.currency then
+    elseif point.loot then
         -- Not an NPC, must be treasure if it has some sort of loot
         if not ns.db.show_treasure then
             return false

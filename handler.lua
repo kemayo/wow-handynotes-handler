@@ -73,16 +73,6 @@ local function work_out_label(point)
         end
         fallback = 'achievement:'..point.achievement
     end
-    if point.currency then
-        if ns.currencies[point.currency] then
-            return ns.currencies[point.currency].name
-        end
-        local info = C_CurrencyInfo.GetCurrencyInfo(point.currency)
-        if info then
-            return info.name
-        end
-        fallback = 'currency:'..point.currency
-    end
     return fallback or UNKNOWN
 end
 ns.work_out_label = work_out_label

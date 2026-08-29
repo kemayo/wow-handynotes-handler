@@ -174,16 +174,6 @@ local function handle_tooltip(tooltip, point, skip_label)
     if point.OnTooltipShow then
         point:OnTooltipShow(tooltip)
     end
-    if point.currency then
-        local name
-        if ns.currencies[point.currency] then
-            name = ns.currencies[point.currency].name
-        else
-            local info = C_CurrencyInfo.GetCurrencyInfo(point.currency)
-            name = info and info.name
-        end
-        tooltip:AddDoubleLine(CURRENCY, name or point.currency)
-    end
     if point.achievement then
         tooltip_achievement(tooltip, point.achievement, point.criteria)
     end

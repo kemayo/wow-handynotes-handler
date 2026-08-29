@@ -85,7 +85,6 @@ end)
 -- built up front because ns.CLASSIC isn't known until handler.lua has loaded.
 local role_builders = {
     npc = function() return atlas_texture("DungeonSkull", 1) end,
-    currency = function() return atlas_texture("Auctioneer", 1.3) end,
     junk = function() return atlas_texture("VignetteLoot", 1) end,
     npc_notable = function()
         if ns.CLASSIC then return atlas_texture("DungeonSkull", {r=0.5, g=1, b=1, scale=1.1}) end
@@ -109,29 +108,14 @@ local function work_out_texture(point)
         return trimmed_icons[point.icon]
     end
     -- Art belonging to the thing itself rather than a marker standing in for
-    -- it. A currency is a kind of loot -- newer data says so outright, putting
-    -- an ns.rewards.Currency in the loot list instead of using the key below --
-    -- so it goes with loot, and the achievement is what's left when neither is
-    -- known. The label ladder deliberately runs the other way: an achievement
-    -- names a point better than its currency does.
+    -- it. The achievement is what's left when neither is known. The label
+    -- ladder deliberately runs the other way: an achievement names a point
+    -- better than its loot does.
     if ns.db.icon_item then
         if point.loot and #point.loot > 0 then
             local texture = point.loot[1]:Icon()
             if texture then
                 return trimmed_icons[texture]
-            end
-        end
-        if point.currency then
-            if ns.currencies[point.currency] then
-                local texture = ns.currencies[point.currency].texture
-                if texture then
-                    return trimmed_icons[texture]
-                end
-            else
-                local info = C_CurrencyInfo.GetCurrencyInfo(point.currency)
-                if info then
-                    return trimmed_icons[info.iconFileID]
-                end
             end
         end
         if point.achievement then
@@ -153,9 +137,6 @@ local function work_out_texture(point)
             return role_icons.npc_lessnotable
         end
         return role_icons.npc
-    end
-    if point.currency then
-        return role_icons.currency
     end
     if point.junk then
         return role_icons.junk

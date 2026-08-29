@@ -13,16 +13,6 @@ ns.map_spellids = ns.map_spellids or {
     -- zone = spellid
 }
 
-ns.currencies = ns.currencies or {
-    ANIMA = {
-        name = '|cffff8000' .. POWER_TYPE_ANIMA .. '|r',
-        texture = select(10, GetAchievementInfo(14339)),
-    },
-    ARTIFACT = {
-        name = '|cffff8000' .. ARTIFACT_POWER .. '|r',
-        texture = select(10, GetAchievementInfo(11144)),
-    }
-}
 -- for fallbacks
 ns.covenants = ns.merge({
     [Enum.CovenantType.Kyrian] = "Kyrian",
