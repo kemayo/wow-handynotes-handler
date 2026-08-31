@@ -7,7 +7,7 @@ local materials = {
     [Enum.ItemArmorSubclass.Plate] = true,
 }
 
-ns.rewards.Item = ns.rewards.Reward:extends({classname="Item"})
+ns.rewards.Item = ns.rewards.Reward:extends({classname="Item", held=false})
 function ns.rewards.Item:init(id, amount, ...)
     if ns.xtype(amount) == 'table' then
         -- backwards compatible
@@ -55,7 +55,7 @@ end
 function ns.rewards.Item:Icon() return (select(5, C_Item.GetItemInfoInstant(self.id))) end
 function ns.rewards.Item:Obtained(ignore_notable, ...)
     local result = self:super("Obtained", ignore_notable, ...)
-    if ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
+    if self.held or ns.CLASSICERA then return result and GetItemCount(self.id, true) > 0 end
     if not result and (ignore_notable or ns.db.transmog_notable) and self.CanLearnAppearance(self.id) then
         return self.HasAppearance(self.id, ns.db.transmog_specific)
     end
