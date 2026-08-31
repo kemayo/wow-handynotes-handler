@@ -8,6 +8,9 @@ local myname, ns = ...
 local render_string, render_string_list = ns.render_string, ns.render_string_list
 local work_out_label = ns.work_out_label
 
+local issecretvalue = _G.issecretvalue or function() return false end
+local issecrettable = _G.issecrettable or function() return false end
+
 -- Keeps the areaPoi line ticking while a tooltip is left open, instead of it
 -- staying frozen at whatever the countdown read the moment the tooltip built.
 -- Forward-declared so handle_tooltip, defined further down, can reach them.
@@ -158,6 +161,30 @@ do
         elapsed = 0
         ticker:Show()
     end
+end
+
+-- Retail stand-in for the SetHyperlink unit path. SetHyperlink routes through
+-- Blizzard's tooltip data handler, which in 12.1 reads a secret unit-name
+-- colour; our comparison frame carries addon taint into that read and it errors.
+-- So build the lines here and drop any that come back secret.
+local function fill_npc_tooltip(tooltip, npcID)
+    if not C_TooltipInfo then return false end
+    local info = C_TooltipInfo.GetHyperlink(("unit:Creature-0-0-0-0-%d"):format(npcID))
+    if not (info and info.lines) then return false end
+    local shown
+    for _, line in ipairs(info.lines) do
+        local text = line.leftText
+        if text and not issecretvalue(text) then
+            local color = line.leftColor
+            if color and not issecrettable(color) and not issecretvalue(color) then
+                tooltip:AddLine(text, color:GetRGB())
+            else
+                tooltip:AddLine(text, HIGHLIGHT_FONT_COLOR:GetRGB())
+            end
+            shown = true
+        end
+    end
+    return shown
 end
 
 local function handle_tooltip(tooltip, point, skip_label)
@@ -333,7 +360,11 @@ local function handle_tooltip(tooltip, point, skip_label)
         if point.loot and #point.loot > 0 then
             shown = point.loot[1]:SetTooltip(comparison) ~= false
         elseif point.npc then
-            comparison:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(point.npc))
+            if ns.CLASSIC then
+                comparison:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(point.npc))
+            else
+                shown = fill_npc_tooltip(comparison, point.npc)
+            end
         elseif point.spell then
             comparison:SetSpellByID(point.spell)
         end
