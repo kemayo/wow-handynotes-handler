@@ -13,8 +13,6 @@ ns.DEBUG = C_AddOns.GetAddOnMetadata(myname, "Version") == '@'..'project-version
 ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
 ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 
-ns.run_caches = {}
-
 ---------------------------------------------------------
 -- All the utility code
 
