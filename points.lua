@@ -122,13 +122,12 @@ do
         -- These two describe something you'll get to rather than something
         -- you're missing, so they mark a point upcoming instead of hiding it.
         if point.level then soon(ns.conditions.Level(point.level)) end
-        if point.covenant then soon(ns.conditions.Covenant(point.covenant)) end
         -- Clearing only reaches keys the point owns: one coming from a
         -- RegisterPoints defaults table stays visible through the metatable,
         -- which costs a redundant check but not a wrong answer.
         point.requires_item, point.requires_buff, point.requires_no_buff = nil, nil, nil
         point.requires_worldquest, point.art, point.poi = nil, nil, nil
-        point.outdoors_only, point.faction, point.level, point.covenant = nil, nil, nil, nil
+        point.outdoors_only, point.faction, point.level = nil, nil, nil
         point.requires = combine(point.requires, hides)
         point.hide_before = combine(point.hide_before, upcoming)
     end
