@@ -7,6 +7,7 @@
 <Script file="class.lua"/>
 <Script file="formatting.lua"/>
 <Script file="icons.lua"/>
+<Script file="foldconditions.lua"/>
 <Script file="points.lua"/>
 <Script file="handler.lua"/>
 <Script file="tooltip.lua"/>
