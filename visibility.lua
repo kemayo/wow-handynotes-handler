@@ -65,6 +65,13 @@ local function showOnMapType(point, uiMapID, isMinimap)
     return ns.db.show_on_world
 end
 
+-- false while any loot that might drop for this character is still missing,
+-- true once it is all accounted for, and nil if there is none to judge by.
+local function lootIsFound(loot)
+    if not (loot and hasKnowableLoot(loot, true)) then return end
+    return allLootKnown(loot, true)
+end
+
 local function PointIsFound(point)
     if ns.db.found or point.always then return false end
 
@@ -84,12 +91,20 @@ local function PointIsFound(point)
 
     -- from here on it's actually found:
     local found
-    if point.loot and hasKnowableLoot(point.loot, true) then
-        -- has knowable loot that might drop
-        if not allLootKnown(point.loot, true) then
-            return false
-        end
+    local lootFound = lootIsFound(point.loot)
+    if lootFound ~= nil then
+        if not lootFound then return false end
         found = true
+    end
+    -- A rare whose own loot is all in the shared pool would otherwise be found
+    -- as soon as its achievement criterion was, which hides it while it can
+    -- still drop you something.
+    if ns.db.notable_shared then
+        local sharedFound = lootIsFound(point.loot_shared)
+        if sharedFound ~= nil then
+            if not sharedFound then return false end
+            found = true
+        end
     end
     if point.achievement and not point.achievementNotFound then
         if not isAchieved(point) then
