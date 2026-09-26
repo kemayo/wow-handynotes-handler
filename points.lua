@@ -82,7 +82,9 @@ do
         -- ...and these are the ones inheriting is always wrong for. The
         -- parent's note describes the treasure rather than the way to it, its
         -- texture belongs to its own atlas, and its satellites have been
-        -- registered already -- picking them up again would recurse.
+        -- registered already -- picking them up again would recurse. Its routes
+        -- are drawn once for it, and a satellite inheriting them would draw
+        -- them again for every satellite.
         -- id lookups have to belong to whichever point actually names the id:
         -- these get indexed by ns.RegisterPoints, and a satellite inheriting one
         -- through the metatable would win the lookup over the point that owns it.
@@ -90,6 +92,7 @@ do
         made.note = spec.note or false
         made.texture = spec.texture or false
         made.path, made.nearby, made.related = spec.path or false, spec.nearby or false, spec.related or false
+        made.routes = false
         made.loot = ns.upgradeloot(spec.loot)
         if made.atlas and made.color then
             made.texture = ns.atlas_texture(made.atlas, made.color)
