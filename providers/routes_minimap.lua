@@ -42,8 +42,13 @@ function dataProvider:RefreshAllData()
     if not uiMapID then return end
     if not ns.points[uiMapID] then return end
 
+    -- Route coords belong to the map the point was registered on, so a point
+    -- translated here from elsewhere can't draw them. And a point registered
+    -- at several coords only wants its routes drawn once.
+    local drawn = {}
     for coord, point in pairs(ns.points[uiMapID]) do
-        if point.routes and ns.should_show_point(coord, point, uiMapID, true) then
+        if point.routes and point._uiMapID == uiMapID and not drawn[point] and ns.should_show_point(coord, point, uiMapID, true) then
+            drawn[point] = true
             for _, route in ipairs(point.routes) do
                 self:DrawRoute(route, point, uiMapID)
             end
