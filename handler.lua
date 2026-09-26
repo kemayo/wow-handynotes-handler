@@ -482,7 +482,8 @@ do
             --  until event dispatch has completed" -- so getting valid data
             --  right away seems good.
             self:Refresh()
-        elseif restrictionState ~= Enum.AddOnRestrictionState.Inactive then
+        elseif restrictionState == Enum.AddOnRestrictionState.Inactive then
+            -- the restriction lifted, so what it hid is readable again
             bucket:Show()
         end
     end
