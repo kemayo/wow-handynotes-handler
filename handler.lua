@@ -219,9 +219,18 @@ do
         local deltaX, deltaY = x2 - x1, y2 - y1
         return ((deltaX ^ 2) + (deltaY ^ 2)) ^ 0.5
     end
-    local function distanceSort(lhs, rhs)
-        local px, py = HBD:GetPlayerZonePosition()
-        return getDistance(px, py, HandyNotes:getXY(lhs)) > getDistance(px, py, HandyNotes:getXY(rhs))
+    -- World coordinates, because the map being clicked needn't be the one the
+    -- player is standing in
+    local function sortByDistance(points, uiMapID)
+        local px, py, pinstance = HBD:GetPlayerWorldPosition()
+        if not px then return end
+        local distances = {}
+        for _, rcoord in ipairs(points) do
+            local x, y = HandyNotes:getXY(rcoord)
+            local wx, wy, instance = HBD:GetWorldCoordinatesFromZone(x, y, uiMapID)
+            distances[rcoord] = (wx and instance == pinstance) and getDistance(px, py, wx, wy) or math.huge
+        end
+        table.sort(points, function(lhs, rhs) return distances[lhs] > distances[rhs] end)
     end
     function createWaypointForAll(uiMapID, coord)
         if not TomTom then return end
@@ -236,7 +245,7 @@ do
         -- Add waypoints in a useful order so we wind up with the closest one
         -- on the arrow. Not just doing TomTom:SetClosestWaypoint because I
         -- want to respect the crazy-arrow settings, and that forces it on.
-        table.sort(points, distanceSort)
+        sortByDistance(points, uiMapID)
         for _, rcoord in ipairs(points) do
             local x, y = HandyNotes:getXY(rcoord)
             TomTom:AddWaypoint(uiMapID, x, y, {
