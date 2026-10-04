@@ -10,7 +10,9 @@ local HBD = LibStub("HereBeDragons-2.0")
 
 ns.DEBUG = C_AddOns.GetAddOnMetadata(myname, "Version") == '@'..'project-version@'
 
-ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE
+-- Forever has its own project ID, but the retail client's UI and APIs
+ns.FOREVER = WOW_PROJECT_ID == WOW_PROJECT_CAMELOT
+ns.CLASSIC = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE and not ns.FOREVER
 ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 
 ---------------------------------------------------------
@@ -438,7 +440,7 @@ function HL:OnInitialize()
     self:RegisterEvent("CRITERIA_EARNED", "RefreshOnEvent")
     self:RegisterEvent("BAG_UPDATE", "RefreshOnEvent")
     self:RegisterEvent("QUEST_TURNED_IN", "RefreshOnEvent")
-    if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+    if not ns.CLASSIC then
         self:RegisterEvent("SHOW_LOOT_TOAST", "RefreshOnEvent")
         self:RegisterEvent("GARRISON_FOLLOWER_ADDED", "RefreshOnEvent")
         self:RegisterEvent("UNIT_ENTERING_VEHICLE", "RefreshOnUnitEvent", "player")
