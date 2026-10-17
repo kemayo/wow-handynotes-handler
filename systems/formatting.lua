@@ -66,11 +66,11 @@ local completeColor = CreateColor(0, 1, 0, 1)
 local incompleteColor = CreateColor(1, 0, 0, 1)
 local function render_replacer(variant, id, fallback)
     local baseVariant, baseID = variant, id
-    local mainid, subid = id:match("(%d+)%.(%d+)")
+    local mainid, subid = id:match("^(%d+)%.(%d+)$")
     mainid, subid = mainid and tonumber(mainid), subid and tonumber(subid)
     id = mainid or (id:match('^%d+$') and tonumber(id) or id)
     -- TODO: multiple variants?
-    local mainvariant, subvariant = variant:match("(%l+)%.(%l+)")
+    local mainvariant, subvariant = variant:match("^(%l+)%.(%l+)$")
     if subvariant then
         variant = mainvariant
     end
@@ -275,7 +275,7 @@ end
 local function render_string(s, context)
     if type(s) == "function" then s = s(context) end
     if not s then return nil end
-    return (s:gsub("{([^:}]+):([^:}]+):?([^}]*)}", safe_render_replacer))
+    return (s:gsub("{([%l.]+):([^:}]+):?([^}]*)}", safe_render_replacer))
 end
 local function cache_string(s, context)
     if type(s) == "function" then s = s(context) end
