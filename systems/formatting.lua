@@ -114,9 +114,7 @@ local function render_replacer(variant, id, fallback)
             -- questlinebyquest:questID[.uiMapID]
         else
             -- questline:uiMapID.questLineID
-            local questLines = C_QuestLine.GetAvailableQuestLines(id)
-            if not questLines then return end
-            for _, line in ipairs(questLines) do
+            for _, line in ipairs(C_QuestLine.GetAvailableQuestLines(id) or {}) do
                 if line.questLineID == subid then
                     questLine = line
                     break
@@ -139,7 +137,6 @@ local function render_replacer(variant, id, fallback)
                 end
                 return (completed and completeColor or incompleteColor):WrapTextInColorCode(criteria)
             end
-            id = 'achievement:'..mainid..'.'..subid
         else
             local _, name, _, completed, _, _, _, _, _, _, _, _, wasEarnedByMe = GetAchievementInfo(id)
             if name and name ~= "" then
@@ -253,7 +250,7 @@ local function render_replacer(variant, id, fallback)
         if _G["EXPANSION_NAME"..id] then
             return _G["EXPANSION_NAME"..id]
         end
-    elseif variant == "gc" and fallback then
+    elseif variant == "gc" and fallback ~= "" then
         if _G[strupper(id).."_FONT_COLOR"] then
             return "|cn" .. strupper(id).."_FONT_COLOR:" .. fallback .. "|r"
         end
