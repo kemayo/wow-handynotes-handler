@@ -166,12 +166,15 @@ local function render_replacer(variant, id, fallback)
     elseif variant == "covenant" then
         local data = C_Covenants.GetCovenantData(id)
         local name = data and data.name or ns.covenants[id]
-        if subvariant == "plain" then return name end
-        return COVENANT_COLORS[id]:WrapTextInColorCode(name)
+        if name then
+            if subvariant == "plain" or not COVENANT_COLORS[id] then return name end
+            return COVENANT_COLORS[id]:WrapTextInColorCode(name)
+        end
     elseif variant == "majorfaction" then
         local info = C_MajorFactions.GetMajorFactionData(id)
         if info and info.name then
             if subvariant == "plain" then return info.name end
+            if not info.textureKit then return info.name end
             return CreateAtlasMarkup(("majorFactions_icons_%s512"):format(info.textureKit)) .. " " .. info.name
         end
     elseif variant == "faction" then
@@ -198,7 +201,7 @@ local function render_replacer(variant, id, fallback)
         end
     elseif variant == "trait" then
         local treeID, nodeID = mainid, subid
-        local configID = C_Traits.GetConfigIDByTreeID(treeID)
+        local configID = nodeID and C_Traits.GetConfigIDByTreeID(treeID)
         local nodeInfo = configID and C_Traits.GetNodeInfo(configID, nodeID)
         if nodeInfo and nodeInfo.ID ~= 0 then
             local known = nodeInfo.ranksPurchased > 0
