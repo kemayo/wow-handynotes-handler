@@ -280,8 +280,9 @@ end
 local function cache_string(s, context)
     if type(s) == "function" then s = s(context) end
     if not s then return end
-    for variant, id, fallback in s:gmatch("{(%l+):(%d+):?([^}]*)}") do
+    for variant, id in s:gmatch("{([%l.]+):(%d+)[:}]") do
         id = tonumber(id)
+        variant = variant:match("^%l+")
         if variant == "item" then
             C_Item.RequestLoadItemDataByID(id)
         elseif variant == "spell" then
