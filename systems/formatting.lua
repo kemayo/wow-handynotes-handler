@@ -297,18 +297,14 @@ local function cache_string(s, context)
         end
     end
 end
-local render_string_list
-do
-    local out = {}
-    function render_string_list(point, variant, ...)
-        if not ... then return "" end
-        if ns.xtype(...) == "table" then return render_string_list(point, variant, unpack(...)) end
-        wipe(out)
-        for i=1,select("#", ...) do
-            table.insert(out, ("{%s:%d}"):format(variant, (select(i, ...))))
-        end
-        return render_string(string.join(", ", unpack(out)), point)
+local function render_string_list(point, variant, ...)
+    if not ... then return "" end
+    if ns.xtype(...) == "table" then return render_string_list(point, variant, unpack(...)) end
+    local out = {...}
+    for i = 1, select("#", ...) do
+        out[i] = ("{%s:%d}"):format(variant, out[i])
     end
+    return render_string(table.concat(out, ", "), point)
 end
 ns.render_string = render_string
 ns.render_string_list = render_string_list
