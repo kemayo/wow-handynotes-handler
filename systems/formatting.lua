@@ -353,6 +353,12 @@ local function render_translated(template, fallbacks)
     end))
 end
 
+-- For text that's already been through translation, e.g. a translated
+-- template with tokens put into it
+local function render_tokens(s)
+    return (s:gsub(TOKEN, safe_render_replacer))
+end
+
 local function render_string(s, context)
     -- strings made by a function can differ every call, so they aren't cached
     local cacheable = type(s) == "string"
@@ -369,7 +375,7 @@ local function render_string(s, context)
             return render_translated(translation, info.fallbacks)
         end
     end
-    return (s:gsub(TOKEN, safe_render_replacer))
+    return render_tokens(s)
 end
 local function cache_string(s, context)
     if type(s) == "function" then s = s(context) end
@@ -401,5 +407,6 @@ local function render_string_list(point, variant, ...)
     return render_string(table.concat(out, ", "), point)
 end
 ns.render_string = render_string
+ns.render_tokens = render_tokens
 ns.render_string_list = render_string_list
 ns.cache_string = cache_string
