@@ -1,4 +1,5 @@
 local myname, ns = ...
+local L = ns.L
 
 ns.defaults = {
     profile = {
@@ -67,59 +68,59 @@ ns.options = {
     args = {
         common = {
             type = "group",
-            name = "Common",
+            name = L["Common"],
             args = {
                 icon = {
                     type = "group",
-                    name = "Icons",
+                    name = L["Icons"],
                     inline = true,
                     order = 10,
                     args = {
                         desc = {
-                            name = "These settings control the look and feel of the icon.",
+                            name = L["These settings control the look and feel of the icon."],
                             type = "description",
                             order = 0,
                         },
                         icon_scale = {
                             type = "range",
-                            name = "Icon Scale",
-                            desc = "The scale of the icons",
+                            name = L["Icon Scale"],
+                            desc = L["The scale of the icons"],
                             min = 0.25, max = 2, step = 0.01,
                             order = 20,
                         },
                         icon_alpha = {
                             type = "range",
-                            name = "Icon Alpha",
-                            desc = "The alpha transparency of the icons",
+                            name = L["Icon Alpha"],
+                            desc = L["The alpha transparency of the icons"],
                             min = 0, max = 1, step = 0.01,
                             order = 30,
                         },
                         show_on_world = {
                             type = "toggle",
-                            name = "World Map",
-                            desc = "Show icons on world map",
+                            name = L["World Map"],
+                            desc = L["Show icons on world map"],
                             order = 40,
                         },
                         show_on_minimap = {
                             type = "toggle",
-                            name = "Minimap",
-                            desc = "Show all icons on the minimap",
+                            name = L["Minimap"],
+                            desc = L["Show all icons on the minimap"],
                             order = 50,
                         },
                         default_icon = {
                             type = "select",
-                            name = "Default Icon",
+                            name = L["Default Icon"],
                             values = {
-                                VignetteLoot = CreateAtlasMarkup("VignetteLoot", 20, 20) .. " Chest",
-                                VignetteLootElite = CreateAtlasMarkup("VignetteLootElite", 20, 20) .. " Chest with star",
-                                Garr_TreasureIcon = CreateAtlasMarkup("Garr_TreasureIcon", 20, 20) .. " Shiny chest",
+                                VignetteLoot = CreateAtlasMarkup("VignetteLoot", 20, 20) .. " " .. L["Chest"],
+                                VignetteLootElite = CreateAtlasMarkup("VignetteLootElite", 20, 20) .. " " .. L["Chest with star"],
+                                Garr_TreasureIcon = CreateAtlasMarkup("Garr_TreasureIcon", 20, 20) .. " " .. L["Shiny chest"],
                             },
                             order = 60,
                         },
                         worldmapoverlay = {
                             type = "toggle",
-                            name = "Add button to world map",
-                            desc = "Put a button on the world map for quick access to these options",
+                            name = L["Add button to world map"],
+                            desc = L["Put a button on the world map for quick access to these options"],
                             set = function(info, v)
                                 ns.db[info[#info]] = v
                                 if WorldMapFrame.RefreshOverlayFrames then
@@ -138,38 +139,38 @@ ns.options = {
                 },
                 display = {
                     type = "group",
-                    name = "What to display",
+                    name = L["What to display"],
                     inline = true,
                     order = 20,
                     args = {
                         npcs = {
                             type = "group",
                             inline = true,
-                            name = "NPCs",
+                            name = L["NPCs"],
                             args = {
                                 show_npcs = {
                                     type = "toggle",
-                                    name = "Show NPCs",
-                                    desc = "Show rare NPCs, generally to be killed for items or achievements",
+                                    name = L["Show NPCs"],
+                                    desc = L["Show rare NPCs, generally to be killed for items or achievements"],
                                     order = 10,
                                     dropdownHidden = true,
                                 },
                                 show_npcs_filter = {
                                     type = "select",
-                                    name = "Filter",
-                                    desc = "Show rare NPCs, generally to be killed for items or achievements",
+                                    name = L["Filter"],
+                                    desc = L["Show rare NPCs, generally to be killed for items or achievements"],
                                     values = {
                                         all = ALL,
-                                        lootable = "Will drop loot",
-                                        notable = "Will drop notable loot",
+                                        lootable = L["Will drop loot"],
+                                        notable = L["Will drop notable loot"],
                                     },
                                     sorting = {"all", "lootable", "notable"},
                                     order = 20,
                                 },
                                 show_npcs_emphasizeNotable = {
                                     type = "toggle",
-                                    name = "Emphasize notable NPCs",
-                                    desc = "Put more emphasis on NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys",
+                                    name = L["Emphasize notable NPCs"],
+                                    desc = L["Put more emphasis on NPCs that you can still get something from: achievements, transmogs, mounts, pets, toys"],
                                     order = 30,
                                 },
 
@@ -179,23 +180,23 @@ ns.options = {
                         treasure = {
                             type = "group",
                             inline = true,
-                            name = "Treasure",
+                            name = L["Treasure"],
                             args = {
                                 show_treasure = {
                                     type = "toggle",
-                                    name = "Show Treasure",
-                                    desc = "Show treasures that can be found in the world",
+                                    name = L["Show Treasure"],
+                                    desc = L["Show treasures that can be found in the world"],
                                     order = 10,
                                     dropdownHidden = true,
                                 },
                                 show_treasure_filter = {
                                     type = "select",
-                                    name = "Filter",
-                                    desc = "Show treasures that can be found in the world",
+                                    name = L["Filter"],
+                                    desc = L["Show treasures that can be found in the world"],
                                     values = {
                                         all = ALL,
-                                        lootable = "Will drop loot",
-                                        notable = "Will drop notable loot",
+                                        lootable = L["Will drop loot"],
+                                        notable = L["Will drop notable loot"],
                                     },
                                     sorting = {"all", "lootable", "notable"},
                                     order = 20,
@@ -212,8 +213,8 @@ ns.options = {
                         },
                         unhide = {
                             type = "execute",
-                            name = "Reset hidden nodes",
-                            desc = "Show all nodes that you manually hid by right-clicking on them and choosing \"hide\".",
+                            name = L["Reset hidden nodes"],
+                            desc = L["Show all nodes that you manually hid by right-clicking on them and choosing \"hide\"."],
                             func = function()
                                 for _, coords in pairs(ns.hidden) do
                                     wipe(coords)
@@ -227,52 +228,52 @@ ns.options = {
                 -- the "found" cluster
                 found = {
                     type = "group",
-                    name = "Found...",
+                    name = L["Found..."],
                     inline = true,
                     order = 30,
                     args = {
                         found = {
                             type = "toggle",
-                            name = "Show found",
-                            desc = "Show waypoints for items you've already found?",
+                            name = L["Show found"],
+                            desc = L["Show waypoints for items you've already found?"],
                             order = 20,
                         },
                     },
                 },
                 tooltips = {
                     type = "group",
-                    name = "Tooltips",
-                    desc = "Settings about how tooltips are displayed",
+                    name = L["Tooltips"],
+                    desc = L["Settings about how tooltips are displayed"],
                     inline = true,
                     args = {
                         tooltip_item = {
                             type = "toggle",
-                            name = "Use item tooltips",
-                            desc = "Show the full tooltips for items",
+                            name = L["Use item tooltips"],
+                            desc = L["Show the full tooltips for items"],
                             order = 10,
                         },
                         tooltip_charloot = {
                             type = "toggle",
-                            name = "Loot for this character only",
-                            desc = "Only show loot that should drop for the current character",
+                            name = L["Loot for this character only"],
+                            desc = L["Only show loot that should drop for the current character"],
                             order = 12,
                         },
                         tooltip_sharedloot = {
                             type = "toggle",
-                            name = "Shared loot",
-                            desc = "Some rares have a common pool of drops that're shared between them",
+                            name = L["Shared loot"],
+                            desc = L["Some rares have a common pool of drops that're shared between them"],
                             order = 12,
                         },
                         tooltip_pointanchor = {
                             type = "toggle",
-                            name = "Anchor tooltips to points",
-                            desc = "Whether to anchor the tooltips to the individual points or to the map",
+                            name = L["Anchor tooltips to points"],
+                            desc = L["Whether to anchor the tooltips to the individual points or to the map"],
                             order = 15,
                         },
                         tooltip_questid = {
                             type = "toggle",
-                            name = "Show quest ids",
-                            desc = "Show the internal id of the quest associated with this node. Handy if you want to report a problem with it.",
+                            name = L["Show quest ids"],
+                            desc = L["Show the internal id of the quest associated with this node. Handy if you want to report a problem with it."],
                             order = 40,
                         },
                     },
@@ -280,51 +281,51 @@ ns.options = {
                 },
                 notable = {
                     type = "group",
-                    name = "What's notable?",
-                    desc = "Define exactly what counts as being \"notable\"",
+                    name = L["What's notable?"],
+                    desc = L["Define exactly what counts as being \"notable\""],
                     inline = true,
                     args = {
                         achievement_notable = {
                             type = "toggle",
                             name = TRANSMOG_SOURCE_5,
-                            desc = "Count unearned achievement-progress as notable",
+                            desc = L["Count unearned achievement-progress as notable"],
                             order = 10,
                         },
                         mount_notable = {
                             type = "toggle",
                             name = PERKS_VENDOR_CATEGORY_MOUNT or MOUNTS, -- MOUNT is the wrong form when translated
-                            desc = "Count unlearned mounts as notable loot",
+                            desc = L["Count unlearned mounts as notable loot"],
                             order = 10,
                         },
                         toy_notable = {
                             type = "toggle",
                             name = TOY,
-                            desc = "Count unlearned toys as notable loot",
+                            desc = L["Count unlearned toys as notable loot"],
                             order = 20,
                         },
                         pet_notable = {
                             type = "toggle",
                             name = TOOLTIP_BATTLE_PET,
-                            desc = "Count uncaught pets as notable loot",
+                            desc = L["Count uncaught pets as notable loot"],
                             order = 30,
                         },
                         transmog_notable = {
                             type = "toggle",
-                            name = "Transmog",
-                            desc = "Count unlearned transmogrification appearances as notable loot",
+                            name = L["Transmog"],
+                            desc = L["Count unlearned transmogrification appearances as notable loot"],
                             order = 40,
                         },
                         decor_notable = {
                             type = "toggle",
-                            name = BINDING_TAG_DECOR or "Decor",
-                            desc = "Count unfound decor as notable loot",
+                            name = BINDING_TAG_DECOR or L["Decor"],
+                            desc = L["Count unfound decor as notable loot"],
                             order = 50,
                             disabled = not BINDING_TAG_DECOR,
                         },
                         quest_notable = {
                             type = "toggle",
-                            name = "Quest-attached",
-                            desc = "Count items with attached uncompleted quests as notable loot (this includes a lot of \"learnable\" items, weekly reputation drops, etc)",
+                            name = L["Quest-attached"],
+                            desc = L["Count items with attached uncompleted quests as notable loot (this includes a lot of \"learnable\" items, weekly reputation drops, etc)"],
                             order = 60,
                         },
                     },
@@ -332,52 +333,52 @@ ns.options = {
                 },
                 fiddly = {
                     type = "group",
-                    name = "Fiddly details",
-                    desc = "Quirky small tweaks",
+                    name = L["Fiddly details"],
+                    desc = L["Quirky small tweaks"],
                     inline = true,
                     args = {
                         icon_item = {
                             type = "toggle",
-                            name = "Use item icons",
-                            desc = "Show the icons for items, if known; otherwise, the achievement icon will be used",
+                            name = L["Use item icons"],
+                            desc = L["Show the icons for items, if known; otherwise, the achievement icon will be used"],
                             order = 10,
                         },
                         upcoming = {
                             type = "toggle",
-                            name = "Show inaccessible",
-                            desc = "Show waypoints for items you can't get yet (max level, gated quests, etc); they'll be tinted red to indicate this",
+                            name = L["Show inaccessible"],
+                            desc = L["Show waypoints for items you can't get yet (max level, gated quests, etc); they'll be tinted red to indicate this"],
                             order = 25,
                         },
                         areapoi_soon = {
                             type = "range",
-                            name = "Event notice period",
-                            desc = "How many minutes before a timed event starts to mark its point as imminent, on the map and in its tooltip",
+                            name = L["Event notice period"],
+                            desc = L["How many minutes before a timed event starts to mark its point as imminent, on the map and in its tooltip"],
                             min = 1, max = 60, step = 1,
                             order = 27,
                         },
                         show_routes = {
                             type = "toggle",
-                            name = "Show routes",
-                            desc = "Show relevant routes between points",
+                            name = L["Show routes"],
+                            desc = L["Show relevant routes between points"],
                             disabled = function() return not ns.MapSystem end,
                             order = 37,
                         },
                         transmog_specific = {
                             type = "toggle",
-                            name = "Transmog exact items",
-                            desc = "For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance",
+                            name = L["Transmog exact items"],
+                            desc = L["For transmog appearances, only count them as known if you know them from that exact item, rather than from another sharing the same appearance"],
                             order = 45,
                         },
                         alts_achievements_count = {
                             type = "toggle",
-                            name = "Alts achievements count",
-                            desc = "Consider achievement-related things done if you have it completed on another character already. Lots of achievement criteria are warband-shared, in which case this setting won't make a difference.",
+                            name = L["Alts achievements count"],
+                            desc = L["Consider achievement-related things done if you have it completed on another character already. Lots of achievement criteria are warband-shared, in which case this setting won't make a difference."],
                             order = 55,
                         },
                         notable_shared = {
                             type = "toggle",
-                            name = "Shared loot is notable",
-                            desc = "Some rares have a common pool of drops that're shared between them. When this is checked, that shared loot will count for notability.",
+                            name = L["Shared loot is notable"],
+                            desc = L["Some rares have a common pool of drops that're shared between them. When this is checked, that shared loot will count for notability."],
                             order = 60,
                         },
                     },
@@ -386,13 +387,13 @@ ns.options = {
             },
         },
         data = {
-            name = "Data",
+            name = L["Data"],
             type = "group",
             args = {
                 achievementsHidden = {
                     type = "multiselect",
-                    name = "Show achievements",
-                    desc = "Toggle whether you want to show points for a given achievement",
+                    name = L["Show achievements"],
+                    desc = L["Toggle whether you want to show points for a given achievement"],
                     get = function(info, key) return not ns.db[info[#info]][key] end,
                     set = function(info, key, value)
                         ns.db[info[#info]][key] = not value
@@ -428,8 +429,8 @@ ns.options = {
                 },
                 zonesHidden = {
                     type = "multiselect",
-                    name = "Show in zones",
-                    desc = "Toggle whether you want to show points in a given zone",
+                    name = L["Show in zones"],
+                    desc = L["Toggle whether you want to show points in a given zone"],
                     get = function(info, key) return not ns.db[info[#info]][key] end,
                     set = function(info, key, value)
                         ns.db[info[#info]][key] = not value
@@ -458,8 +459,8 @@ ns.options = {
                 },
                 groupsHidden = {
                     type = "multiselect",
-                    name = "Show groups",
-                    desc = "Toggle whether to show certain groups of points",
+                    name = L["Show groups"],
+                    desc = L["Toggle whether to show certain groups of points"],
                     get = function(info, key) return not ns.db[info[#info]][key] end,
                     set = function(info, key, value)
                         ns.db[info[#info]][key] = not value
