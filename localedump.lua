@@ -1,9 +1,9 @@
 local myname, ns = ...
 
--- Debug builds only: /<name>keys opens a window holding a translation template
--- for this addon's data strings, ready to copy into a new locale file. The
--- handler's own L keys are not included.
-if not ns.DEBUG then return end
+-- /<name>keys opens a window holding a translation template for this addon's
+-- data strings, ready to copy into a new locale file. It is in release builds
+-- too, so that translators do not need a development copy. The handler's own L
+-- keys are not included.
 
 local function collect()
     local keys, seen = {}, {}
