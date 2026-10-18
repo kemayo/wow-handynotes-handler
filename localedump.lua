@@ -46,9 +46,16 @@ local function collect()
     return list
 end
 
+local function literal(s)
+    return (("%q"):format(s):gsub("\\\n", "\\n"))
+end
+
+-- On a client with translations, the template is for its locale and keeps what
+-- is already translated. Otherwise it's blank, for a new locale.
 local function template(keys)
+    local locale = ns.translate and GetLocale() or "xxXX"
     local lines = {
-        'if GetLocale() ~= "xxXX" then return end',
+        ('if GetLocale() ~= "%s" then return end'):format(locale),
         "local _, ns = ...",
         "",
         '-- Fill in the translations. Entries left as "" are ignored.',
@@ -56,11 +63,11 @@ local function template(keys)
         "-- icon. They can move to wherever they fit the sentence.",
         "-- In {gc:colour:text}, translate only the text.",
         "-- Keep %s as it is. Use %2$s and %1$s to change the order.",
-        'ns.AddTranslations("xxXX", {',
+        ('ns.AddTranslations("%s", {'):format(locale),
     }
     for _, key in ipairs(keys) do
-        local literal = ("%q"):format(key):gsub("\\\n", "\\n")
-        table.insert(lines, ("    [%s] = \"\","):format(literal))
+        local translation = ns.translate and ns.translate(key) or ""
+        table.insert(lines, ("    [%s] = %s,"):format(literal(key), literal(translation)))
     end
     table.insert(lines, "})")
     return table.concat(lines, "\n")
