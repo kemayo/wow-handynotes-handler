@@ -15,6 +15,7 @@
 <Script file="visibility.lua"/>
 <Script file="config.lua"/>
 <Script file="overlay.lua"/>
+<Script file="localedump.lua"/>
 
 <Script file="providers\decorations.lua"/>
 <Script file="providers\routes.lua"/>
