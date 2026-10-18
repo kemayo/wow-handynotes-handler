@@ -23,9 +23,9 @@ function ns.AddTranslations(locale, translations)
         -- unfinished entries are blank, or true to mean "same as the key"
         if type(translation) == "string" and translation ~= "" then
             strings[key] = translation
+            ns.translate = translate
         end
     end
-    ns.translate = translate
 end
 
 -- For text written in code. Format after translating: L["Hide %s"]:format(name)
