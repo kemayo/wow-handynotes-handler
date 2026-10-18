@@ -323,10 +323,53 @@ local function safe_render_replacer(...)
     end
     return replacement
 end
+local TOKEN = "{([%l.]+):([^:}]+):?([^}]*)}"
+
+-- Translation. A host that has translations sets ns.translate(key), which
+-- returns the translated string or nil. The key is the English string with
+-- the name fallbacks removed: the client already localises those names, so
+-- translators shouldn't see them. Variants whose third field is text to show
+-- (not a fallback name) keep it.
+local text_variants = {gc = true}
+local parsed = {}
+local function parse_string(s)
+    local fallbacks = {}
+    local key = s:gsub(TOKEN, function(variant, id, fallback)
+        if fallback == "" or text_variants[variant] then return end
+        fallbacks[variant .. ":" .. id] = fallback
+        return "{" .. variant .. ":" .. id .. "}"
+    end)
+    -- a string that is only tokens has nothing to translate
+    local translatable = key:gsub("{[%l.]+:[^:}]+}", ""):find("%S") ~= nil
+    return {key = key, fallbacks = fallbacks, translatable = translatable}
+end
+
+local function render_translated(template, fallbacks)
+    return (template:gsub(TOKEN, function(variant, id, fallback)
+        if fallback == "" then
+            fallback = fallbacks[variant .. ":" .. id] or ""
+        end
+        return safe_render_replacer(variant, id, fallback)
+    end))
+end
+
 local function render_string(s, context)
+    -- strings made by a function can differ every call, so they aren't cached
+    local cacheable = type(s) == "string"
     if type(s) == "function" then s = s(context) end
     if not s then return nil end
-    return (s:gsub("{([%l.]+):([^:}]+):?([^}]*)}", safe_render_replacer))
+    if ns.translate then
+        local info = parsed[s]
+        if not info then
+            info = parse_string(s)
+            if cacheable then parsed[s] = info end
+        end
+        local translation = info.translatable and ns.translate(info.key)
+        if translation then
+            return render_translated(translation, info.fallbacks)
+        end
+    end
+    return (s:gsub(TOKEN, safe_render_replacer))
 end
 local function cache_string(s, context)
     if type(s) == "function" then s = s(context) end
