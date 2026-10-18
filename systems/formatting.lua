@@ -408,5 +408,10 @@ local function render_string_list(point, variant, ...)
 end
 ns.render_string = render_string
 ns.render_tokens = render_tokens
+-- The key render_string would look s up by, or nil if there's nothing to translate
+function ns.translation_key(s)
+    local info = parsed[s] or parse_string(s)
+    return info.translatable and info.key or nil
+end
 ns.render_string_list = render_string_list
 ns.cache_string = cache_string
