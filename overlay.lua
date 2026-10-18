@@ -1,5 +1,6 @@
 local myname, ns = ...
 local _, myfullname = C_AddOns.GetAddOnInfo(myname)
+local L = ns.L
 
 local Krowi = LibStub("Krowi_WorldMapButtons-1.4")
 
@@ -233,7 +234,7 @@ function ns.SetupMapOverlay()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip_SetTitle(GameTooltip, (myfullname:gsub("HandyNotes: ", "")))
         GameTooltip_AddColoredDoubleLine(GameTooltip, " ", "HandyNotes", NORMAL_FONT_COLOR, LIGHTBLUE_FONT_COLOR)
-        GameTooltip_AddNormalLine(GameTooltip, "Adjust display settings")
+        GameTooltip_AddNormalLine(GameTooltip, L["Adjust display settings"])
         GameTooltip:Show()
     end
     frame:SetScript("OnMouseUp", frame.OnMouseUp)
@@ -252,8 +253,8 @@ function ns.SetupMapOverlay()
             return MenuResponse.Close
         end
         description:CreateRadio(ALL, isVisible, setVisible, "all")
-        description:CreateRadio("Will drop loot", isVisible, setVisible, "lootable")
-        description:CreateRadio("Will drop notable loot", isVisible, setVisible, "notable")
+        description:CreateRadio(L["Will drop loot"], isVisible, setVisible, "lootable")
+        description:CreateRadio(L["Will drop notable loot"], isVisible, setVisible, "notable")
 
         return description
     end
@@ -276,13 +277,13 @@ function ns.SetupMapOverlay()
             rootDescription:QueueTitle(SHOW)
 
             if not ns.hiddenConfig.show_npcs then
-                local npcs = createVisibility(rootDescription:CreateCheckbox("NPCs", isChecked, toggleChecked, "show_npcs"))
+                local npcs = createVisibility(rootDescription:CreateCheckbox(L["NPCs"], isChecked, toggleChecked, "show_npcs"))
                 npcs:CreateDivider()
                 OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args.npcs.args, npcs)
             end
 
             if not ns.hiddenConfig.show_treasure then
-                local treasure = createVisibility(rootDescription:CreateCheckbox("Treasure", isChecked, toggleChecked, "show_treasure"))
+                local treasure = createVisibility(rootDescription:CreateCheckbox(L["Treasure"], isChecked, toggleChecked, "show_treasure"))
             end
 
             OptionsDropdown.FillFromArgs(ns.options.args.common.args.display.args, rootDescription)
@@ -290,7 +291,7 @@ function ns.SetupMapOverlay()
             rootDescription:QueueDivider()
         end
 
-        rootDescription:QueueTitle("Nearby types")
+        rootDescription:QueueTitle(L["Nearby types"])
 
         local showZoneGroups = not (ns.hiddenConfig.groupsHiddenByZone and OptionsDropdown.isHidden(ns.options.args.data, "groupsHidden")) and zoneHasGroups(uiMapID)
         local showZoneAchievements = not OptionsDropdown.isHidden(ns.options.args.data, "achievementsHidden") and zoneHasAchievements(uiMapID)
@@ -312,7 +313,7 @@ function ns.SetupMapOverlay()
                 ns.HL:Refresh()
             end
             local function groupTooltip(tooltip)
-                GameTooltip_AddNormalLine(tooltip, global and "Show this type of point everywhere" or "Show this type of point on this map")
+                GameTooltip_AddNormalLine(tooltip, global and L["Show this type of point everywhere"] or L["Show this type of point on this map"])
             end
             for _, group in iterKeysByValue(zoneGroups(uiMapID)) do
                 rootDescription:CreateCheckbox(ns.render_string(ns.groups[group] or group), groupIsChecked, groupToggleChecked, group):SetTooltip(groupTooltip)
@@ -320,7 +321,7 @@ function ns.SetupMapOverlay()
         end
         if showZoneAchievements then
             local function achievementTooltip(tooltip)
-                GameTooltip_AddNormalLine(tooltip, "Show this type of point")
+                GameTooltip_AddNormalLine(tooltip, L["Show this type of point"])
             end
             for achievementid in pairs(zoneAchievements(uiMapID)) do
                 rootDescription:CreateCheckbox(ns.render_string(("{achievement:%d}"):format(achievementid)), achievementIsChecked, achievementToggleChecked, achievementid):SetTooltip(achievementTooltip)
@@ -330,7 +331,7 @@ function ns.SetupMapOverlay()
         rootDescription:ClearQueuedDescriptions()
         rootDescription:QueueDivider()
 
-        rootDescription:QueueTitle("All types")
+        rootDescription:QueueTitle(L["All types"])
 
         local showAchievements = not OptionsDropdown.isHidden(ns.options.args.data, "achievementsHidden")
         if showAchievements then
@@ -368,7 +369,7 @@ function ns.SetupMapOverlay()
                         ns.HL:Refresh()
                     end
                     local function groupTooltip(tooltip)
-                        GameTooltip_AddNormalLine(tooltip, "Hide this type of point on this map")
+                        GameTooltip_AddNormalLine(tooltip, L["Hide this type of point on this map"])
                     end
                     local groups = zoneGroups(zoneUiMapID)
                     for _, group in iterKeysByValue(groups) do
@@ -388,7 +389,7 @@ function ns.SetupMapOverlay()
                 ns.HL:Refresh()
             end
             local function groupTooltip(tooltip)
-                GameTooltip_AddNormalLine(tooltip, "Hide this type of point everywhere")
+                GameTooltip_AddNormalLine(tooltip, L["Hide this type of point everywhere"])
             end
             local groups = allGroups()
             for _, group in iterKeysByValue(groups) do
@@ -400,11 +401,11 @@ function ns.SetupMapOverlay()
         rootDescription:CreateDivider()
 
         if not ns.hiddenConfig.notable then
-            local notabilitySubmenu = rootDescription:CreateButton("What's notable?")
+            local notabilitySubmenu = rootDescription:CreateButton(L["What's notable?"])
             OptionsDropdown.FillFromArgs(ns.options.args.common.args.notable.args, notabilitySubmenu)
         end
 
-        local settingsSubmenu = rootDescription:CreateButton("More settings")
+        local settingsSubmenu = rootDescription:CreateButton(L["More settings"])
         settingsSubmenu:CreateTitle(ns.options.args.common.args.found.name)
         OptionsDropdown.FillFromArgs(ns.options.args.common.args.found.args, settingsSubmenu)
         settingsSubmenu:CreateTitle(ns.options.args.common.args.tooltips.name)
@@ -412,7 +413,7 @@ function ns.SetupMapOverlay()
         settingsSubmenu:CreateTitle(ns.options.args.common.args.fiddly.name)
         OptionsDropdown.FillFromArgs(ns.options.args.common.args.fiddly.args, settingsSubmenu)
 
-        rootDescription:CreateButton("Open HandyNotes options", function()
+        rootDescription:CreateButton(L["Open HandyNotes options"], function()
             if InterfaceOptionsFrame_Show then
                 InterfaceOptionsFrame_Show()
                 InterfaceOptionsFrame_OpenToCategory('HandyNotes')

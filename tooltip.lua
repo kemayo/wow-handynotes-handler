@@ -1,4 +1,5 @@
 local myname, ns = ...
+local L = ns.L
 
 -- Everything that goes into a point's tooltip. This is where the fiddly
 -- retail-only handling lives -- secret values, and not re-anchoring a tooltip
@@ -221,13 +222,13 @@ local function handle_tooltip(tooltip, point, skip_label)
     end
     if ns.db.tooltip_sharedloot and point.loot_shared and #point.loot_shared > 0 then
         -- This is loot flagged as being from a shared pool
-        tooltip:AddLine("Shared Loot", 1, 1, 1, false)
+        tooltip:AddLine(L["Shared Loot"], 1, 1, 1, false)
         for _, item in ipairs(point.loot_shared) do
             hidden = tooltip_loot(tooltip, item, point.showallloot) or hidden
         end
     end
     if hidden then
-        tooltip:AddLine("Items for other characters hidden", 0, 1, 1)
+        tooltip:AddLine(L["Items for other characters hidden"], 0, 1, 1)
     end
     if point.hide_before then
         local summary = ns.conditions.summarize(point.hide_before)
@@ -285,7 +286,7 @@ local function handle_tooltip(tooltip, point, skip_label)
             1, 1, 1, r, g, b, true
         )
         if ns.db.tooltip_questid then
-            tooltip:AddDoubleLine("QuestID", render_string_list(point, "questid", point.quest), NORMAL_FONT_COLOR:GetRGB())
+            tooltip:AddDoubleLine(L["QuestID"], render_string_list(point, "questid", point.quest), NORMAL_FONT_COLOR:GetRGB())
         end
     end
 
