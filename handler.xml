@@ -5,6 +5,8 @@
 
 <Include file="systems\systems.xml"/>
 
+<Script file="locale\frFR.lua"/>
+
 <Script file="util.lua"/>
 <Script file="icons.lua"/>
 <Script file="points.lua"/>

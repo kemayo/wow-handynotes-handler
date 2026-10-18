@@ -3,7 +3,7 @@ local _, myfullname = C_AddOns.GetAddOnInfo(myname)
 
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
 local HL = LibStub("AceAddon-3.0"):NewAddon(myname, "AceEvent-3.0")
--- local L = LibStub("AceLocale-3.0"):GetLocale(myname, true)
+local L = ns.L
 ns.HL = HL
 
 local HBD = LibStub("HereBeDragons-2.0")
@@ -19,7 +19,7 @@ ns.CLASSICERA = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC -- forever vanilla
 -- All the utility code
 
 local mob_name = ns.mob_name
-local render_string, cache_string = ns.render_string, ns.cache_string
+local render_string, render_tokens, cache_string = ns.render_string, ns.render_tokens, ns.cache_string
 local work_out_texture = ns.work_out_texture
 local get_inactive_texture_variant = ns.get_inactive_texture_variant
 local get_upcoming_texture_variant = ns.get_upcoming_texture_variant
@@ -303,6 +303,9 @@ local function sendToChat(uiMapID, coord)
 end
 
 do
+    local function group_name(point)
+        return (render_string(ns.groups[point.group] or point.group, point))
+    end
     local generateMenu = function(owner, rootDescription, uiMapID, coord, point)
         rootDescription:SetTag("MENU_WORLD_MAP_CONTEXT_"..myname)
         rootDescription:CreateTitle(myfullname)
@@ -310,12 +313,12 @@ do
             rootDescription:CreateButton(OBJECTIVES_VIEW_ACHIEVEMENT, showAchievement, point.achievement)
         end
         if TomTom or (C_Map and C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(uiMapID)) then
-            rootDescription:CreateButton("Create waypoint", function() createWaypoint(uiMapID, coord) end)
+            rootDescription:CreateButton(L["Create waypoint"], function() createWaypoint(uiMapID, coord) end)
         end
         -- Specifically for TomTom, since it supports multiples:
         if TomTom and ns.PointHasRelatedPointsInZone(uiMapID, point) then
             rootDescription:CreateButton(
-                render_string(("Create waypoint for all %s"):format(point.group and (ns.groups[point.group] or point.group) or ("{achievement:%d}"):format(point.achievement)), point),
+                render_tokens(L["Create waypoint for all %s"]:format(point.group and group_name(point) or ("{achievement:%d}"):format(point.achievement))),
                 function() createWaypointForAll(uiMapID, coord) end
             )
         end
@@ -325,21 +328,21 @@ do
         end
         -- Hide menu item
         if not ns.hiddenConfig.unhide then
-            rootDescription:CreateButton("Hide this point", function() hideNode(uiMapID, coord) end)
+            rootDescription:CreateButton(L["Hide this point"], function() hideNode(uiMapID, coord) end)
         end
         if point.achievement then
-            rootDescription:CreateButton(render_string("Hide {achievement:" .. point.achievement .. "}", point), hideAchievement, point.achievement)
+            rootDescription:CreateButton(render_tokens(L["Hide %s"]:format(("{achievement:%d}"):format(point.achievement))), hideAchievement, point.achievement)
         end
         if point.group then
             if not ns.hiddenConfig.groupsHiddenByZone then
                 rootDescription:CreateButton(
-                    render_string(("Hide %s only in {zone:%s}"):format(ns.groups[point.group] or point.group, uiMapID), point),
+                    render_tokens(L["Hide %s only in %s"]:format(group_name(point), ("{zone:%d}"):format(uiMapID))),
                     function() hideGroupZone(uiMapID, coord) end
                 )
             end
             if not ns.hiddenConfig.groupsHidden then
                 rootDescription:CreateButton(
-                    render_string((ns.hiddenConfig.groupsHiddenByZone and "Hide all %s" or "Hide %s in all zones"):format(ns.groups[point.group] or point.group), point),
+                    (ns.hiddenConfig.groupsHiddenByZone and L["Hide all %s"] or L["Hide %s in all zones"]):format(group_name(point)),
                     function() hideGroup(uiMapID, coord) end
                 )
             end
