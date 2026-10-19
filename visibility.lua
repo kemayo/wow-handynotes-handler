@@ -144,7 +144,7 @@ ns.should_show_point = function(coord, point, currentZone, isMinimap)
     if achievementHidden(point.achievement) then
         return false
     end
-    if point.group and ns.db.groupsHidden[point.group] or ns.db.groupsHiddenByZone[currentZone][point.group] then
+    if point.group and (ns.db.groupsHidden[point.group] or ns.db.groupsHiddenByZone[currentZone][point.group]) then
         return false
     end
     if point.ShouldShow then
