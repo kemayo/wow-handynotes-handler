@@ -234,8 +234,8 @@ function ns.rewards.Achievement:AddProgressToTooltip(tooltip)
             local numCriteria = GetAchievementNumCriteria(achievement, true) -- include hidden
             if numCriteria > 10 then
                 local numComplete = 0
-                for criteria=1, numCriteria do
-                    if select(3, GetAchievementCriteriaInfo(achievement, criteria, true)) then
+                for i=1, numCriteria do
+                    if select(3, GetAchievementCriteriaInfo(achievement, i, true)) then
                         numComplete = numComplete + 1
                     end
                 end
@@ -246,13 +246,13 @@ function ns.rewards.Achievement:AddProgressToTooltip(tooltip)
                     (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
                 )
             else
-                for criteria=1, numCriteria do
-                    self:TooltipCriteria(tooltip, achievement, criteria, true)
+                for i=1, numCriteria do
+                    self:TooltipCriteria(tooltip, achievement, i, true)
                 end
             end
         elseif type(criteria) == "table" then
-            for _, criteria in ipairs(criteria) do
-                self:TooltipCriteria(tooltip, achievement, criteria, true)
+            for _, id in ipairs(criteria) do
+                self:TooltipCriteria(tooltip, achievement, id, true)
             end
         elseif type(criteria) == "number" then
             self:TooltipCriteria(tooltip, achievement, criteria, true)
