@@ -61,7 +61,7 @@ local function tooltip_criteria(tooltip, achievement, criteriaid, ignore_quantit
     else
         tooltip:AddDoubleLine(" ", criteria,
             nil, nil, nil,
-            r, g, b, r, g, b
+            r, g, b
         )
     end
 end

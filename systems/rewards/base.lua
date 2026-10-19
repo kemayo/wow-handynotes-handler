@@ -239,6 +239,8 @@ function ns.rewards.Achievement:AddProgressToTooltip(tooltip)
                         numComplete = numComplete + 1
                     end
                 end
+                local _, _, _, anyComplete, _, _, _, _, _, _, _, _, completedByMe = GetAchievementInfo(achievement)
+                local complete = completedByMe or (ns.db.alts_achievements_count and anyComplete)
                 tooltip:AddDoubleLine(" ", GENERIC_FRACTION_STRING:format(numComplete, numCriteria),
                     nil, nil, nil,
                     (complete and GREEN_FONT_COLOR or RED_FONT_COLOR):GetRGB()
@@ -276,7 +278,7 @@ function ns.rewards.Achievement:TooltipCriteria(tooltip, achievement, criteriaid
     else
         tooltip:AddDoubleLine(" ", criteria,
             nil, nil, nil,
-            r, g, b, r, g, b
+            r, g, b
         )
     end
 end
