@@ -91,26 +91,29 @@ ns.point_upcoming = function(point)
     end
     return false
 end
-local get_point_info = function(point, isMinimap)
-    if point then
-        local label = work_out_label(point)
-        local icon = work_out_texture(point)
-        if not ns.point_active(point) then
-            icon = get_inactive_texture_variant(icon)
-        elseif ns.point_upcoming(point) then
-            icon = get_upcoming_texture_variant(icon)
-        end
-        if not isMinimap then
-            cache_string(point.label, point)
-            cache_string(point.note, point)
-            cache_loot(point.loot)
-            cache_loot(point.loot_shared)
-        end
-        return label, icon, point.scale, point.alpha or 1
+local get_point_icon = function(point, isMinimap)
+    local icon = work_out_texture(point)
+    if not ns.point_active(point) then
+        icon = get_inactive_texture_variant(icon)
+    elseif ns.point_upcoming(point) then
+        icon = get_upcoming_texture_variant(icon)
     end
+    -- The label isn't needed to draw a pin, but working it out is what asks the
+    -- client for an npc's name, so it's there by the time a tooltip wants it.
+    if point.npc then mob_name(point.npc) end
+    if not isMinimap then
+        cache_string(point.label, point)
+        cache_string(point.note, point)
+        cache_loot(point.loot)
+        cache_loot(point.loot_shared)
+    end
+    return icon
 end
-local get_point_info_by_coord = function(uiMapID, coord)
-    return get_point_info(ns.points[uiMapID] and ns.points[uiMapID][coord])
+local get_point_label_by_coord = function(uiMapID, coord)
+    local point = ns.points[uiMapID] and ns.points[uiMapID][coord]
+    if point then
+        return work_out_label(point)
+    end
 end
 
 do
@@ -200,11 +203,11 @@ local function createWaypoint(uiMapID, coord)
             x = x,
             y = y,
             setTracked = true,
-            title = get_point_info_by_coord(uiMapID, coord),
+            title = get_point_label_by_coord(uiMapID, coord),
         }
     elseif TomTom then
         TomTom:AddWaypoint(uiMapID, x, y, {
-            title = get_point_info_by_coord(uiMapID, coord),
+            title = get_point_label_by_coord(uiMapID, coord),
             persistent = nil,
             minimap = true,
             world = true
@@ -251,7 +254,7 @@ do
         for _, rcoord in ipairs(points) do
             local x, y = HandyNotes:getXY(rcoord)
             TomTom:AddWaypoint(uiMapID, x, y, {
-                title = get_point_info_by_coord(uiMapID, rcoord),
+                title = get_point_label_by_coord(uiMapID, rcoord),
                 persistent = nil,
                 minimap = true,
                 world = true
@@ -282,7 +285,7 @@ local function hideGroupZone(uiMapID, coord)
 end
 
 local function sendToChat(uiMapID, coord)
-    local title = get_point_info_by_coord(uiMapID, coord)
+    local title = get_point_label_by_coord(uiMapID, coord)
     local x, y = HandyNotes:getXY(coord)
     local message = ("%s|cffffff00|Hworldmap:%d:%d:%d|h[%s]|h|r"):format(
         title and (title .. " ") or "",
@@ -397,9 +400,9 @@ do
         local state, value = next(t, prestate)
         while state do -- Have we reached the end of this zone?
             if value and ns.should_show_point(state, value, currentZone, isMinimap) then
-                local _, icon, scale, alpha = get_point_info(value, isMinimap)
-                scale = (scale or 1) * (icon and icon.scale or 1) * ns.db.icon_scale
-                return state, nil, icon, scale, ns.db.icon_alpha * alpha
+                local icon = get_point_icon(value, isMinimap)
+                local scale = (value.scale or 1) * (icon and icon.scale or 1) * ns.db.icon_scale
+                return state, nil, icon, scale, ns.db.icon_alpha * (value.alpha or 1)
             end
             state, value = next(t, state) -- Get next data
         end
