@@ -32,16 +32,25 @@ local function isNotable(point, lootable)
 end
 ns.PointIsNotable = isNotable
 
+-- Every point in a zone asks the same question, and answering it walks up the
+-- map's parents.
+local zoneHiddenCache = {}
+ns.run_caches.zoneHidden = zoneHiddenCache
 local zoneHidden
 zoneHidden = function(uiMapID)
+    local cached = zoneHiddenCache[uiMapID]
+    if cached ~= nil then return cached end
+    local hidden = false
     if ns.db.zonesHidden[uiMapID] then
-        return true
+        hidden = true
+    else
+        local info = C_Map.GetMapInfo(uiMapID)
+        if info and info.parentMapID then
+            hidden = zoneHidden(info.parentMapID)
+        end
     end
-    local info = C_Map.GetMapInfo(uiMapID)
-    if info and info.parentMapID then
-        return zoneHidden(info.parentMapID)
-    end
-    return false
+    zoneHiddenCache[uiMapID] = hidden
+    return hidden
 end
 local achievementHidden = function(achievement)
     if not achievement then return false end
