@@ -336,10 +336,6 @@ local function handle_tooltip(tooltip, point, skip_label)
                 -- the measuring wants AppearanceTooltip's guards: IsRectValid
                 -- before touching geometry, issecretvalue on GetLeft/GetRight/
                 -- GetWidth rather than trusting `or 0`.
-                if ( primaryItemShown  ) then
-                    totalWidth = totalWidth + comparison:GetWidth()
-                end
-
                 if ( (side == "left") and (totalWidth > leftPos) ) then
                     tooltip:SetAnchorType(tooltip:GetAnchorType(), (totalWidth - leftPos), 0)
                 elseif ( (side == "right") and (rightPos + totalWidth) >  GetScreenWidth() ) then
