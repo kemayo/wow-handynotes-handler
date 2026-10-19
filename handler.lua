@@ -413,7 +413,7 @@ do
         for _, cache in pairs(ns.run_caches) do
             table.wipe(cache)
         end
-        HL:RefreshProviders()
+        HL:RefreshProviders(minimap)
         currentZone = uiMapID
         isMinimap = minimap
         return iter, ns.points[uiMapID], nil
@@ -504,11 +504,14 @@ do
             bucket:Show()
         end
     end
-    function HL:RefreshProviders()
-        if ns.RouteMiniMapDataProvider then
-            ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
-        end
-        if ns.MapSystem then
+    -- HandyNotes asks for the minimap's nodes and the world map's separately,
+    -- so each only needs to rebuild its own routes and pins.
+    function HL:RefreshProviders(isMinimap)
+        if isMinimap then
+            if ns.RouteMiniMapDataProvider then
+                ns.RouteMiniMapDataProvider:UpdateMinimapRoutes()
+            end
+        elseif ns.MapSystem then
             ns.MapSystem:UpdateProviders()
         end
     end
