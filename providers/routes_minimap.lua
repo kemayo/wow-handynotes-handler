@@ -84,6 +84,9 @@ function dataProvider:ReleaseAllPins()
     self.pinPool:ReleaseAll()
 end
 
+-- Read on every CVAR_UPDATE rather than keyed on the variable's name, because
+-- this is asked every frame and the event is rare.
+local rotating = GetCVar("rotateMinimap") == "1"
 local f = CreateFrame("Frame")
 f:RegisterEvent("MINIMAP_UPDATE_ZOOM")
 f:RegisterEvent("CVAR_UPDATE")
@@ -91,14 +94,15 @@ f:SetScript("OnEvent", function(self, event, ...)
     if event == "MINIMAP_UPDATE_ZOOM" then
         dataProvider:UpdateMinimapRoutes()
     elseif event == "CVAR_UPDATE" then
-        local varname = ...
-        if varname == "ROTATE_MINIMAP" then
+        local now = GetCVar("rotateMinimap") == "1"
+        if now ~= rotating then
+            rotating = now
             dataProvider:UpdateMinimapRoutes()
         end
     end
 end)
 f:SetScript("OnUpdate", function(self)
-    if GetCVar("rotateMinimap") == "1" then
+    if rotating then
         local facing = GetPlayerFacing()
         if facing ~= dataProvider.facing then
             dataProvider.facing = facing
