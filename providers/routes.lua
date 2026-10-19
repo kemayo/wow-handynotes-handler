@@ -7,7 +7,6 @@ provider.data = {}
 
 local highlights = {}
 local routecache = {}
-local already = {}
 
 -- Points in a cluster carry a route back to the main point they highlight as.
 local function GetMainPoint(point, mapID)
@@ -45,6 +44,7 @@ function provider:OnRefresh()
     -- A path on a related point holds its own routes, so the point holding them
     -- is not always the main one. Visibility is that point's own; only the
     -- highlighting belongs to the main point.
+    local already = {}
     for _, point in pairs(ns.points[mapID]) do
         if point.routes and not already[point] and ns.should_show_point(point._coord, point, mapID, false) then
             already[point] = true
@@ -66,7 +66,6 @@ function provider:OnRefresh()
             end
         end
     end
-    table.wipe(already)
 end
 
 function provider.OnPinReset(pin)
